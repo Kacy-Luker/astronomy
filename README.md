@@ -221,5 +221,6 @@ change and updates this README and `CLAUDE.md` where they no longer match
 it, and commits the fix to the pull request's branch as "Update docs for
 this change". It then comments on the pull request with what changed, a
 link to that commit, and the diff. Review it with the rest. Import and
-remove pull requests are skipped. It uses the `ANTHROPIC_API_KEY` secret, about the
-cost of reading a page or two per run.
+remove pull requests are skipped. It uses the `ANTHROPIC_API_KEY` secret,
+about the cost of reading a page or two per run, and pushes with
+`SCANS_TOKEN` so the pull request's checks run on its commit.
