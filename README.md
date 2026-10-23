@@ -14,6 +14,7 @@ Astronomy observations transcribed from paper notes, published at
 | `site/` | Static site source (HTML, CSS, JS) |
 | `scripts/` | Build and validation scripts |
 | `docs/PROJECT_BRIEF.md` | The plan this site is built from |
+| `CLAUDE.md` | Context for AI agents working on the repo |
 
 ## Local use
 
