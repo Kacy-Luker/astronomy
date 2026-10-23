@@ -12,7 +12,10 @@
     "node": ">=20"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^1.2.0",
     "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1"
+    "ajv-formats": "^3.0.1",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7"
   }
 }
