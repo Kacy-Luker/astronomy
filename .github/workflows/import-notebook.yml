@@ -2,7 +2,8 @@ name: Import
 
 # Run from the Actions tab after uploading a scan to the private
 # astronomy-scans repo as <notebook id>/<date>.pdf. Opens a pull request
-# with the new pages and sessions.
+# with the new pages and sessions. Remove notebook opens a pull request that
+# deletes a notebook from the site.
 on:
   workflow_dispatch:
     inputs:
@@ -15,6 +16,7 @@ on:
           - Create new notebook
           - Replace pages
           - Complete notebook
+          - Remove notebook
       notebook:
         description: "Notebook (for everything except Create new notebook)"
         type: choice
@@ -28,6 +30,9 @@ on:
         required: false
       scan:
         description: "File in astronomy-scans. Empty = the newest in the notebook's folder; for Complete notebook, empty = just mark it completed"
+        required: false
+      confirm:
+        description: "Remove notebook only: type the selected notebook's id to confirm"
         required: false
 
 permissions:
@@ -48,25 +53,34 @@ jobs:
         env:
           PICKED: ${{ inputs.notebook }}
           NEW: ${{ inputs.new_notebook }}
+          CONFIRM: ${{ inputs.confirm }}
         run: |
           case "$ACTION" in
             "Add session") MODE=add; NOTEBOOK=$PICKED ;;
             "Create new notebook") MODE=new; NOTEBOOK=$NEW ;;
             "Replace pages") MODE=replace; NOTEBOOK=$PICKED ;;
             "Complete notebook") MODE=complete; NOTEBOOK=$PICKED ;;
+            "Remove notebook") MODE=remove; NOTEBOOK=$PICKED ;;
           esac
+          [ "$NOTEBOOK" != none ] || { echo "::error::There are no notebooks yet; use Create new notebook"; exit 1; }
           [[ "$NOTEBOOK" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "::error::Notebook id must be lowercase letters, digits and dashes (got '$NOTEBOOK')"; exit 1; }
           [[ "$SCAN" != *..* ]] || { echo "::error::Scan path can't contain '..'"; exit 1; }
+          if [ "$MODE" = remove ]; then
+            [ "$CONFIRM" = "$NOTEBOOK" ] || { echo "::error::To remove $NOTEBOOK, type $NOTEBOOK in the confirm field (got '$CONFIRM')"; exit 1; }
+            echo "BRANCH=remove/$NOTEBOOK" >> "$GITHUB_ENV"
+          fi
           echo "MODE=$MODE" >> "$GITHUB_ENV"
           echo "NOTEBOOK=$NOTEBOOK" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - name: Fetch the private scans
+        if: env.MODE != 'remove'
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/astronomy-scans
           token: ${{ secrets.SCANS_TOKEN }}
           path: .scans
       - name: Pick the scan
+        if: env.MODE != 'remove'
         run: |
           if [ -z "$SCAN" ] && [ "$MODE" != complete ]; then
             # Names are dates (optionally -HHMM), so the newest upload sorts
@@ -88,22 +102,31 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: command -v pdfimages || (sudo apt-get update && sudo apt-get install -y poppler-utils)
+      - if: env.MODE != 'remove'
+        run: command -v pdfimages || (sudo apt-get update && sudo apt-get install -y poppler-utils)
       - run: npm ci
       # Stamp show-through is removed by scripts/showthrough.py.
-      - uses: actions/setup-python@v5
+      - if: env.MODE != 'remove'
+        uses: actions/setup-python@v5
         with:
           python-version: "3.13"
           cache: pip
-      - run: pip install -r requirements.txt
+      - if: env.MODE != 'remove'
+        run: pip install -r requirements.txt
       - name: Import
+        if: env.MODE != 'remove'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           node scripts/import-notebook.mjs "$NOTEBOOK" ${SCAN:+".scans/$SCAN"} --mode "$MODE" \
             --summary "$RUNNER_TEMP/summary.md"
           cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
-      - name: Add a new notebook to the dropdown
+      - name: Remove the notebook
+        if: env.MODE == 'remove'
+        run: |
+          node scripts/remove-notebook.mjs "$NOTEBOOK" --summary "$RUNNER_TEMP/summary.md"
+          cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Update the notebook dropdown
         run: node scripts/sync-workflow.mjs
       - run: npm run validate
       - name: Remove the unredacted scans
