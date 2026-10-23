@@ -42,10 +42,10 @@ await rm(work, { recursive: true, force: true });
 
 const replaced = Boolean(notebook.front_cover);
 await writeFile(join("scans", id, "cover-front.jpg"), await webImage(cover));
-// Recreate the notebook with front_cover just before its sections, keeping
-// the key order of the hand-edited file.
-const { sections, pages, front_cover: _, ...rest } = notebook;
-await writeFile(notebookPath, formatJSON({ ...rest, front_cover: {}, sections, pages }) + "\n");
+// Recreate the notebook with front_cover just before its pages, keeping the
+// key order of the hand-edited file.
+const { pages, front_cover: _, ...rest } = notebook;
+await writeFile(notebookPath, formatJSON({ ...rest, front_cover: {}, pages }) + "\n");
 
 const summary = [
   `${replaced ? "Replaced" : "Added"} the front cover of **${notebook.title}** from \`${basename(source)}\`.`,

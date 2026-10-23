@@ -5,31 +5,31 @@
 //
 // [scan] is a PDF, an image, or a folder of images holding two-page spreads.
 //
-//   new       Start a notebook: front matter plus any sessions written so far.
+//   new       Start a notebook from whatever pages are scanned.
 //   add       After a session: reads only pages that are new or still open
 //             (pages that were going to change); everything else is skipped.
 //   replace   Re-read the uploaded pages and replace what was recorded for them.
 //   complete  Mark the notebook completed. Without a scan, lists what to
-//             rescan (sections marked rescan, pages still open); with one,
-//             fills those in.
+//             rescan; with one, the rescanned pages replace the old ones.
 //
-// Pages are placed by printed odd page numbers, by matching the rescanned
-// pages against the published images, or (for completion) by the list of
-// spreads to rescan. Back matter (index, info page, inside back cover) is
-// kept at the end of the notebook: uploaded pages of those kinds at the end
-// of a scan replace that section, and new session pages go in before it.
+// Claude puts each page in a category (data/categories.json), and pages go
+// where their category comes in the notebook; session pages go by page
+// number, printed on odd pages. A category with only one page (title page,
+// info page, ...) is skipped once the notebook has it, unless it's being
+// re-read. A word naming a category at the end of the file name, like
+// 2026-10-23-index.pdf, puts every non-blank page in it in that category.
 // The outside front cover is imported by scripts/import-cover.mjs.
 // Readings are cached in .import-cache/ so a rerun doesn't pay for the same
 // page twice.
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { basename, extname, join } from "node:path";
 import { parseArgs } from "node:util";
+import { CATEGORIES, SESSION_RANK, category, ranks } from "./lib/categories.mjs";
 import { formatJSON } from "./lib/format-json.mjs";
 import { matchPosition } from "./lib/match.mjs";
 import { cleanShowThrough, listSpreads, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
-import { assignSections, backStart, defaultSections, missingSections } from "./lib/sections.mjs";
 
 const MODES = ["add", "new", "replace", "complete"];
 const { positionals: [id, source], values: opts } = parseArgs({
@@ -55,27 +55,28 @@ const existing = existsSync(notebookPath) ? JSON.parse(await readFile(notebookPa
 if (mode === "new" && existing) throw new Error(`notebook ${id} already exists; use Add session instead`);
 if (mode !== "new" && !existing) throw new Error(`there is no notebook ${id}; make it with Create new notebook first`);
 const scan = existing?.scan ?? { rotate: 90, split: 0.47 };
-
-// Back matter is set aside while the other pages are placed, then put back
-// after them. Its images are read now, before any are overwritten.
-const sections = existing?.sections ?? null;
-const firstBack = backStart(sections ?? defaultSections([]));
-const backSections = (sections ?? defaultSections([])).slice(firstBack);
-const owners = existing ? assignSections(sections, existing.pages).owner : [];
-let bodyCount = owners.findIndex((o) => o >= firstBack);
-if (bodyCount < 0) bodyCount = existing?.pages.length ?? 0;
-const known = existing?.pages.slice(0, bodyCount) ?? [];
-const oldBack = await Promise.all((existing?.pages.slice(bodyCount) ?? []).map(async (page, k) =>
-  ({ page, section: owners[bodyCount + k] - firstBack, image: await readFile(pageImage(id, bodyCount + k)) })));
 const notes = []; // lines for the PR summary
 const nn = (i) => String(i + 1).padStart(2, "0");
+const nameOf = (page) => (page.number != null ? `page ${page.number}` : (page.label ?? category(page.kind)?.label ?? page.kind).toLowerCase());
 
-// Front matter and other non-session pages that are still open are rescanned
-// once the notebook is completed; this lists the spreads they're on.
-const awaitingRescan = (pages) => [...new Set(pages.flatMap((p, i) =>
-  p.open && !["session", "blank"].includes(p.kind) ? [i - (i % 2)] : []))].sort((a, b) => a - b);
-const describeSpread = (pages, left) => [pages[left], pages[left + 1]].filter(Boolean)
-  .map((p) => (p.number != null ? `page ${p.number}` : (p.label ?? p.kind).toLowerCase())).join(" + ");
+// A category named at the end of the file name, e.g. 2026-10-23-index.pdf.
+const dashed = (text) => text.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+const fileName = source ? dashed(basename(source, extname(source))) : "";
+const named = CATEGORIES.find((c) => [c.kind, c.label].some((n) => fileName.endsWith(`-${dashed(n)}`)));
+if (named?.kind === "front_cover") throw new Error("this file is named as the front cover; import it with Add front cover");
+if (named) notes.push(`- The file name puts every non-blank page in **${named.label}**.`);
+
+// The notebook's pages as they are, with their images, so pages can be
+// inserted anywhere and everything after them renumbered.
+const list = await Promise.all((existing?.pages ?? []).map(async (page, i) => {
+  const clean = pageImage(id, i).replace(/\.jpg$/, ".clean.jpg");
+  return {
+    page,
+    from: i,
+    image: await readFile(pageImage(id, i)),
+    clean: existsSync(clean) ? await readFile(clean) : null,
+  };
+}));
 
 // 1. Split the uploaded spreads into pages.
 const uploaded = [];
@@ -119,106 +120,124 @@ async function read(us) {
   });
 }
 
-// 3. Place the upload. offset maps a position in the page list to a page
-// number; the most common one among printed odd numbers wins.
-function commonOffset(pairs) {
-  const votes = new Map();
-  for (const [pos, number] of pairs) votes.set(number - pos, (votes.get(number - pos) ?? 0) + 1);
-  return [...votes].sort((a, b) => b[1] - a[1])[0]?.[0];
-}
-let offset = commonOffset(known.flatMap((p, i) => (p.number != null ? [[i, p.number]] : [])));
-const uploadOffset = () => commonOffset([...readings].flatMap(([u, r]) =>
-  r.printed_number % 2 === 1 ? [[u, r.printed_number]] : []));
+// Adding a session usually rescans pages already recorded. Matching the
+// upload against the published images finds them, so they aren't paid for
+// again; only pages that are new or still open are read. A file named for a
+// category is read in full: ruled pages like the index and the table of
+// contents can look alike when matched.
 const all = uploaded.map((_, u) => u);
-let positions = []; // upload index -> notebook position
-let toRecord = []; // upload indices to record (read, re-image, merge)
-
-// Back matter at the end of the upload: unnumbered pages of the back
-// sections' kinds, with any blank page scanned alongside them (dropped).
-function trailingBack() {
-  const run = [];
-  for (let u = uploaded.length - 1; u >= 0; u--) {
-    const r = readings.get(u);
-    if (!r || r.printed_number != null || !(backSections.some((s) => s.kind === r.kind) || r.kind === "blank")) break;
-    run.unshift(u);
-  }
-  return run.some((u) => readings.get(u).kind !== "blank") ? run : [];
+let toRead = all;
+if (mode === "add" && list.length && !named) {
+  const start = await matchPosition(uploaded, list.map((_, i) => pageImage(id, i)));
+  if (start != null) toRead = all.filter((u) => !list[start + u] || list[start + u].page.open);
+  const skipped = all.length - toRead.length;
+  if (skipped) notes.push(`- Skipped ${skipped} uploaded page(s) that were already recorded. Use **Replace pages** to re-read them.`);
 }
+await read(toRead);
 
-if (mode === "new") {
-  await read(all);
-  const o = uploadOffset();
-  if (o != null) offset = o;
-  else notes.push("- **No page numbers found**, so pages are unnumbered. Set `number` by hand.");
-  positions = all;
-  toRecord = all;
-} else if (mode === "complete" && uploaded.length) {
-  // The spreads to rescan, in order, then any back matter.
-  await read(all);
-  const body = all.slice(0, all.length - trailingBack().length);
-  const spreads = awaitingRescan(known);
-  if (body.length !== spreads.length * 2) {
-    throw new Error(`expected ${spreads.length} spread(s) to rescan (` +
-      `${spreads.map((s) => describeSpread(known, s)).join("; ") || "none"}) before the back matter, but the scan has ${body.length / 2}`);
-  }
-  positions = body.map((u) => spreads[Math.floor(u / 2)] + (u % 2));
-  toRecord = body;
-  for (const u of body) {
-    const want = known[positions[u]].kind, got = readings.get(u).kind;
-    if (want !== got) notes.push(`- Uploaded page ${nn(u)} looks like a ${got} page but replaces a ${want} page. Check the spreads were scanned in order.`);
-  }
-} else if (uploaded.length) {
-  const knownImages = known.map((_, i) => pageImage(id, i)).filter(existsSync);
-  let start;
-  if (mode === "replace") {
-    await read(all);
-    const o = uploadOffset();
-    start = o != null && offset != null ? o - offset : await matchPosition(uploaded, knownImages);
-    if (start == null) throw new Error("couldn't tell which pages this scan replaces (no page numbers, and it doesn't match the published pages)");
-    toRecord = all;
-  } else {
-    // add: match against what's published, else assume the scan continues
-    // the notebook; then let printed numbers on the pages read overrule that.
-    start = await matchPosition(uploaded, knownImages) ?? known.length;
-    for (let round = 0; round < 3; round++) {
-      toRecord = all.filter((u) => start + u >= known.length || known[start + u].open);
-      await read(toRecord);
-      const o = uploadOffset();
-      if (o == null || offset == null || o - offset === start) break;
-      start = o - offset;
-    }
-    const skipped = all.length - toRecord.length;
-    if (skipped) notes.push(`- Skipped ${skipped} uploaded page(s) that were already recorded. Use **Replace pages** to re-read them.`);
-  }
-  if (start < 0 || start > known.length) {
-    throw new Error(start > known.length
-      ? `this scan starts at page ${start + offset}, but the notebook only goes up to page ${known.length - 1 + offset}; scan the pages in between too`
-      : "this scan would start before the notebook's first page");
-  }
-  positions = all.map((u) => start + u);
+// 3. What each page read is, and its page number. Odd pages carry printed
+// numbers; the others follow from where they are in the upload. A blank page
+// only gets a number when the page facing it is a numbered page too.
+const kindOf = (u) => (named && readings.get(u).kind !== "blank" ? named.kind : readings.get(u).kind);
+const votes = new Map();
+for (const u of toRead) {
+  const n = readings.get(u).printed_number;
+  if (n % 2 === 1) votes.set(n - u, (votes.get(n - u) ?? 0) + 1);
 }
-const backUploads = trailingBack().filter((u) => mode === "complete" || toRecord.includes(u));
-toRecord = toRecord.filter((u) => !backUploads.includes(u));
-for (const u of toRecord) {
+const offset = [...votes].sort((a, b) => b[1] - a[1])[0]?.[0];
+const sessionArea = (u) => ["session", "unused"].includes(kindOf(u)) || readings.get(u).printed_number != null;
+function numberOf(u) {
   const r = readings.get(u);
-  const expected = known[positions[u]]?.number ?? (offset != null ? positions[u] + offset : null);
-  if (r.printed_number != null && expected != null && r.printed_number !== expected) {
-    notes.push(`- Uploaded page ${nn(u)} shows number ${r.printed_number} but was placed as page ${expected}. Check the page order.`);
-  }
+  if (r.printed_number != null) return r.printed_number;
+  if (offset == null || u + offset < 1) return null;
+  if (kindOf(u) === "blank" && !(readings.has(u ^ 1) && sessionArea(u ^ 1))) return null;
+  return ["session", "unused", "blank"].includes(kindOf(u)) ? u + offset : null;
+}
+for (const u of toRead) {
+  const n = readings.get(u).printed_number, want = offset != null ? u + offset : null;
+  if (n != null && want != null && n !== want) notes.push(`- Uploaded page ${nn(u)} shows number ${n}, out of step with the pages around it. Check the page order.`);
 }
 
-// 4. Record the processed pages.
-const clamp = (v) => Math.min(1, Math.max(0, v));
-const round = (v) => Math.round(v * 1000) / 1000;
+// 4. Place each page: replace what's there when it may be (re-reading, or a
+// page still open), skip it when it's already recorded, or insert it where
+// its category (or number) comes.
+const replaceable = (entry) => mode === "replace" || mode === "complete" || Boolean(entry.page.open);
+const rankOf = (kind) => (kind === "unused" ? SESSION_RANK : CATEGORIES.findIndex((c) => c.kind === kind));
+// An entry as it will be: a page being placed counts as what it was read as.
+const pageNow = (e) => (e.u != null ? { kind: kindOf(e.u), number: numberOf(e.u) ?? e.before?.number } : e.page);
+function slotFor(rank, number) {
+  const r = ranks(list.map(pageNow));
+  const i = list.findIndex((e, k) => r[k] > rank ||
+    (rank === SESSION_RANK && r[k] === SESSION_RANK && number != null && pageNow(e).number > number));
+  return i < 0 ? list.length : i;
+}
+const placed = []; // entries recorded from the upload: { u, before, page }
+const where = new Map(); // upload index -> the entry it went to or matched
+function put(u, entry, at) {
+  if (entry) {
+    where.set(u, entry);
+    if (!replaceable(entry)) return;
+    Object.assign(entry, { u, before: entry.page });
+    placed.push(entry);
+  } else {
+    const fresh = { u, before: null, page: null, from: null };
+    list.splice(at, 0, fresh);
+    where.set(u, fresh);
+    placed.push(fresh);
+  }
+}
+const seen = new Map(); // kind -> how many of it this upload has had
+const existingOf = new Map(CATEGORIES.map((c) => [c.kind, list.filter((e) => e.page.kind === c.kind)]));
+for (const u of toRead.filter((u) => kindOf(u) !== "blank" || numberOf(u) != null)) {
+  const kind = kindOf(u);
+  const number = numberOf(u);
+  if (number != null) {
+    put(u, list.find((e) => pageNow(e).number === number), slotFor(SESSION_RANK, number));
+  } else if (["session", "unused"].includes(kind)) {
+    notes.push(`- Uploaded page ${nn(u)} is a session page with no page number, so it went after the last session page. Set \`number\` by hand.`);
+    put(u, null, slotFor(SESSION_RANK, null));
+  } else {
+    const k = seen.get(kind) ?? 0;
+    seen.set(kind, k + 1);
+    if (category(kind)?.single && k) {
+      notes.push(`- Uploaded page ${nn(u)} also reads as the ${category(kind).label.toLowerCase()}, and there's only one, so it was skipped. Check the scan.`);
+      continue;
+    }
+    const old = existingOf.get(kind)?.[k];
+    if (old && !replaceable(old)) {
+      notes.push(`- Uploaded page ${nn(u)}: the notebook already has its ${category(kind).label.toLowerCase()}, so it was skipped. Use **Replace pages** to re-read it.`);
+    }
+    const after = list.findLastIndex((e) => pageNow(e).kind === kind);
+    put(u, old, after >= 0 ? after + 1 : slotFor(rankOf(kind), null));
+  }
+}
+// Unnumbered blank pages go beside the page they face.
+for (const u of toRead.filter((u) => kindOf(u) === "blank" && numberOf(u) == null)) {
+  const partner = where.get(u ^ 1);
+  if (!partner) {
+    notes.push(`- Uploaded page ${nn(u)} is blank and the page it faces wasn't placed, so it was left out.`);
+    continue;
+  }
+  const at = list.indexOf(partner) + (u % 2 ? 1 : 0);
+  const neighbor = list[u % 2 ? at : at - 1];
+  const blank = neighbor && pageNow(neighbor).kind === "blank" && pageNow(neighbor).number == null;
+  put(u, blank ? neighbor : null, at);
+}
+
 // One uploaded page as a notebook page entry, keeping what was recorded
 // for it before (label, number, note, redaction).
-async function recordPage(u, before, { number, label, where }) {
+const clamp = (v) => Math.min(1, Math.max(0, v));
+const round = (v) => Math.round(v * 1000) / 1000;
+async function recordPage(u, before) {
   const r = readings.get(u);
-  const page = { kind: r.kind };
-  if (before && r.kind === "blank" && before.kind !== "blank") {
+  const number = numberOf(u) ?? before?.number ?? null;
+  const page = { kind: kindOf(u) };
+  if (before && page.kind === "blank" && before.kind !== "blank") {
     page.kind = before.kind;
-    notes.push(`- ${where} now reads as blank, so its old kind (${before.kind}) was kept. Check the scan.`);
+    notes.push(`- ${nameOf(before)} now reads as blank, so its old kind (${before.kind}) was kept. Check the scan.`);
   }
+  // Category pages are named by their category; scales pages can differ.
+  const label = before?.label ?? (page.kind === "reference" ? r.label : null);
   if (label) page.label = label;
   if (number != null) page.number = number;
   if (before?.note) page.note = before.note;
@@ -231,52 +250,22 @@ async function recordPage(u, before, { number, label, where }) {
     });
     const check = await cached(`${nn(u)}.check`, async (c) =>
       c.checkRedaction(await webImage(await redact(uploaded[u], page.redact), READ_HEIGHT)));
+    const name = nameOf(page);
     if (check.legible) {
       page.redact = [[0, 0, 1, 1]];
-      notes.push(`- ${where}: details were still readable after blurring (${check.what.join(", ")}), so the whole page is blurred. Narrow \`redact\` by hand if you like.`);
+      notes.push(`- ${name}: details were still readable after blurring (${check.what.join(", ")}), so the whole page is blurred. Narrow \`redact\` by hand if you like.`);
     } else {
-      notes.push(`- ${where}: blurred ${r.personal_info.map((p) => p.what).join(", ")}.`);
+      notes.push(`- ${name}: blurred ${r.personal_info.map((p) => p.what).join(", ")}.`);
     }
   }
   if (!page.redact) delete page.redact;
   return page;
 }
-
-const pages = [...known];
-const fresh = new Set(); // pages recorded by this run
-await inBatches(toRecord, async (u) => {
-  const i = positions[u];
-  const r = readings.get(u);
-  const before = known[i];
-  const label = before?.label ?? (["session", "blank", "unused"].includes(r.kind) ? null : r.label);
-  const number = before ? before.number : offset != null && i + offset >= 1 ? i + offset : null;
-  pages[i] = await recordPage(u, before, { number, label, where: number != null ? `Page ${number}` : label ?? `Scan position ${nn(i)}` });
-  fresh.add(pages[i]);
+await inBatches(placed, async (entry) => {
+  entry.page = await recordPage(entry.u, entry.before);
+  entry.image = await webImage(await redact(uploaded[entry.u], entry.page.redact));
+  entry.clean = null;
 });
-
-// Back matter: uploaded pages replace their whole section, and the others
-// keep theirs. Blank pages scanned alongside it aren't kept.
-const backUpload = backUploads.filter((u) => readings.get(u).kind !== "blank");
-const { owner: backOwner } = assignSections(backSections, backUpload.map((u) => ({ kind: readings.get(u).kind })));
-if (backOwner.length < backUpload.length) {
-  throw new Error(`the back matter in this scan (${backUpload.map((u) => readings.get(u).kind).join(", ")}) ` +
-    `doesn't fit the notebook's back sections in order (${backSections.map((s) => s.label ?? s.kind).join(", ")})`);
-}
-const back = [];
-for (const [k, section] of backSections.entries()) {
-  const old = oldBack.filter((b) => b.section === k);
-  const ups = backUpload.filter((_, j) => backOwner[j] === k);
-  if (!ups.length) {
-    back.push(...old);
-    continue;
-  }
-  for (const [j, u] of ups.entries()) {
-    const label = section.label ?? null;
-    const page = await recordPage(u, old[j]?.page, { number: null, label, where: label ?? section.kind });
-    fresh.add(page);
-    back.push({ page, image: await webImage(await redact(uploaded[u], page.redact)) });
-  }
-}
 
 // 5. Sessions. A header starts a session; entries without one continue the
 // latest session. On a page that already has entries, only entries beyond
@@ -307,7 +296,7 @@ const headerFields = (h) => {
 };
 
 // Replacing pages starts them from scratch: forget their entries first.
-const processedNumbers = new Set(toRecord.map((u) => pages[positions[u]].number).filter((n) => n != null));
+const processedNumbers = new Set(placed.map((e) => e.page.number).filter((n) => n != null));
 const startedOn = new Map(mine().map((s) => [Math.min(...(s.pages ?? [Infinity])), s]));
 if (mode === "replace") {
   for (const s of mine()) {
@@ -320,9 +309,9 @@ if (mode === "replace") {
 }
 
 let current = null;
-for (const u of [...toRecord].sort((a, b) => positions[a] - positions[b])) {
+for (const { u, page } of [...placed].sort((a, b) => list.indexOf(a) - list.indexOf(b))) {
   const r = readings.get(u);
-  const number = pages[positions[u]].number ?? null;
+  const number = page.number ?? null;
   if (r.kind !== "session" || (!r.header && !r.entries.length)) continue;
   const recorded = mine().flatMap((s) => s.observations).filter((o) => number != null && o.page === number).length;
 
@@ -392,38 +381,38 @@ for (const s of mine()) {
   }
 }
 
+
 // 6. Which pages are still open. Completing without a scan asks for the
-// sections marked rescan (and pages still waiting) to be rescanned; later
-// completion scans close what they record. While the notebook is in
+// categories marked rescan (and other pages still waiting) to be rescanned;
+// later completion scans close what they replace. While the notebook is in
 // progress, blank pages after the last written page stay open, since that's
 // where the next session goes.
 const status = mode === "complete" ? "completed" : existing?.status ?? "in_progress";
-const finalSections = sections ?? defaultSections(pages);
-const allPages = [...pages, ...back.map((b) => b.page)];
-const { owner: finalOwner } = assignSections(finalSections, allPages);
-const toRescan = (p, i) => Boolean(finalSections[finalOwner[i]]?.rescan) || (p.open && !["session", "blank"].includes(p.kind));
+const pages = list.map((e) => e.page);
+const fresh = new Set(placed.map((e) => e.page));
+const toRescan = (p) => Boolean(category(p.kind)?.rescan) || (p.open && !["session", "blank"].includes(p.kind));
 let frontCover = existing?.front_cover ?? null;
 if (status === "completed") {
   const asking = mode === "complete" && !uploaded.length && existing.status !== "completed";
-  allPages.forEach((p, i) => {
-    if (asking ? toRescan(p, i) : !fresh.has(p) && p.open && toRescan(p, i)) p.open = true;
+  for (const p of pages) {
+    if (asking ? toRescan(p) : !fresh.has(p) && p.open && toRescan(p)) p.open = true;
     else delete p.open;
-  });
-  if (asking && frontCover && finalSections.some((s) => s.kind === "front_cover" && s.rescan)) frontCover = { open: true };
+  }
+  if (asking && frontCover && category("front_cover")?.rescan) frontCover = { open: true };
 } else {
-  const lastWritten = pages.findLastIndex((p) => p.kind !== "blank");
+  const lastWritten = pages.findLastIndex((p) => p.number != null && p.kind !== "blank");
   pages.forEach((p, i) => {
-    if (p.kind === "blank" && i > lastWritten) p.open = true;
+    if (p.kind === "blank" && p.number != null && i > lastWritten) p.open = true;
     else if (p.kind === "blank") delete p.open;
   });
 }
 // Keep the key order of hand-written entries, with open last before redact.
-for (const [i, p] of allPages.entries()) {
-  const { kind, label, number, note, open, redact: boxes } = p;
-  allPages[i] = present({ kind, label, number, note, open, redact: boxes });
+for (const e of list) {
+  const { kind, label, number, note, open, redact: boxes } = e.page;
+  e.page = present({ kind, label, number, note, open, redact: boxes });
 }
 
-// 7. Write the notebook, sessions, and processed page images.
+// 7. Write the notebook, sessions, and page images.
 const label = [...readings.values()].map((r) => r.notebook_label).find(Boolean) ?? {};
 const dates = mine().map((s) => s.date).sort();
 const notebook = {
@@ -436,10 +425,7 @@ const notebook = {
   finished: label.finished ?? existing?.finished ?? (status === "completed" ? dates.at(-1) ?? null : null),
   scan,
   ...(frontCover && { front_cover: frontCover }),
-  // A new notebook's sections follow its front matter as read; edit them by
-  // hand if the notebook is laid out differently.
-  sections: finalSections,
-  pages: allPages,
+  pages: list.map((e) => e.page),
 };
 await mkdir(join("data", "notebooks"), { recursive: true });
 await writeFile(notebookPath, formatJSON(notebook) + "\n");
@@ -448,35 +434,33 @@ for (const sid of touched) {
   await writeFile(join("data", "sessions", `${sid}.json`), formatJSON(sessions.get(sid)) + "\n");
 }
 for (const sid of removed) await rm(join("data", "sessions", `${sid}.json`), { force: true });
+// Images are named by position, so pages after an inserted one move along.
 await mkdir(join("scans", id), { recursive: true });
-for (const u of toRecord) {
-  await writeFile(pageImage(id, positions[u]), await webImage(await redact(uploaded[u], allPages[positions[u]].redact)));
+const changed = [];
+for (const [i, e] of list.entries()) {
+  if (e.from === i && e.u == null) continue;
+  changed.push(i);
+  await writeFile(pageImage(id, i), e.image);
+  const clean = pageImage(id, i).replace(/\.jpg$/, ".clean.jpg");
+  if (e.clean) await writeFile(clean, e.clean);
+  else await rm(clean, { force: true });
 }
-// Back matter goes after the other pages, wherever they now end. It has no
-// show-through cleaning: the blank pages it backs onto aren't scanned.
-for (const [k, b] of back.entries()) {
-  await writeFile(pageImage(id, pages.length + k), b.image);
-  await rm(pageImage(id, pages.length + k).replace(/\.jpg$/, ".clean.jpg"), { force: true });
-}
-for (let i = allPages.length; i < (existing?.pages.length ?? 0); i++) {
+for (let i = list.length; i < (existing?.pages.length ?? 0); i++) {
   await rm(pageImage(id, i), { force: true });
   await rm(pageImage(id, i).replace(/\.jpg$/, ".clean.jpg"), { force: true });
 }
-// New pages may complete a sheet whose other side came in an earlier upload.
-if (toRecord.length) cleanShowThrough(id, toRecord.map((u) => positions[u]));
+// New and moved pages may complete a sheet whose other side was scanned before.
+if (changed.length) cleanShowThrough(id, changed);
 
 // 8. Summarize for the pull request.
 const what = {
   new: "Created", add: "Added to", replace: "Replaced pages in", complete: "Completed",
 }[mode];
-const placed = toRecord.map((u) => positions[u]).sort((a, b) => a - b);
-const pageName = (i) => (allPages[i].number != null ? `page ${allPages[i].number}` : (allPages[i].label ?? allPages[i].kind).toLowerCase());
-const pageRange = (a, b) => (a === b ? pageName(a) : `${pageName(a)} to ${pageName(b)}`);
+const recorded = placed.map((e) => list.indexOf(e)).sort((a, b) => a - b).map((i) => nameOf(list[i].page));
 const lines = [
   `${what} **${notebook.title}**` + (source
-    ? ` from \`${basename(source)}\`: ${toRecord.length + backUpload.length} of ${uploaded.length} uploaded pages recorded` +
-      (placed.length ? ` (${pageRange(placed[0], placed.at(-1))})` : "") + "." +
-      (backUpload.length ? ` At the back: ${backUpload.map((u) => readings.get(u).kind).join(", ")}.` : "")
+    ? ` from \`${basename(source)}\`: ${placed.length} of ${uploaded.length} uploaded pages recorded` +
+      (recorded.length ? ` (${[...new Set(recorded)].join(", ")})` : "") + "."
     : "."),
   `Status: **${status === "completed" ? "completed" : "in progress"}**.`,
   "",
@@ -492,40 +476,33 @@ if (touched.size || removed.size) {
 } else {
   lines.push("No session entries changed.");
 }
-const rescan = awaitingRescan(allPages.slice(0, pages.length));
 if (status === "completed") {
   // What completing asks to be rescanned, and whether it has been.
-  const todo = finalSections.flatMap((section, k) => {
-    if (!section.rescan) return [];
-    const name = section.label ?? section.kind;
-    if (section.kind === "front_cover") return [{ name, k, todo: !frontCover ? "not scanned yet" : frontCover.open ? "rescan it" : null }];
-    const ps = allPages.filter((_, i) => finalOwner[i] === k);
-    return [{ name, k, todo: !ps.length ? "not scanned yet" : ps.some((p) => p.open) ? "rescan it" : null }];
+  const todo = CATEGORIES.filter((c) => c.rescan).map((c) => {
+    if (c.kind === "front_cover") return { c, todo: !frontCover ? "not scanned yet" : frontCover.open ? "rescan it" : null };
+    const ps = notebook.pages.filter((p) => p.kind === c.kind);
+    return { c, todo: !ps.length ? "not scanned yet" : ps.some((p) => p.open) ? "rescan it" : null };
   });
+  // Other pages still waiting, like a volume label without its finish date.
+  const others = [...new Set(notebook.pages.filter((p) => p.open && !category(p.kind)?.rescan).map(nameOf))];
   lines.push("", "### Rescan checklist", "",
-    ...todo.map(({ name, todo: t }) => `- [${t ? " " : "x"}] ${name}${t ? `: ${t}` : ""}`));
-  const backTodo = todo.filter((t) => t.todo && t.k >= backStart(finalSections)).map((t) => t.name.toLowerCase());
-  if (rescan.length || backTodo.length) {
-    lines.push("", "Scan these in this order into one file, upload it, and run **Complete notebook** again with that file:", "");
-    rescan.forEach((s, k) => lines.push(`${k + 1}. ${describeSpread(allPages, s)}`));
-    if (backTodo.length) lines.push(`${rescan.length + 1}. then the ${backTodo.join(" and ")} spreads at the back`);
+    ...todo.map(({ c, todo: t }) => `- [${t ? " " : "x"}] ${c.label}${t ? `: ${t}` : ""}`),
+    ...others.map((name) => `- [ ] ${name[0].toUpperCase()}${name.slice(1)}: rescan it`));
+  if (todo.some((t) => t.todo && t.c.kind !== "front_cover") || others.length) {
+    lines.push("", "Scan those pages (whole spreads, in any order) into one file, upload it, and run",
+      "**Complete notebook** again with that file. Each page goes back where its category belongs.");
   }
-  if (todo.some((t) => t.todo && finalSections[t.k].kind === "front_cover")) {
+  if (todo.some((t) => t.todo && t.c.kind === "front_cover")) {
     lines.push("", "Scan the closed notebook's front cover on its own, upload it, and run **Add front cover**.");
   }
-  // Blank pages are confirmed by hand, and other sections still to scan are listed.
-  const blanks = allPages.flatMap((p, i) => (p.kind === "blank" ? [p.number != null ? `page ${p.number}` : `scan position ${nn(i)}`] : []));
+  // Blank pages are confirmed by hand, and categories never scanned are listed.
+  const blanks = notebook.pages.flatMap((p, i) => (p.kind === "blank" ? [p.number != null ? `page ${p.number}` : `scan position ${nn(i)}`] : []));
   if (blanks.length) {
     lines.push("", "### Blank pages", "", "These pages were read as blank. Check each is meant to be blank before merging:", "",
       ...blanks.map((b) => `- ${b}`));
   }
-  const missing = missingSections(notebook).filter((s) => !s.rescan);
-  if (missing.length) {
-    lines.push("", "### Not scanned yet", "", ...missing.map((s) => `- ${s.label ?? s.kind}`));
-  }
-} else if (rescan.length) {
-  lines.push("", "### When the notebook is complete", "", "These spreads are hidden until then, and will need rescanning:", "");
-  rescan.forEach((s, k) => lines.push(`${k + 1}. ${describeSpread(allPages, s)}`));
+  const missing = CATEGORIES.filter((c) => !c.rescan && !notebook.pages.some((p) => p.kind === c.kind));
+  if (missing.length) lines.push("", "### Not scanned", "", ...missing.map((c) => `- ${c.label}`));
 }
 if (notes.length) lines.push("", "### Check these", "", ...notes);
 const summary = lines.join("\n") + "\n";
