@@ -2,15 +2,15 @@
 //
 //   node scripts/split-notebook.mjs <notebook-id> <scan.pdf | folder of images>
 //
-// Each scan is a two-page spread. It is rotated upright, cut at the fold,
-// and written to scans/<notebook-id>/01.jpg, 02.jpg, ... in page order.
-// Rotation, fold position, and blurred regions come from
-// data/notebooks/<notebook-id>.json when it exists.
+// Each scan is a two-page spread. It is rotated upright, cut at its fold
+// (found in each spread), and written to scans/<notebook-id>/01.jpg, 02.jpg,
+// ... in page order. Rotation, the fallback fold position, and blurred
+// regions come from data/notebooks/<notebook-id>.json when it exists.
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { cleanShowThrough, listSpreads, pageImage, redact, splitSpread, webImage } from "./lib/pages.mjs";
+import { cleanShowThrough, listSpreads, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
 
 const [id, source] = process.argv.slice(2);
 if (!id || !source) {
@@ -27,13 +27,12 @@ const spreads = await listSpreads(source, work);
 await rm(join("scans", id), { recursive: true, force: true });
 await mkdir(join("scans", id), { recursive: true });
 
+const { pages } = await splitSpreads(spreads, notebook.scan);
 let n = 0;
-for (const file of spreads) {
-  for (const page of await splitSpread(file, notebook.scan)) {
-    const boxes = notebook.pages?.[n]?.redact;
-    await writeFile(pageImage(id, n), await webImage(await redact(page, boxes)));
-    n++;
-  }
+for (const page of pages) {
+  const boxes = notebook.pages?.[n]?.redact;
+  await writeFile(pageImage(id, n), await webImage(await redact(page, boxes)));
+  n++;
 }
 await rm(work, { recursive: true, force: true });
 

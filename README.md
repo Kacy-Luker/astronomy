@@ -40,7 +40,10 @@ node scripts/split-notebook.mjs astronomy-001 path/to/scan.pdf
 
 It rotates each spread upright, cuts it at the fold, blurs any `redact`
 boxes, and writes `scans/astronomy-001/01.jpg`, `02.jpg`, and so on. The
-rotation and fold position come from the notebook file's `scan` setting.
+fold is found in each spread (a faint crease that runs the page's height,
+cut where it won't go through writing), since scanner placement moves it;
+a spread with no visible fold uses the median of the others, or the
+notebook file's `scan.split` when none can be seen.
 Use `redact` on a page to blur personal details such as a phone number.
 Keep unredacted scans out of the repo, since it's public.
 
@@ -55,10 +58,11 @@ pull request it opens before merging. Merge each import before the next.
 
 | Action | When | Scan |
 | --- | --- | --- |
-| **Create new notebook** | Starting a notebook | From the inside front cover through any sessions so far. Type the id in **new notebook** |
+| **Create new notebook** | Starting a notebook | From the inside front cover through any sessions so far. Pick **new-notebook** in the notebook dropdown and type the id in **new notebook** |
 | **Add session** | After each session | The spreads you wrote on, including the one you started on. Only new pages and pages still being written on are read |
 | **Replace pages** | A page was misread or rescanned | The spreads to re-read. What was recorded for those pages is replaced |
 | **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the list of spreads to rescan; then upload those, in that order, and run it again with that file |
+| **Remove notebook** | Taking a notebook off the site | No scan. Type the notebook's id in **confirm**; it opens a pull request deleting the notebook, its page images and its sessions (the scans in astronomy-scans are kept) |
 
 The scan field can be left empty to use the newest file in the notebook's
 folder (for **Complete notebook**, empty means no scan). The notebook

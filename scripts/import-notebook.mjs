@@ -23,7 +23,7 @@ import { basename, join } from "node:path";
 import { parseArgs } from "node:util";
 import { formatJSON } from "./lib/format-json.mjs";
 import { matchPosition } from "./lib/match.mjs";
-import { cleanShowThrough, listSpreads, pageImage, redact, splitSpread, webImage } from "./lib/pages.mjs";
+import { cleanShowThrough, listSpreads, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
 
 const MODES = ["add", "new", "replace", "complete"];
 const { positionals: [id, source], values: opts } = parseArgs({
@@ -64,7 +64,11 @@ const describeSpread = (pages, left) => [pages[left], pages[left + 1]].filter(Bo
 const uploaded = [];
 if (source) {
   const work = await mkdtemp(join(tmpdir(), "notebook-"));
-  for (const file of await listSpreads(source, work)) uploaded.push(...await splitSpread(file, scan));
+  const { pages: split, folds } = await splitSpreads(await listSpreads(source, work), scan);
+  uploaded.push(...split);
+  folds.forEach((f, k) => {
+    if (f == null) notes.push(`- Spread ${k + 1} of the scan has no visible fold, so it was cut where the others were. Check its two pages.`);
+  });
   await rm(work, { recursive: true, force: true });
   console.log(`${uploaded.length} pages in ${basename(source)}`);
 }
