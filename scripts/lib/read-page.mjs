@@ -1,6 +1,5 @@
 // Ask Claude to read one notebook page into structured data.
 import Anthropic from "@anthropic-ai/sdk";
-import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 
 const MODEL = "claude-opus-5-5";
@@ -96,27 +95,53 @@ Rules:
 
 const client = new Anthropic();
 
-async function ask(image, prompt, schema, maxTokens) {
-  const response = await client.beta.messages.parse({
-    model: MODEL,
-    max_tokens: maxTokens,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    output_config: { effort: "high", format: betaZodOutputFormat(schema) },
-    system: SYSTEM,
-    messages: [{
-      role: "user",
-      content: [
-        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: image.toString("base64") } },
-        { type: "text", text: prompt },
-      ],
-    }],
-  });
-  if (response.stop_reason === "refusal") {
-    throw new Error(`refused (${response.stop_details?.category ?? "no category"})`);
+// The first {...} block in a reply, parsed; null when there isn't valid JSON.
+export function extractJSON(text) {
+  const start = text.indexOf("{"), end = text.lastIndexOf("}");
+  if (start < 0 || end < start) return null;
+  try {
+    return JSON.parse(text.slice(start, end + 1));
+  } catch {
+    return null;
   }
-  if (!response.parsed_output) throw new Error(`no parsed output (stop reason ${response.stop_reason})`);
-  return response.parsed_output;
+}
+
+// The answer format is given as a JSON Schema in the prompt and checked here.
+// (Enforcing it in the API instead fails: the schema is too large to compile.)
+// A reply that doesn't fit goes back once with what was wrong.
+async function ask(image, prompt, schema, maxTokens) {
+  const format = JSON.stringify(z.toJSONSchema(schema));
+  const messages = [{
+    role: "user",
+    content: [
+      { type: "image", source: { type: "base64", media_type: "image/jpeg", data: image.toString("base64") } },
+      { type: "text", text: `${prompt}\n\nReply with only a JSON object matching this JSON Schema, and nothing else:\n${format}` },
+    ],
+  }];
+  for (let attempt = 1; ; attempt++) {
+    const response = await client.beta.messages.create({
+      model: MODEL,
+      max_tokens: maxTokens,
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      output_config: { effort: "high" },
+      system: SYSTEM,
+      messages,
+    });
+    if (response.stop_reason === "refusal") {
+      throw new Error(`refused (${response.stop_details?.category ?? "no category"})`);
+    }
+    const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("");
+    const json = extractJSON(text);
+    const result = json ? schema.safeParse(json) : null;
+    if (result?.success) return result.data;
+    const problem = result ? z.prettifyError(result.error) : "the reply had no valid JSON object";
+    if (attempt === 2) throw new Error(`Claude's reply didn't match the page format: ${problem}`);
+    messages.push(
+      { role: "assistant", content: response.content },
+      { role: "user", content: `That doesn't match the format: ${problem}\nReply with only the corrected JSON object.` },
+    );
+  }
 }
 
 export function readPage(image) {
