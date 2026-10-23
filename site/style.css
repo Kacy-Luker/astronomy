@@ -102,3 +102,24 @@ a { color: var(--accent); }
 .object-id { margin: 0; font-size: 1.2rem; }
 .ids { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0 0; padding: 0; }
 .description { margin: .75rem 0 0; }
+
+.toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: .75rem;
+}
+.toggle button {
+  font: inherit;
+  font-size: .9rem;
+  padding: .35rem 1rem;
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.toggle button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
+
+/* Swap light and dark; the hue turn keeps ink colors recognizable. */
+.scans.inverted img { filter: invert(1) hue-rotate(180deg); }

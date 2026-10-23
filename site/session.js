@@ -42,6 +42,36 @@ function renderHeader(s) {
   return header;
 }
 
+// The viewer's last choice is remembered; storage can be unavailable.
+const VIEW_KEY = "scan-view";
+function savedView() {
+  try { return localStorage.getItem(VIEW_KEY); } catch { return null; }
+}
+function saveView(view) {
+  try { localStorage.setItem(VIEW_KEY, view); } catch { /* not persisted */ }
+}
+
+// Original / Inverted buttons that flip the scans' colors in place.
+function renderScanToggle(section) {
+  const group = el("div", "toggle");
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "Scan colors");
+  const buttons = ["original", "inverted"].map((view) => {
+    const b = el("button", null, view[0].toUpperCase() + view.slice(1));
+    b.type = "button";
+    b.dataset.view = view;
+    b.addEventListener("click", () => { apply(view); saveView(view); });
+    return b;
+  });
+  function apply(view) {
+    section.classList.toggle("inverted", view === "inverted");
+    for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.view === view));
+  }
+  apply(savedView() === "inverted" ? "inverted" : "original");
+  group.append(...buttons);
+  return group;
+}
+
 function renderScans(s) {
   const section = el("section", "scans");
   section.append(el("h3", null, "Original notes"));
@@ -49,6 +79,7 @@ function renderScans(s) {
     section.append(el("p", "muted", "No scans for this session yet."));
     return section;
   }
+  section.append(renderScanToggle(section));
   for (const [i, src] of s.scans.entries()) {
     const link = el("a", "scan");
     link.href = src;
