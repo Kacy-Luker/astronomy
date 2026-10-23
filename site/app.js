@@ -11,7 +11,7 @@ function renderNotebook(nb, sessions) {
   const item = el("li", "session");
   const head = el("div", "session-head");
   head.append(link(notebookHref(nb.id), nb.title, "session-link session-date"));
-  head.append(el("span", "tag", nb.finished ? "Finished" : "In progress"));
+  head.append(el("span", "tag", nb.status === "completed" ? "Completed" : "In progress"));
   item.append(head);
   const mine = sessions.filter((s) => s.notebook === nb.id);
   const dates = nb.started && `${formatDate(nb.started)} – ${nb.finished ? formatDate(nb.finished) : "now"}`;

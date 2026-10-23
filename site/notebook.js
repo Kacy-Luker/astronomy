@@ -8,10 +8,11 @@ const main = document.getElementById("notebook");
 
 function renderHeader(nb, sessions) {
   const header = el("section", "session-header");
-  header.append(el("h2", "session-title", nb.title));
-  const dates = nb.started
-    ? `${formatDate(nb.started)} – ${nb.finished ? formatDate(nb.finished) : "in progress"}`
-    : null;
+  const head = el("div", "session-head");
+  head.append(el("h2", "session-title", nb.title),
+    el("span", "tag", nb.status === "completed" ? "Completed" : "In progress"));
+  header.append(head);
+  const dates = nb.started && `${formatDate(nb.started)} – ${nb.finished ? formatDate(nb.finished) : "now"}`;
   const count = sessions.reduce((n, s) => n + s.observations.length, 0);
   const meta = [nb.owner, dates, plural(sessions.length, "session"), plural(count, "observation")];
   header.append(el("p", "session-meta", meta.filter(Boolean).join(" · ")));

@@ -14,6 +14,10 @@
     },
     "title": { "type": "string" },
     "owner": { "type": ["string", "null"] },
+    "status": {
+      "description": "Whether the notebook is still being written in.",
+      "enum": ["in_progress", "completed"]
+    },
     "started": { "type": ["string", "null"], "format": "date" },
     "finished": { "type": ["string", "null"], "format": "date" },
     "scan": {

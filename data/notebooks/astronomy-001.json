@@ -2,6 +2,7 @@
   "id": "astronomy-001",
   "title": "Astronomy 001",
   "owner": "Kacy Luker",
+  "status": "in_progress",
   "started": "2026-08-12",
   "finished": null,
   "scan": { "rotate": 90, "split": 0.47 },
