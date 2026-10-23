@@ -1,6 +1,6 @@
 // Image steps shared by the notebook scripts: spreads in, pages out.
 import { execFileSync } from "node:child_process";
-import { readdir } from "node:fs/promises";
+import { open, readdir, stat } from "node:fs/promises";
 import { extname, join } from "node:path";
 import sharp from "sharp";
 
@@ -10,17 +10,44 @@ const IMAGE_EXT = new Set([".jpg", ".jpeg", ".png", ".tif", ".tiff"]);
 export const pageImage = (notebookId, index) =>
   join("scans", notebookId, `${String(index + 1).padStart(2, "0")}.jpg`);
 
+// What a file really is, from its first bytes rather than its name.
+async function sniff(path) {
+  const handle = await open(path);
+  const { buffer, bytesRead } = await handle.read(Buffer.alloc(64), 0, 64, 0);
+  await handle.close();
+  const head = buffer.subarray(0, bytesRead);
+  const text = head.toString("latin1");
+  if (text.startsWith("%PDF")) return "pdf";
+  if (head[0] === 0xff && head[1] === 0xd8) return "jpeg";
+  if (text.startsWith("\x89PNG")) return "png";
+  if (text.startsWith("II*\0") || text.startsWith("MM\0*")) return "tiff";
+  if (/^....ftyp(heic|heix|mif1|hevc)/s.test(text)) return "heic";
+  if (text.startsWith("version https://git-lfs")) return "lfs-pointer";
+  return `unknown (starts with ${JSON.stringify(text.slice(0, 24))}, ${(await stat(path)).size} bytes)`;
+}
+
 // The scanned spreads in order: embedded images from a PDF, a single image,
 // or a folder of images.
 export async function listSpreads(source, workDir) {
-  const ext = extname(source).toLowerCase();
-  if (ext === ".pdf") {
-    // pdfimages (poppler-utils) extracts the scanned JPEGs without re-encoding.
-    execFileSync("pdfimages", ["-j", source, join(workDir, "spread")]);
-    return (await readdir(workDir)).filter((f) => f.startsWith("spread")).sort()
-      .map((f) => join(workDir, f));
+  if ((await stat(source)).isFile()) {
+    const type = await sniff(source);
+    if (type === "pdf") {
+      // pdfimages (poppler-utils) extracts the scanned JPEGs without re-encoding.
+      execFileSync("pdfimages", ["-j", source, join(workDir, "spread")]);
+      const spreads = (await readdir(workDir)).filter((f) => f.startsWith("spread")).sort()
+        .map((f) => join(workDir, f));
+      if (!spreads.length) throw new Error(`${source} is a PDF with no scanned images in it`);
+      return spreads;
+    }
+    if (["jpeg", "png", "tiff"].includes(type)) return [source];
+    if (type === "heic") {
+      throw new Error(`${source} is an iPhone HEIC photo; export it as JPEG or PDF and upload that`);
+    }
+    if (type === "lfs-pointer") {
+      throw new Error(`${source} is a Git LFS pointer, not the scan; upload the file without LFS`);
+    }
+    throw new Error(`${source} isn't a PDF or image: ${type}. Open it on GitHub to check the upload worked`);
   }
-  if (IMAGE_EXT.has(ext)) return [source];
   return (await readdir(source))
     .filter((f) => IMAGE_EXT.has(extname(f).toLowerCase()))
     .sort()
