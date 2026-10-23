@@ -29,11 +29,15 @@ const notebooks = await Promise.all((await readAll("data/notebooks")).map(async 
     const { width, height } = await sharp(image).metadata();
     // Pages that will still change aren't published until they're final.
     const hidden = Boolean(page.open && page.kind !== "session");
+    // The show-through-cleaned copy, when scripts/showthrough.py made one.
+    const clean = image.replace(/\.jpg$/, ".clean.jpg");
     if (hidden) await rm(join(OUT, image));
+    if (hidden) await rm(join(OUT, clean), { force: true });
     return {
       ...page,
       slot: i + 1,
       image: hidden ? null : image,
+      clean: !hidden && existsSync(clean) ? clean : null,
       hidden,
       width,
       height,

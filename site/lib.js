@@ -60,32 +60,43 @@ const TRANSPARENCY = ["Mag 1", "Mag 2–3", "Mag 4", "Mag 5", "Mag 6–7"];
 export const seeingText = (n) => n && `${ROMAN[n - 1]} · ${SEEING[n - 1]}`;
 export const transparencyText = (n) => n && `${ROMAN[n - 1]} · ${TRANSPARENCY[n - 1]}`;
 
-// The viewer's last choice is remembered; storage can be unavailable.
-const VIEW_KEY = "scan-view";
+// How scans are shown: inverted (white on dark; the default), cleaned (stamp
+// show-through removed), or the original scan. Inverted uses the cleaned
+// image. The viewer's last choice is remembered; storage can be unavailable.
+const VIEWS = { inverted: "Inverted", cleaned: "Cleaned", original: "Original" };
+const VIEW_KEY = "page-view";
 function savedView() {
   try { return localStorage.getItem(VIEW_KEY); } catch { return null; }
 }
 function saveView(view) {
   try { localStorage.setItem(VIEW_KEY, view); } catch { /* not persisted */ }
 }
+let currentView = VIEWS[savedView()] ? savedView() : "inverted";
 
-// Original / Inverted buttons that flip the scans inside target in place.
+const imageFor = (img, view) => (view === "original" ? img.dataset.original : img.dataset.clean || img.dataset.original);
+
+// Inverted / Cleaned / Original buttons for the scans inside target.
 export function scanToggle(target) {
   const group = el("div", "toggle");
   group.setAttribute("role", "group");
-  group.setAttribute("aria-label", "Scan colors");
-  const buttons = ["original", "inverted"].map((view) => {
-    const b = el("button", null, view[0].toUpperCase() + view.slice(1));
+  group.setAttribute("aria-label", "How scans are shown");
+  const buttons = Object.entries(VIEWS).map(([view, label]) => {
+    const b = el("button", null, label);
     b.type = "button";
     b.dataset.view = view;
     b.addEventListener("click", () => { apply(view); saveView(view); });
     return b;
   });
   function apply(view) {
+    currentView = view;
     target.classList.toggle("inverted", view === "inverted");
+    for (const img of target.querySelectorAll("img[data-original]")) {
+      img.src = imageFor(img, view);
+      img.closest("a").href = img.src;
+    }
     for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.view === view));
   }
-  apply(savedView() === "inverted" ? "inverted" : "original");
+  apply(currentView);
   group.append(...buttons);
   return group;
 }
@@ -101,9 +112,11 @@ export function pageFigure(page, alt, caption) {
     if (page.width) box.style.aspectRatio = `${page.width} / ${page.height}`;
     figure.append(box);
   } else {
-    const a = link(page.image);
     const img = el("img");
-    img.src = page.image;
+    img.dataset.original = page.image;
+    if (page.clean) img.dataset.clean = page.clean;
+    img.src = imageFor(img, currentView);
+    const a = link(img.src);
     if (page.width) [img.width, img.height] = [page.width, page.height];
     img.alt = alt;
     img.loading = "lazy";
