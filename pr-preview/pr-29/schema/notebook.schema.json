@@ -37,8 +37,16 @@
         }
       }
     },
+    "front_cover": {
+      "description": "The outside front cover, scanned on its own to scans/<id>/cover-front.jpg. Absent until it's scanned.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "open": { "description": "Waiting to be rescanned now that the notebook is complete.", "type": "boolean" }
+      }
+    },
     "sections": {
-      "description": "The parts this notebook is expected to have, in order (front cover, title page, index, scales, session pages, table of contents, notebook info, ...). Scanned pages are matched to them in order; a section with nothing scanned yet isn't shown.",
+      "description": "The parts this notebook is expected to have, in order (front cover, title page, table of contents, scales, session pages, index, notebook info, ...). Scanned pages are matched to them in order; a section with nothing scanned yet isn't shown.",
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "#/$defs/section" }
@@ -56,17 +64,25 @@
       "required": ["kind"],
       "properties": {
         "kind": {
-          "description": "What its pages are. A session section also holds unused and blank pages.",
-          "enum": ["cover", "title", "index", "reference", "session", "blank", "contents", "info"]
+          "description": "What its pages are. A session section also holds unused and blank pages. front_cover is the outside front cover, scanned on its own (see front_cover).",
+          "enum": ["front_cover", "cover", "title", "contents", "reference", "session", "index", "info", "blank"]
         },
         "label": {
           "description": "Its name, e.g. 'Front cover'. Pages with a label must carry the same one.",
           "type": "string"
         },
         "pages": {
-          "description": "How many pages it has. Defaults to 1, or to as many as it needs for session pages and the table of contents.",
+          "description": "How many pages it has. Defaults to 1, or to as many as it needs for session pages and the index.",
           "type": "integer",
           "minimum": 1
+        },
+        "hidden_until_complete": {
+          "description": "Left off the site while the notebook is in progress.",
+          "type": "boolean"
+        },
+        "rescan": {
+          "description": "Rescanned when the notebook is completed; Complete notebook checks it was.",
+          "type": "boolean"
         }
       }
     },
@@ -76,7 +92,7 @@
       "required": ["kind"],
       "properties": {
         "kind": {
-          "enum": ["cover", "title", "index", "reference", "session", "unused", "blank", "contents", "info"]
+          "enum": ["cover", "title", "contents", "reference", "session", "unused", "blank", "index", "info"]
         },
         "number": {
           "description": "Page number: printed on odd pages, inferred for even ones. Front matter has none.",
