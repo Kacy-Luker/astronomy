@@ -44,6 +44,42 @@ rotation and fold position come from the notebook file's `scan` setting.
 Use `redact` on a page to blur personal details such as a phone number.
 Keep unredacted scans out of the repo, since it's public.
 
+## Importing a notebook
+
+When a notebook is full (or whenever you want to catch up):
+
+1. Scan every spread, cover to last page, into one PDF.
+2. Upload it to the private **astronomy-scans** repo as `<notebook id>.pdf`,
+   for example `astronomy-002.pdf`.
+3. Here, open **Actions → Import notebook → Run workflow** and enter the
+   notebook id.
+4. Review the pull request it opens: compare each session with its pages
+   in the notebook view, fix anything misread in the JSON, then merge.
+
+The import splits the pages and asks Claude (Opus 5.5) to read each one.
+It numbers the pages, groups entries into sessions, and blurs phone
+numbers, emails and addresses. After blurring it checks each page again
+and blurs the whole page if anything is still readable. Pages the notebook
+file already lists are left alone, so re-importing a notebook you've added
+to only reads the new pages and keeps your corrections. Expect roughly
+5–10 cents per new page.
+
+Locally, the same thing runs as:
+
+```sh
+ANTHROPIC_API_KEY=... node scripts/import-notebook.mjs astronomy-002 path/to/scan.pdf
+```
+
+One-time setup:
+
+1. Create a **private** repo named `astronomy-scans`.
+2. Create a fine-grained token with read-only **Contents** access to
+   `astronomy-scans` only.
+3. In this repo, under **Settings → Secrets and variables → Actions**, add
+   `SCANS_TOKEN` (that token) and `ANTHROPIC_API_KEY`.
+4. Under **Settings → Actions → General**, tick **Allow GitHub Actions to
+   create and approve pull requests**.
+
 ## Session files
 
 Name each file `<date>-<site>.json` and set its `id` to the same slug,
