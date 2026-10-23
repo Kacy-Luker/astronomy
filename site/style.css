@@ -179,3 +179,13 @@ a { color: var(--accent); }
 /* Make the whole card clickable via the date link. */
 .session { position: relative; }
 .session-link::after { content: ""; position: absolute; inset: 0; }
+
+/* Shown only on PR preview builds. */
+.preview-banner {
+  padding: .5rem 16px;
+  text-align: center;
+  font-size: .9rem;
+  background: var(--tag-bg);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}

@@ -49,4 +49,15 @@ await mkdir(join(OUT, "data"), { recursive: true });
 await writeFile(join(OUT, "data", "sessions.json"), JSON.stringify(sessions));
 await writeFile(join(OUT, "data", "notebooks.json"), JSON.stringify(notebooks));
 
+// A PR preview build gets a banner on every page so it isn't mistaken for the live site.
+if (process.env.PREVIEW_OF) {
+  const escape = (text) => text.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+  const link = process.env.PREVIEW_LINK ? ` <a href="${escape(process.env.PREVIEW_LINK)}">View the pull request</a>` : "";
+  const banner = `<div class="preview-banner">Preview of ${escape(process.env.PREVIEW_OF)}.${link}</div>`;
+  for (const file of (await readdir(OUT)).filter((f) => f.endsWith(".html"))) {
+    const html = await readFile(join(OUT, file), "utf8");
+    await writeFile(join(OUT, file), html.replace("<body>", `<body>\n  ${banner}`).replace(/<body class="([^"]*)">/, `<body class="$1">\n  ${banner}`));
+  }
+}
+
 console.log(`Built ${notebooks.length} notebooks and ${sessions.length} sessions into ${OUT}/`);
