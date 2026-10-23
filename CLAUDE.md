@@ -108,7 +108,9 @@ updated.
    grammar is too large").
 3. **Place**: Claude's category (or one named at the end of the file
    name) decides where a page goes; session pages go by printed odd page
-   numbers, even ones inferred. An unnumbered blank goes beside the page it
+   numbers, even ones inferred; with `--start N` (the form's start page)
+   session pages are numbered from N in scan order instead, for printed
+   numbers missed by the scanner. An unnumbered blank goes beside the page it
    faces. A page replaces what's there when re-reading (replace, complete)
    or when that page is open; otherwise it's skipped, so only-one pages
    aren't duplicated. Add mode first matches the upload against published

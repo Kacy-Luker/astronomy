@@ -101,6 +101,13 @@ dropdown is generated from `data/notebooks/` by
 `scripts/sync-workflow.mjs`; a new notebook appears in it once its import
 is merged.
 
+**Start page.** Session pages are placed by the page numbers printed on
+odd pages. If those didn't come out in the scan, type the number of the
+scan's first session page in **start page**: session pages are then
+numbered from it in scan order (a blank page just before them counts too),
+and any printed number that disagrees is listed in the pull request. A
+start page makes **Add session** read every page in the scan.
+
 **Open pages.** Pages that will still change are marked `"open": true`:
 the table of contents, a volume label with no finish date, blank pages
 after the last one written on, and session pages with room for another
