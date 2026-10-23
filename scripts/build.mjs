@@ -3,7 +3,7 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import sharp from "sharp";
-import { assignSections } from "./lib/sections.mjs";
+import { category, isBack, ranks } from "./lib/categories.mjs";
 
 const OUT = "dist";
 
@@ -21,32 +21,34 @@ if (existsSync("scans")) await cp("scans", join(OUT, "scans"), { recursive: true
 const sessions = await readAll("data/sessions");
 sessions.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
 
-// Give each notebook page its section, its image, and the sessions written
-// on it. Image sizes let pages reserve their space before the images load.
+// Give each notebook page its name, its image, and the sessions written on
+// it. Image sizes let pages reserve their space before the images load.
 const notebooks = await Promise.all((await readAll("data/notebooks")).map(async ({ scan, ...nb }) => {
-  const { owner } = assignSections(nb.sections, nb.pages);
+  const rank = ranks(nb.pages);
+  // The outside front cover, scanned on its own.
   const cover = `scans/${nb.id}/cover-front.jpg`;
+  const front = nb.front_cover && existsSync(cover) ? await sharp(cover).metadata() : null;
   return {
     ...nb,
-    // The outside front cover, scanned on its own.
-    front_cover: nb.front_cover && existsSync(cover)
-      ? { label: "Front cover", slot: 0, sessions: [], image: cover, ...await sharp(cover).metadata().then(({ width, height }) => ({ width, height })) }
-      : null,
+    front_cover: front && { label: "Front cover", slot: 0, sessions: [], image: cover, width: front.width, height: front.height },
     pages: await Promise.all(nb.pages.map(async ({ redact, ...page }, i) => {
       const image = `scans/${nb.id}/${String(i + 1).padStart(2, "0")}.jpg`;
       const { width, height } = await sharp(image).metadata();
       // Pages that will still change aren't published until they're final. An
-      // unfinished notebook also leaves out its blank pages and the sections
-      // marked hidden_until_complete.
+      // unfinished notebook also leaves out its blank pages and the categories
+      // not shown in progress.
+      const kind = page.kind === "unused" ? "session" : page.kind;
       const hidden = Boolean(page.open && page.kind !== "session") || (nb.status !== "completed" &&
-        (page.kind === "blank" || Boolean(nb.sections[owner[i]]?.hidden_until_complete)));
+        (page.kind === "blank" || !category(kind)?.in_progress));
       // The show-through-cleaned copy, when scripts/showthrough.py made one.
       const clean = image.replace(/\.jpg$/, ".clean.jpg");
       if (hidden) await rm(join(OUT, image));
       if (hidden) await rm(join(OUT, clean), { force: true });
       return {
         ...page,
-        section: owner[i],
+        label: page.label ?? category(page.kind)?.label ?? null,
+        // Back matter (index, info page, ...) is paired from the end of the book.
+        back: isBack(rank[i]),
         slot: i + 1,
         image: hidden ? null : image,
         clean: !hidden && existsSync(clean) ? clean : null,

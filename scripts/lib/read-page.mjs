@@ -1,6 +1,7 @@
 // Ask Claude to read one notebook page into structured data.
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
+import { CATEGORIES, PAGE_KINDS } from "./categories.mjs";
 
 const MODEL = "claude-opus-5-5";
 
@@ -22,11 +23,11 @@ const Scope = z.object({
 const Scale = z.number().int().nullable().describe("Circled roman numeral as 1-5; null if none circled");
 
 export const PageReading = z.object({
-  kind: z.enum(["cover", "title", "index", "reference", "session", "unused", "blank", "contents", "info"]),
+  kind: z.enum(PAGE_KINDS).describe("The page's category"),
   printed_number: z.number().int().nullable()
     .describe("Page number printed in the top outer corner, if one is visible"),
   label: z.string().nullable()
-    .describe("Short name for a page that isn't a session page, e.g. 'Volume label'"),
+    .describe("Short name for a page that isn't a session page, e.g. 'Seeing and transparency key'"),
   will_change: z.boolean()
     .describe("True if more will be written on this page as the notebook fills"),
   notebook_label: z.object({
@@ -72,12 +73,10 @@ CAT #, AKA, LT (local time), UT, SEE I-V and TR I-V (the observer circles one
 numeral each), EP/MAG (eyepiece and magnification), FILTER, a sketch circle, and
 DESCRIPTION lines that often run past the printed lines.
 
-Front matter can include covers, a volume label (title, start and finish dates),
-a title page with the owner's contact details, a table of contents (kind
-"contents": a table of PROGRAM, DATE/EVENT, OBJ COUNT/HRS, PG #), and a
-reference key. Back matter can include an index (kind "index": every object
-observed, by catalog, with its page number), the notebook maker's info page
-(kind "info": paper brand, page count, copyright), and the inside back cover.
+Each page is in one category ("kind"), in the order they come in the notebook:
+${CATEGORIES.filter((c) => c.kind !== "front_cover").map((c) => `- ${c.kind}: ${c.describe}`).join("\n")}
+- unused: a session page whose only entries are crossed out or never filled in.
+- blank: nothing written or printed on it.
 Odd pages carry a small printed page number in the top outer corner.
 
 Rules:
@@ -90,7 +89,6 @@ Rules:
   type "Dobsonian", aperture 203, focal length 1200, f-ratio 5.9.
 - SQM like "~21.99 mag/arcsec^2" is 21.99.
 - Eyepiece like "13mm Ethos;" with nothing after the ";" means no magnification.
-- kind "unused" is a page whose only entries are crossed out or never filled in.
 - will_change is true for a table of contents or index with empty rows left,
   a volume label whose finish date is blank, and a session page with unused
   space below its last entry where another entry could still go. Otherwise

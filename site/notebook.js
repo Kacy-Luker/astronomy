@@ -70,15 +70,14 @@ function caption(page, sessionsById) {
 // Pages that aren't shown leave their side of the spread empty, so facing
 // pages stay facing.
 function spreadsOf(nb) {
-  const back = nb.sections.findIndex((s) => s.kind === "session") + 1 || nb.sections.length;
-  let split = nb.pages.findIndex((p) => p.section >= back);
+  let split = nb.pages.findIndex((p) => p.back);
   if (split < 0) split = nb.pages.length;
   const spreads = nb.front_cover ? [[null, nb.front_cover]] : [];
-  for (let i = 0; i < split; i += 2) spreads.push([nb.pages[i], nb.pages[i + 1]]);
+  for (let i = 0; i < split; i += 2) spreads.push([nb.pages[i], i + 1 < split ? nb.pages[i + 1] : null]);
   const tail = [];
   let end = nb.pages.length;
   // The inside back cover, if scanned, faces the info page.
-  if (end > split && nb.pages[end - 1].kind !== "cover") tail.unshift([nb.pages[--end], null]);
+  if (end > split && nb.pages[end - 1].kind !== "inside_back_cover") tail.unshift([nb.pages[--end], null]);
   for (; end > split; end -= 2) tail.unshift([end - 2 >= split ? nb.pages[end - 2] : null, nb.pages[end - 1]]);
   return [...spreads, ...tail];
 }

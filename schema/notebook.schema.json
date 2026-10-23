@@ -5,7 +5,7 @@
   "description": "One paper notebook, page by page, in scan order.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "title", "sections", "pages"],
+  "required": ["id", "title", "pages"],
   "properties": {
     "id": {
       "description": "Unique slug; matches the file name without .json and the scans/<id>/ folder.",
@@ -42,67 +42,40 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "open": { "description": "Waiting to be rescanned now that the notebook is complete.", "type": "boolean" }
+        "open": {
+          "description": "Waiting to be rescanned now that the notebook is complete.",
+          "type": "boolean"
+        }
       }
     },
-    "sections": {
-      "description": "The parts this notebook is expected to have, in order (front cover, title page, table of contents, scales, session pages, index, notebook info, ...). Scanned pages are matched to them in order; a section with nothing scanned yet isn't shown.",
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/section" }
-    },
     "pages": {
-      "description": "Every scanned page in order; the nth entry is scans/<id>/<nn>.jpg.",
+      "description": "Every scanned page in order (categories in the order of data/categories.json, session pages by number); the nth entry is scans/<id>/<nn>.jpg.",
       "type": "array",
       "items": { "$ref": "#/$defs/page" }
     }
   },
   "$defs": {
-    "section": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind"],
-      "properties": {
-        "kind": {
-          "description": "What its pages are. A session section also holds unused and blank pages. front_cover is the outside front cover, scanned on its own (see front_cover).",
-          "enum": ["front_cover", "cover", "title", "contents", "reference", "session", "index", "info", "blank"]
-        },
-        "label": {
-          "description": "Its name, e.g. 'Front cover'. Pages with a label must carry the same one.",
-          "type": "string"
-        },
-        "pages": {
-          "description": "How many pages it has. Defaults to 1, or to as many as it needs for session pages and the index.",
-          "type": "integer",
-          "minimum": 1
-        },
-        "hidden_until_complete": {
-          "description": "Left off the site while the notebook is in progress.",
-          "type": "boolean"
-        },
-        "rescan": {
-          "description": "Rescanned when the notebook is completed; Complete notebook checks it was.",
-          "type": "boolean"
-        }
-      }
-    },
     "page": {
       "type": "object",
       "additionalProperties": false,
       "required": ["kind"],
       "properties": {
         "kind": {
-          "enum": ["cover", "title", "contents", "reference", "session", "unused", "blank", "index", "info"]
+          "description": "The page's category from data/categories.json (any but front_cover), or unused (a session page with only crossed-out entries) or blank.",
+          "type": "string"
         },
         "number": {
           "description": "Page number: printed on odd pages, inferred for even ones. Front matter has none.",
           "type": ["integer", "null"],
           "minimum": 1
         },
-        "label": { "type": ["string", "null"] },
+        "label": {
+          "description": "A name for the page; defaults to its category's label.",
+          "type": ["string", "null"]
+        },
         "note": { "type": ["string", "null"] },
         "open": {
-          "description": "Still being written in. Re-read on the next import; hidden on the site (except session pages) until the notebook is completed.",
+          "description": "Still being written in, or waiting to be rescanned once the notebook is completed. Re-read on the next import; hidden on the site (except session pages).",
           "type": "boolean"
         },
         "redact": {
