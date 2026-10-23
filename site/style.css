@@ -67,3 +67,38 @@ a { color: var(--accent); }
 }
 
 .objects { margin: 0; padding-left: 1.25rem; }
+
+/* Session page */
+.muted { color: var(--muted); }
+.session-header, .scans, .observation { margin-bottom: 1.5rem; }
+.session-title { margin: 0; font-size: 1.4rem; }
+.section-title { margin: 0 0 .75rem; }
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: .25rem 1rem;
+  margin: .75rem 0 0;
+}
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+
+.scans h3 { margin: 0 0 .75rem; }
+.scan { display: block; margin-bottom: 1rem; }
+.scan img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.observation {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.object-id { margin: 0; font-size: 1.2rem; }
+.ids { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0 0; padding: 0; }
+.description { margin: .75rem 0 0; }
