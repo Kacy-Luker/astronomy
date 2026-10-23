@@ -24,6 +24,7 @@ import { parseArgs } from "node:util";
 import { formatJSON } from "./lib/format-json.mjs";
 import { matchPosition } from "./lib/match.mjs";
 import { cleanShowThrough, listSpreads, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
+import { assignSections, defaultSections } from "./lib/sections.mjs";
 
 const MODES = ["add", "new", "replace", "complete"];
 const { positionals: [id, source], values: opts } = parseArgs({
@@ -360,6 +361,9 @@ const notebook = {
   // The finish date written on the volume label wins once it's been rescanned.
   finished: label.finished ?? existing?.finished ?? (status === "completed" ? dates.at(-1) ?? null : null),
   scan,
+  // A new notebook's sections follow its front matter as read; edit them by
+  // hand if the notebook is laid out differently.
+  sections: existing?.sections ?? defaultSections(pages),
   pages,
 };
 await mkdir(join("data", "notebooks"), { recursive: true });
@@ -408,6 +412,20 @@ if (rescan.length) {
     ? "### Rescan these spreads\n\nScan them in this order into one file, upload it, and run **Complete notebook** again with that file:\n"
     : "### When the notebook is complete\n\nThese spreads are hidden until then, and will need rescanning:\n");
   rescan.forEach((s, k) => lines.push(`${k + 1}. ${describeSpread(pages, s)}`));
+}
+if (status === "completed") {
+  // Blank pages are confirmed by hand, and sections still to scan are listed.
+  const blanks = pages.flatMap((p, i) => (p.kind === "blank" ? [p.number != null ? `page ${p.number}` : `scan position ${nn(i)}`] : []));
+  if (blanks.length) {
+    lines.push("", "### Blank pages", "", "These pages were read as blank. Check each is meant to be blank before merging:", "",
+      ...blanks.map((b) => `- ${b}`));
+  }
+  const { owner } = assignSections(notebook.sections, pages);
+  const missing = notebook.sections.filter((_, s) => !owner.includes(s));
+  if (missing.length) {
+    lines.push("", "### Not scanned yet", "", "Sections the notebook expects that have no pages yet:", "",
+      ...missing.map((s) => `- ${s.label ?? s.kind}`));
+  }
 }
 if (notes.length) lines.push("", "### Check these", "", ...notes);
 const summary = lines.join("\n") + "\n";

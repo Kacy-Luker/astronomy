@@ -22,7 +22,7 @@ const Scope = z.object({
 const Scale = z.number().int().nullable().describe("Circled roman numeral as 1-5; null if none circled");
 
 export const PageReading = z.object({
-  kind: z.enum(["cover", "title", "index", "reference", "session", "unused", "blank"]),
+  kind: z.enum(["cover", "title", "index", "reference", "session", "unused", "blank", "contents", "info"]),
   printed_number: z.number().int().nullable()
     .describe("Page number printed in the top outer corner, if one is visible"),
   label: z.string().nullable()
@@ -74,7 +74,10 @@ DESCRIPTION lines that often run past the printed lines.
 
 Front matter can include covers, a volume label (title, start and finish dates),
 a title page with the owner's contact details, an index table, and a reference
-key. Odd pages carry a small printed page number in the top outer corner.
+key. Back matter can include a handwritten table of contents (kind "contents":
+objects by catalog with their page numbers) and the notebook maker's info page
+(kind "info": paper brand, page count, copyright). Odd pages carry a small
+printed page number in the top outer corner.
 
 Rules:
 - Transcribe what is written. Do not add facts, cross-catalog IDs, or names that
