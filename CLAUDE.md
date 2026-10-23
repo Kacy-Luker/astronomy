@@ -22,6 +22,10 @@ needs to change things safely.
   `/astronomy/` to match production paths.
 - `npm run validate` and `npm run build` must pass. Every PR runs them and
   gets a preview at `kacyluker.com/astronomy/pr-preview/pr-<n>/`.
+- Keep README.md and CLAUDE.md in step with the code in the same PR. The
+  **Docs** workflow also checks code PRs, commits fixes ("Update docs for
+  this change") to the branch and comments what changed; pull before
+  pushing again.
 
 ## Privacy
 
@@ -45,7 +49,7 @@ needs to change things safely.
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
 | `site/` | Static pages: home, `notebook.html?id=`, `session.html?id=` |
 | `scripts/` | Build, validation, import, splitting, cleaning |
-| `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `import-notebook.yml` (the Import form) |
+| `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml` (the Import form) |
 
 JSON files are hand-edited by Kacy; write them with
 `scripts/lib/format-json.mjs` so diffs stay small. Seeing and transparency
