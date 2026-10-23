@@ -56,10 +56,10 @@ left off while a notebook is in progress. Once a notebook has a page from
 an only-one category, later uploads skip it unless it's being re-read. The
 info page can be scanned early: later session pages go in before it.
 
-If Claude puts pages in the wrong category, name the upload after the
-right one, e.g. `astronomy-001/2026-10-23-index.pdf` or
-`…-table-of-contents.pdf` (the kind or the label, at the end of the name),
-and every non-blank page in it goes in that category.
+If Claude puts pages in the wrong category, pick the right one in the
+Import form's **category** dropdown, and every non-blank page in the scan
+goes in that category. The dropdown is generated from
+`data/categories.json` by `scripts/sync-workflow.mjs`.
 
 To turn a notebook scan (a PDF of two-page spreads, or a folder of
 images) into page images:
@@ -102,11 +102,13 @@ dropdown is generated from `data/notebooks/` by
 is merged.
 
 **Start page.** Session pages are placed by the page numbers printed on
-odd pages. If those didn't come out in the scan, type the number of the
-scan's first session page in **start page**: session pages are then
-numbered from it in scan order (a blank page just before them counts too),
-and any printed number that disagrees is listed in the pull request. A
-start page makes **Add session** read every page in the scan.
+odd pages, and a printed number always wins: if any page in the scan shows
+one, the others are counted from it. If none came out in the scan, the
+number in **start page** is used instead: the scan's first session page
+gets it and the rest are numbered in scan order (a blank page just before
+them counts too). A start page that disagrees with printed numbers is
+noted in the pull request. A start page makes **Add session** read every
+page in the scan.
 
 **Open pages.** Pages that will still change are marked `"open": true`:
 the table of contents, a volume label with no finish date, blank pages
@@ -123,8 +125,8 @@ nothing scanned.
 **How it reads.** The import splits each spread into pages and asks
 Claude (Opus 5.5) to read them. Pages are placed by category and printed
 odd page numbers; **Add session** first matches the upload against the
-published pages so pages already recorded aren't read again (a file named
-for a category is always read in full). Entries are grouped into sessions (a
+published pages so pages already recorded aren't read again (a scan with
+a chosen category is always read in full). Entries are grouped into sessions (a
 page without a NEW SESSION header continues the last one); on a page that
 already has entries, only entries beyond those are added, so nothing is
 duplicated and hand corrections survive. Phone numbers, emails and
