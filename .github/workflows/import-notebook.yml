@@ -33,6 +33,9 @@ on:
       scan:
         description: "File in astronomy-scans. Empty = the newest in the notebook's folder; for Complete notebook, empty = just mark it completed"
         required: false
+      start_page:
+        description: "Optional: the page number of the first session page in the scan, when page numbers didn't scan. Session pages are numbered from it in order"
+        required: false
       confirm:
         description: "Remove notebook only: type the selected notebook's id to confirm"
         required: false
@@ -50,6 +53,7 @@ jobs:
     env:
       ACTION: ${{ inputs.action }}
       SCAN: ${{ inputs.scan }}
+      START_PAGE: ${{ inputs.start_page }}
     steps:
       - name: Check inputs
         env:
@@ -74,6 +78,7 @@ jobs:
           fi
           [[ "$NOTEBOOK" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "::error::Notebook id must be lowercase letters, digits and dashes (got '$NOTEBOOK')"; exit 1; }
           [[ "$SCAN" != *..* ]] || { echo "::error::Scan path can't contain '..'"; exit 1; }
+          [[ -z "$START_PAGE" || "$START_PAGE" =~ ^[1-9][0-9]*$ ]] || { echo "::error::Start page must be a page number, like 12 (got '$START_PAGE')"; exit 1; }
           if [ "$MODE" = remove ]; then
             [ "$CONFIRM" = "$NOTEBOOK" ] || { echo "::error::To remove $NOTEBOOK, type $NOTEBOOK in the confirm field (got '$CONFIRM')"; exit 1; }
             echo "BRANCH=remove/$NOTEBOOK" >> "$GITHUB_ENV"
@@ -128,7 +133,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           node scripts/import-notebook.mjs "$NOTEBOOK" ${SCAN:+".scans/$SCAN"} --mode "$MODE" \
-            --summary "$RUNNER_TEMP/summary.md"
+            ${START_PAGE:+--start "$START_PAGE"} --summary "$RUNNER_TEMP/summary.md"
           cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Import the front cover
         if: env.MODE == 'cover'

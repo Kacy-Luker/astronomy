@@ -1,7 +1,7 @@
 // Import a scan into a notebook: split pages, read them with Claude, write JSON.
 //
 //   node scripts/import-notebook.mjs <notebook-id> [scan] --mode add|new|replace|complete
-//                                    [--title T] [--summary out.md]
+//                                    [--start N] [--title T] [--summary out.md]
 //
 // [scan] is a PDF, an image, or a folder of images holding two-page spreads.
 //
@@ -18,6 +18,8 @@
 // info page, ...) is skipped once the notebook has it, unless it's being
 // re-read. A word naming a category at the end of the file name, like
 // 2026-10-23-index.pdf, puts every non-blank page in it in that category.
+// --start N numbers the session pages from N (the first session page in the
+// scan), in scan order, for when printed page numbers don't scan well.
 // The outside front cover is imported by scripts/import-cover.mjs.
 // Readings are cached in .import-cache/ so a rerun doesn't pay for the same
 // page twice.
@@ -36,15 +38,20 @@ const { positionals: [id, source], values: opts } = parseArgs({
   allowPositionals: true,
   options: {
     mode: { type: "string", default: "add" },
+    start: { type: "string" },
     title: { type: "string" },
     summary: { type: "string" },
   },
 });
 if (!id || !MODES.includes(opts.mode) || (!source && opts.mode !== "complete")) {
-  console.error("usage: node scripts/import-notebook.mjs <notebook-id> [scan] --mode add|new|replace|complete [--title T] [--summary out.md]");
+  console.error("usage: node scripts/import-notebook.mjs <notebook-id> [scan] --mode add|new|replace|complete [--start N] [--title T] [--summary out.md]");
   process.exit(2);
 }
 const mode = opts.mode;
+const startPage = opts.start ? Number(opts.start) : null;
+if (startPage != null && !(Number.isInteger(startPage) && startPage >= 1)) {
+  throw new Error(`the start page must be a page number, like 12 (got "${opts.start}")`);
+}
 
 const READ_HEIGHT = 2000; // what Claude sees; the site gets PAGE_HEIGHT
 const PARALLEL = 4;
@@ -124,10 +131,11 @@ async function read(us) {
 // upload against the published images finds them, so they aren't paid for
 // again; only pages that are new or still open are read. A file named for a
 // category is read in full: ruled pages like the index and the table of
-// contents can look alike when matched.
+// contents can look alike when matched. So is a scan given a start page,
+// which counts from its first session page.
 const all = uploaded.map((_, u) => u);
 let toRead = all;
-if (mode === "add" && list.length && !named) {
+if (mode === "add" && list.length && !named && startPage == null) {
   const start = await matchPosition(uploaded, list.map((_, i) => pageImage(id, i)));
   if (start != null) toRead = all.filter((u) => !list[start + u] || list[start + u].page.open);
   const skipped = all.length - toRead.length;
@@ -136,26 +144,41 @@ if (mode === "add" && list.length && !named) {
 await read(toRead);
 
 // 3. What each page read is, and its page number. Odd pages carry printed
-// numbers; the others follow from where they are in the upload. A blank page
-// only gets a number when the page facing it is a numbered page too.
+// numbers; the others follow from where they are in the upload. With a start
+// page, session pages are numbered in scan order from it instead, since a
+// printed number can be missed while scanning. A blank page only gets a
+// number when it comes before a session page, or faces one.
 const kindOf = (u) => (named && readings.get(u).kind !== "blank" ? named.kind : readings.get(u).kind);
 const votes = new Map();
 for (const u of toRead) {
   const n = readings.get(u).printed_number;
   if (n % 2 === 1) votes.set(n - u, (votes.get(n - u) ?? 0) + 1);
 }
-const offset = [...votes].sort((a, b) => b[1] - a[1])[0]?.[0];
-const sessionArea = (u) => ["session", "unused"].includes(kindOf(u)) || readings.get(u).printed_number != null;
+const isSession = (u) => readings.has(u) && ["session", "unused"].includes(kindOf(u));
+const firstSession = toRead.find(isSession);
+let offset = [...votes].sort((a, b) => b[1] - a[1])[0]?.[0];
+if (startPage != null) {
+  if (firstSession == null) notes.push(`- A start page (${startPage}) was given, but the scan has no session pages, so it wasn't used.`);
+  else {
+    offset = startPage - firstSession;
+    notes.push(`- Session pages were numbered from ${startPage}, the start page given, in scan order.`);
+  }
+}
+const sessionArea = (u) => isSession(u) || (readings.has(u) && readings.get(u).printed_number != null);
 function numberOf(u) {
   const r = readings.get(u);
-  if (r.printed_number != null) return r.printed_number;
+  if (r.printed_number != null && (startPage == null || firstSession == null)) return r.printed_number;
   if (offset == null || u + offset < 1) return null;
-  if (kindOf(u) === "blank" && !(readings.has(u ^ 1) && sessionArea(u ^ 1))) return null;
+  if (kindOf(u) === "blank" && !isSession(u + 1) && !sessionArea(u ^ 1)) return null;
   return ["session", "unused", "blank"].includes(kindOf(u)) ? u + offset : null;
 }
 for (const u of toRead) {
   const n = readings.get(u).printed_number, want = offset != null ? u + offset : null;
-  if (n != null && want != null && n !== want) notes.push(`- Uploaded page ${nn(u)} shows number ${n}, out of step with the pages around it. Check the page order.`);
+  if (n != null && want != null && n !== want) {
+    notes.push(startPage != null
+      ? `- Uploaded page ${nn(u)} shows number ${n}, but counting from the start page makes it page ${want}. Check the start page.`
+      : `- Uploaded page ${nn(u)} shows number ${n}, out of step with the pages around it. Check the page order.`);
+  }
 }
 
 // 4. Place each page: replace what's there when it may be (re-reading, or a
