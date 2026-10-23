@@ -28,6 +28,8 @@ export const PageReading = z.object({
     .describe("Page number printed in the top outer corner, if one is visible"),
   label: z.string().nullable()
     .describe("Short name for a page that isn't a session page, e.g. 'Volume label'"),
+  will_change: z.boolean()
+    .describe("True if more will be written on this page as the notebook fills"),
   notebook_label: z.object({
     title: z.string().nullable(),
     owner: z.string().nullable(),
@@ -86,6 +88,9 @@ Rules:
 - SQM like "~21.99 mag/arcsec^2" is 21.99.
 - Eyepiece like "13mm Ethos;" with nothing after the ";" means no magnification.
 - kind "unused" is a page whose only entries are crossed out or never filled in.
+- will_change is true for an index with empty rows left, a volume label whose
+  finish date is blank, and a session page with unused space below its last
+  entry where another entry could still go. Otherwise false.
 - personal_info boxes must fully cover each item with a little margin.
 - List anything you had to guess in "uncertain".`;
 
