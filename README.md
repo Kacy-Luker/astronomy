@@ -220,6 +220,6 @@ dependencies, `data/categories.json`) also run **Docs**: Claude reads the
 change and updates this README and `CLAUDE.md` where they no longer match
 it, and commits the fix to the pull request's branch as "Update docs for
 this change". It then comments on the pull request with what changed, a
-link to that commit, and the diff. Review it with the rest. Import pull
-requests are skipped. It uses the `ANTHROPIC_API_KEY` secret, about the
+link to that commit, and the diff. Review it with the rest. Import and
+remove pull requests are skipped. It uses the `ANTHROPIC_API_KEY` secret, about the
 cost of reading a page or two per run.
