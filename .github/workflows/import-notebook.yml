@@ -1,18 +1,23 @@
-name: Import notebook
+name: Import session
 
-# Run from the Actions tab once a notebook's scan is in the private
-# astronomy-scans repo. Opens a pull request with the pages and sessions.
+# Run from the Actions tab after uploading a scan to the private
+# astronomy-scans repo as <notebook id>/<date>.pdf. Opens a pull request
+# with the new pages and sessions.
 on:
   workflow_dispatch:
     inputs:
       notebook:
-        description: "Notebook id, e.g. astronomy-002"
+        description: "Notebook id, e.g. astronomy-001"
         required: true
       scan:
-        description: "PDF in astronomy-scans (default: <notebook id>.pdf)"
+        description: "File in astronomy-scans (default: the newest file in the notebook's folder)"
         required: false
+      completed:
+        description: "This was the last session in the notebook"
+        type: boolean
+        default: false
       title:
-        description: "Title for a new notebook (default: read from its label)"
+        description: "Title, only for a brand new notebook (default: read from its label)"
         required: false
 
 permissions:
@@ -28,20 +33,32 @@ jobs:
     timeout-minutes: 60
     env:
       NOTEBOOK: ${{ inputs.notebook }}
-      SCAN: ${{ inputs.scan || format('{0}.pdf', inputs.notebook) }}
+      SCAN: ${{ inputs.scan }}
       TITLE: ${{ inputs.title }}
+      COMPLETED: ${{ inputs.completed }}
     steps:
       - name: Check inputs
         run: |
           [[ "$NOTEBOOK" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "::error::Notebook id must be lowercase letters, digits and dashes"; exit 1; }
           [[ "$SCAN" != *..* ]] || { echo "::error::Scan path can't contain '..'"; exit 1; }
       - uses: actions/checkout@v4
-      - name: Fetch the private scan
+      - name: Fetch the private scans
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/astronomy-scans
           token: ${{ secrets.SCANS_TOKEN }}
           path: .scans
+      - name: Pick the scan
+        run: |
+          if [ -z "$SCAN" ]; then
+            # Names sort by date, so the newest upload is last.
+            SCAN=$(cd .scans && ls -1 "$NOTEBOOK"/* 2>/dev/null | sort | tail -n 1)
+            [ -n "$SCAN" ] || { echo "::error::No files in astronomy-scans/$NOTEBOOK/"; exit 1; }
+          fi
+          [ -e ".scans/$SCAN" ] || { echo "::error::astronomy-scans has no $SCAN"; exit 1; }
+          echo "Importing $SCAN"
+          echo "SCAN=$SCAN" >> "$GITHUB_ENV"
+          echo "BRANCH=import/$NOTEBOOK-$(basename "${SCAN%.*}" | tr -c 'A-Za-z0-9.\n-' '-')" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -53,16 +70,17 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           args=()
-          [ -n "$TITLE" ] && args=(--title "$TITLE")
+          [ -n "$TITLE" ] && args+=(--title "$TITLE")
+          [ "$COMPLETED" = "true" ] && args+=(--completed)
           node scripts/import-notebook.mjs "$NOTEBOOK" ".scans/$SCAN" "${args[@]}" --summary "$RUNNER_TEMP/summary.md"
       - run: npm run validate
-      - name: Remove the unredacted scan
+      - name: Remove the unredacted scans
         run: rm -rf .scans
       - uses: peter-evans/create-pull-request@v7
         with:
-          branch: import/${{ inputs.notebook }}
-          title: Import ${{ inputs.notebook }}
-          commit-message: Import ${{ inputs.notebook }} from scan
+          branch: ${{ env.BRANCH }}
+          title: Import ${{ env.SCAN }}
+          commit-message: Import ${{ env.SCAN }}
           body-path: ${{ runner.temp }}/summary.md
           add-paths: |
             data
