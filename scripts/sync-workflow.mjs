@@ -2,14 +2,17 @@
 //
 //   node scripts/sync-workflow.mjs          rewrite the list
 //   node scripts/sync-workflow.mjs --check  exit 1 if it's out of date
+import { existsSync } from "node:fs";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 
 const WORKFLOW = ".github/workflows/import-notebook.yml";
 const START = "# notebooks:start";
 const END = "# notebooks:end";
 
-const ids = (await readdir("data/notebooks")).filter((f) => f.endsWith(".json"))
+const files = existsSync("data/notebooks") ? await readdir("data/notebooks") : [];
+const ids = files.filter((f) => f.endsWith(".json"))
   .map((f) => f.replace(/\.json$/, "")).sort().reverse(); // newest notebook first
+if (!ids.length) ids.push("none"); // a dropdown needs at least one choice
 
 const yaml = await readFile(WORKFLOW, "utf8");
 const block = new RegExp(`^( *)${START}\\n[\\s\\S]*?^ *${END}$`, "m");
