@@ -3,6 +3,7 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import sharp from "sharp";
+import { assignSections } from "./lib/sections.mjs";
 
 const OUT = "dist";
 
@@ -20,33 +21,39 @@ if (existsSync("scans")) await cp("scans", join(OUT, "scans"), { recursive: true
 const sessions = await readAll("data/sessions");
 sessions.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
 
-// Give each notebook page its image and the sessions written on it.
-// Image sizes let pages reserve their space before the images load.
-const notebooks = await Promise.all((await readAll("data/notebooks")).map(async ({ scan, ...nb }) => ({
-  ...nb,
-  pages: await Promise.all(nb.pages.map(async ({ redact, ...page }, i) => {
-    const image = `scans/${nb.id}/${String(i + 1).padStart(2, "0")}.jpg`;
-    const { width, height } = await sharp(image).metadata();
-    // Pages that will still change aren't published until they're final.
-    const hidden = Boolean(page.open && page.kind !== "session");
-    // The show-through-cleaned copy, when scripts/showthrough.py made one.
-    const clean = image.replace(/\.jpg$/, ".clean.jpg");
-    if (hidden) await rm(join(OUT, image));
-    if (hidden) await rm(join(OUT, clean), { force: true });
-    return {
-      ...page,
-      slot: i + 1,
-      image: hidden ? null : image,
-      clean: !hidden && existsSync(clean) ? clean : null,
-      hidden,
-      width,
-      height,
-      sessions: sessions
-        .filter((s) => s.notebook === nb.id && page.number != null && s.pages?.includes(page.number))
-        .map((s) => s.id),
-    };
-  })),
-})));
+// Give each notebook page its section, its image, and the sessions written
+// on it. Image sizes let pages reserve their space before the images load.
+const notebooks = await Promise.all((await readAll("data/notebooks")).map(async ({ scan, ...nb }) => {
+  const { owner } = assignSections(nb.sections, nb.pages);
+  return {
+    ...nb,
+    pages: await Promise.all(nb.pages.map(async ({ redact, ...page }, i) => {
+      const image = `scans/${nb.id}/${String(i + 1).padStart(2, "0")}.jpg`;
+      const { width, height } = await sharp(image).metadata();
+      // Pages that will still change aren't published until they're final, and
+      // an unfinished notebook leaves out its blank pages.
+      const hidden = Boolean(page.open && page.kind !== "session") ||
+        (page.kind === "blank" && nb.status !== "completed");
+      // The show-through-cleaned copy, when scripts/showthrough.py made one.
+      const clean = image.replace(/\.jpg$/, ".clean.jpg");
+      if (hidden) await rm(join(OUT, image));
+      if (hidden) await rm(join(OUT, clean), { force: true });
+      return {
+        ...page,
+        section: owner[i],
+        slot: i + 1,
+        image: hidden ? null : image,
+        clean: !hidden && existsSync(clean) ? clean : null,
+        hidden,
+        width,
+        height,
+        sessions: sessions
+          .filter((s) => s.notebook === nb.id && page.number != null && s.pages?.includes(page.number))
+          .map((s) => s.id),
+      };
+    })),
+  };
+}));
 notebooks.sort((a, b) => (b.started ?? "").localeCompare(a.started ?? ""));
 
 await mkdir(join(OUT, "data"), { recursive: true });

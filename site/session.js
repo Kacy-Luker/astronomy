@@ -56,7 +56,7 @@ const pageOf = (notebook, number) => notebook?.pages.find((p) => p.number === nu
 function renderPages(s, notebook) {
   const section = el("section", "scans");
   section.append(el("h3", null, "Original notes"));
-  const pages = (s.pages ?? []).map((n) => pageOf(notebook, n)).filter(Boolean);
+  const pages = (s.pages ?? []).map((n) => pageOf(notebook, n)).filter((p) => p && !p.hidden);
   if (!pages.length) {
     section.append(el("p", "muted", "No scans for this session yet."));
     return section;
