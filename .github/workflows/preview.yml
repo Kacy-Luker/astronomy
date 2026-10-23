@@ -1,0 +1,42 @@
+name: Preview
+
+# Builds each pull request into kacyluker.com/astronomy/pr-preview/pr-<n>/,
+# comments the link on the PR, and removes the preview when the PR closes.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: preview-${{ github.event.number }}
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        if: github.event.action != 'closed'
+        with:
+          node-version: 22
+          cache: npm
+      - if: github.event.action != 'closed'
+        run: npm ci
+      - if: github.event.action != 'closed'
+        run: npm run validate
+      - if: github.event.action != 'closed'
+        run: npm run build
+        env:
+          PREVIEW_OF: "PR #${{ github.event.number }}: ${{ github.event.pull_request.title }}"
+          PREVIEW_LINK: ${{ github.event.pull_request.html_url }}
+      - uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: dist
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          pages-base-url: kacyluker.com/astronomy
+          qr-code: false
