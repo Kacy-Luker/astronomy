@@ -10,7 +10,7 @@ import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { listSpreads, pageImage, redact, splitSpread, webImage } from "./lib/pages.mjs";
+import { cleanShowThrough, listSpreads, pageImage, redact, splitSpread, webImage } from "./lib/pages.mjs";
 
 const [id, source] = process.argv.slice(2);
 if (!id || !source) {
@@ -38,6 +38,7 @@ for (const file of spreads) {
 await rm(work, { recursive: true, force: true });
 
 console.log(`Wrote ${n} pages from ${spreads.length} spreads to scans/${id}/`);
+cleanShowThrough(id);
 if (notebook.pages && notebook.pages.length !== n) {
   console.warn(`Warning: ${notebookPath} lists ${notebook.pages.length} pages, the scan has ${n}.`);
 }

@@ -23,7 +23,7 @@ import { basename, join } from "node:path";
 import { parseArgs } from "node:util";
 import { formatJSON } from "./lib/format-json.mjs";
 import { matchPosition } from "./lib/match.mjs";
-import { listSpreads, pageImage, redact, splitSpread, webImage } from "./lib/pages.mjs";
+import { cleanShowThrough, listSpreads, pageImage, redact, splitSpread, webImage } from "./lib/pages.mjs";
 
 const MODES = ["add", "new", "replace", "complete"];
 const { positionals: [id, source], values: opts } = parseArgs({
@@ -369,6 +369,8 @@ await mkdir(join("scans", id), { recursive: true });
 for (const u of toRecord) {
   await writeFile(pageImage(id, positions[u]), await webImage(await redact(uploaded[u], pages[positions[u]].redact)));
 }
+// New pages may complete a sheet whose other side came in an earlier upload.
+if (toRecord.length) cleanShowThrough(id, toRecord.map((u) => positions[u]));
 
 // 8. Summarize for the pull request.
 const what = {

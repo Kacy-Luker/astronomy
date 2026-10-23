@@ -1,5 +1,6 @@
 // Image steps shared by the notebook scripts: spreads in, pages out.
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { open, readdir, stat } from "node:fs/promises";
 import { extname, join } from "node:path";
 import sharp from "sharp";
@@ -92,4 +93,12 @@ export function webImage(page, height = PAGE_HEIGHT) {
     .resize({ height, withoutEnlargement: true })
     .jpeg({ quality: 80, mozjpeg: true })
     .toBuffer();
+}
+
+// Remove stamp show-through from the sheets touching these page positions
+// (all pages when none are given), writing scans/<id>/NN.clean.jpg. The work
+// is done by scripts/showthrough.py; see requirements.txt.
+export function cleanShowThrough(notebookId, positions = []) {
+  const python = process.env.PYTHON ?? (existsSync(".venv/bin/python") ? ".venv/bin/python" : "python3");
+  execFileSync(python, ["scripts/showthrough.py", notebookId, ...positions.map(String)], { stdio: "inherit" });
 }

@@ -99,6 +99,35 @@ One-time setup:
 3. In this repo, under **Settings → Secrets and variables → Actions**, add
    the repository secrets `SCANS_TOKEN` (that token) and `ANTHROPIC_API_KEY`.
 
+## Show-through
+
+Rubber-stamp ink soaks through the paper and shows as a faint mirrored
+ghost on the other side of the sheet; pencil doesn't.
+`scripts/showthrough.py` removes those ghosts and writes a cleaned copy,
+`scans/<id>/NN.clean.jpg`, beside each page it can clean:
+
+1. Pages pair by printed number (odd page N is backed by page N + 1;
+   unnumbered front matter pairs by position).
+2. The back is mirrored and best-fit onto the front using its stamp ink
+   only, scoring both sides of the sheet together. Scanner placement varies
+   between spreads, so the search is wide and allows a slight rotation; the
+   sheet is left alone unless one fit clearly wins.
+3. Inside the ghost's footprint, faint pixels are rebuilt from the pixels
+   around them and can only get lighter, so a ghost on blank paper becomes
+   paper and a sketch under a ghost keeps its shading. Dark pencil and
+   print are never changed.
+
+Imports run it for the pages they touch; a page is cleaned once both sides
+of its sheet are scanned. To (re)clean a whole notebook:
+
+```sh
+python -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python scripts/showthrough.py astronomy-001
+```
+
+On the site, scans have an **Inverted / Cleaned / Original** toggle.
+Inverted (the default) shows the cleaned page with light and dark swapped.
+
 ## Session files
 
 Name each file `<date>-<site>.json` and set its `id` to the same slug,
