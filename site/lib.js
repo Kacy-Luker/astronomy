@@ -45,7 +45,8 @@ export function pageAnchor(page) {
 
 export const KIND_NAMES = {
   cover: "Cover", title: "Title page", index: "Index", reference: "Reference",
-  session: "Session", unused: "Unused", blank: "Blank",
+  session: "Session", unused: "Unused", blank: "Blank", contents: "Table of contents",
+  info: "Notebook info",
 };
 
 export function pageName(page) {
@@ -101,28 +102,20 @@ export function scanToggle(target) {
   return group;
 }
 
-// One scanned page, linking to the full image, with a caption. A page that
-// will still change shows a same-sized placeholder instead.
+// One scanned page, linking to the full image, with a caption.
 export function pageFigure(page, alt, caption) {
   const figure = el("figure", "page");
   figure.id = pageAnchor(page);
-  if (page.hidden) {
-    const box = el("div", "page-hidden",
-      page.kind === "blank" ? "Not written on yet" : "Shown when the notebook is complete");
-    if (page.width) box.style.aspectRatio = `${page.width} / ${page.height}`;
-    figure.append(box);
-  } else {
-    const img = el("img");
-    img.dataset.original = page.image;
-    if (page.clean) img.dataset.clean = page.clean;
-    img.src = imageFor(img, currentView);
-    const a = link(img.src);
-    if (page.width) [img.width, img.height] = [page.width, page.height];
-    img.alt = alt;
-    img.loading = "lazy";
-    a.append(img);
-    figure.append(a);
-  }
+  const img = el("img");
+  img.dataset.original = page.image;
+  if (page.clean) img.dataset.clean = page.clean;
+  img.src = imageFor(img, currentView);
+  const a = link(img.src);
+  if (page.width) [img.width, img.height] = [page.width, page.height];
+  img.alt = alt;
+  img.loading = "lazy";
+  a.append(img);
+  figure.append(a);
   if (caption) {
     const fc = el("figcaption");
     fc.append(...[caption].flat());

@@ -66,6 +66,10 @@ a { color: var(--accent); }
   font-size: .8rem;
 }
 
+/* A notebook's status, next to its title. */
+.tag.status { font-size: .95rem; font-weight: 600; padding: .1rem .75rem; }
+.tag.status.completed { background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+
 .objects { margin: 0; padding-left: 1.25rem; }
 
 /* Session page */
@@ -104,23 +108,11 @@ a { color: var(--accent); }
   border-radius: 8px;
 }
 @media (min-width: 40rem) {
-  .spread .page:first-child img { border-radius: 8px 0 0 8px; }
-  .spread .page:last-child img { border-radius: 0 8px 8px 0; border-left: 0; }
-}
-.page-hidden {
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  text-align: center;
-  color: var(--muted);
-  font-size: .9rem;
-  background: var(--surface);
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-}
-@media (min-width: 40rem) {
-  .spread .page:first-child .page-hidden { border-radius: 8px 0 0 8px; }
-  .spread .page:last-child .page-hidden { border-radius: 0 8px 8px 0; border-left: 0; }
+  .spread .left img { border-radius: 8px 0 0 8px; }
+  .spread .right { grid-column: 2; }
+  .spread .right img { border-radius: 0 8px 8px 0; border-left: 0; }
+  .spread .right:only-child img { border-radius: 8px; border-left: 1px solid var(--border); }
+  .spread .left:only-child img { border-radius: 8px; }
 }
 .page figcaption { margin-top: .35rem; font-size: .9rem; }
 .page-name { font-weight: 600; }

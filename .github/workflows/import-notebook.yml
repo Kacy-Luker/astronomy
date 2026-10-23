@@ -15,6 +15,7 @@ on:
           - Add session
           - Create new notebook
           - Replace pages
+          - Add front cover
           - Complete notebook
           - Remove notebook
       notebook:
@@ -60,6 +61,7 @@ jobs:
             "Add session") MODE=add; NOTEBOOK=$PICKED ;;
             "Create new notebook") MODE=new; NOTEBOOK=$NEW ;;
             "Replace pages") MODE=replace; NOTEBOOK=$PICKED ;;
+            "Add front cover") MODE=cover; NOTEBOOK=$PICKED ;;
             "Complete notebook") MODE=complete; NOTEBOOK=$PICKED ;;
             "Remove notebook") MODE=remove; NOTEBOOK=$PICKED ;;
           esac
@@ -121,12 +123,17 @@ jobs:
       - if: env.MODE != 'remove'
         run: pip install -r requirements.txt
       - name: Import
-        if: env.MODE != 'remove'
+        if: env.MODE != 'remove' && env.MODE != 'cover'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           node scripts/import-notebook.mjs "$NOTEBOOK" ${SCAN:+".scans/$SCAN"} --mode "$MODE" \
             --summary "$RUNNER_TEMP/summary.md"
+          cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Import the front cover
+        if: env.MODE == 'cover'
+        run: |
+          node scripts/import-cover.mjs "$NOTEBOOK" ".scans/$SCAN" --summary "$RUNNER_TEMP/summary.md"
           cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Remove the notebook
         if: env.MODE == 'remove'

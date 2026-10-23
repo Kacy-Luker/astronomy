@@ -10,7 +10,7 @@ function renderHeader(nb, sessions) {
   const header = el("section", "session-header");
   const head = el("div", "session-head");
   head.append(el("h2", "session-title", nb.title),
-    el("span", "tag", nb.status === "completed" ? "Completed" : "In progress"));
+    el("span", `tag status ${nb.status ?? "in_progress"}`, nb.status === "completed" ? "Completed" : "In progress"));
   header.append(head);
   const dates = nb.started && `${formatDate(nb.started)} – ${nb.finished ? formatDate(nb.finished) : "now"}`;
   const count = sessions.reduce((n, s) => n + s.observations.length, 0);
@@ -19,7 +19,7 @@ function renderHeader(nb, sessions) {
   return header;
 }
 
-// The notebook's index, generated from the session files.
+// The notebook's table of contents, generated from the session files.
 function renderContents(nb, sessions) {
   const section = el("section", "contents");
   section.append(el("h3", null, "Contents"));
@@ -63,14 +63,38 @@ function caption(page, sessionsById) {
   return parts;
 }
 
+// Pages come in scan order, two to a spread like the open book. The outside
+// front cover comes first on its own, as a right-hand page. Back matter
+// (index, info page) is paired from the end of the book, since the blank
+// pages before it aren't scanned: the info page is the last left-hand page.
+// Pages that aren't shown leave their side of the spread empty, so facing
+// pages stay facing.
+function spreadsOf(nb) {
+  const back = nb.sections.findIndex((s) => s.kind === "session") + 1 || nb.sections.length;
+  let split = nb.pages.findIndex((p) => p.section >= back);
+  if (split < 0) split = nb.pages.length;
+  const spreads = nb.front_cover ? [[null, nb.front_cover]] : [];
+  for (let i = 0; i < split; i += 2) spreads.push([nb.pages[i], nb.pages[i + 1]]);
+  const tail = [];
+  let end = nb.pages.length;
+  // The inside back cover, if scanned, faces the info page.
+  if (end > split && nb.pages[end - 1].kind !== "cover") tail.unshift([nb.pages[--end], null]);
+  for (; end > split; end -= 2) tail.unshift([end - 2 >= split ? nb.pages[end - 2] : null, nb.pages[end - 1]]);
+  return [...spreads, ...tail];
+}
+
 function renderPages(nb, sessionsById) {
   const section = el("section", "scans");
   section.append(el("h3", null, "Pages"), scanToggle(section));
-  // Pages come in scan order, so each pair is one open spread.
-  for (let i = 0; i < nb.pages.length; i += 2) {
+  for (const pair of spreadsOf(nb)) {
+    if (!pair.some((p) => p && !p.hidden)) continue;
     const spread = el("div", "spread");
-    spread.append(...nb.pages.slice(i, i + 2).map((p) =>
-      pageFigure(p, `${pageName(p)} of ${nb.title}`, caption(p, sessionsById))));
+    pair.forEach((p, side) => {
+      if (!p || p.hidden) return;
+      const figure = pageFigure(p, `${pageName(p)} of ${nb.title}`, caption(p, sessionsById));
+      figure.classList.add(side ? "right" : "left");
+      spread.append(figure);
+    });
     section.append(spread);
   }
   return section;

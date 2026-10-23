@@ -215,12 +215,16 @@ def save(arr, path):
 def pair(pages, i):
     """The other side of page position i. Numbered pages pair by number: odd
     page N (a right page) is backed by page N + 1 (the next left page).
-    Unnumbered front matter pairs by position."""
+    Unnumbered front matter pairs by position. Back matter (unnumbered pages
+    after the numbered ones) has none: the blank pages it backs onto aren't
+    scanned."""
     n = pages[i].get("number") if i < len(pages) else None
     if n is not None:
         want = n + 1 if n % 2 else n - 1
         match = [j for j, p in enumerate(pages) if p.get("number") == want]
         return match[0] if match else None
+    if any(p.get("number") is not None for p in pages[:i]):
+        return None
     return back_of(i)
 
 
