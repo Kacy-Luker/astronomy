@@ -1,18 +1,20 @@
 """Remove stamp show-through from notebook page images.
 
 Rubber-stamp ink on the back of a sheet soaks into the paper and shows as a
-faint mirrored ghost on the front. Both sides of every sheet are scanned, so
-the back is mirrored, lined up with the front, and the ghost it casts is
-divided out: the front is brightened exactly where, and exactly as much as,
-the back's ink darkened it. A sketch under a ghost line keeps its shading;
-only the ghost's share is removed. Pencil doesn't soak through.
+faint mirrored ghost on the front; pencil doesn't. Both sides of every sheet
+are scanned, so the back is mirrored and best-fit onto the front using its
+stamp ink. Inside the ghost's footprint, faint pixels are rebuilt from the
+pixels around them, and may only get lighter: on blank paper the ghost turns
+to paper, and on a sketch the shading carries straight through. Dark marks on
+the front (pencil, print) are never changed.
 
     python scripts/showthrough.py <notebook-id> [position ...]
 
 Writes scans/<id>/NN.clean.jpg for each sheet touching the given page
-positions (default: every page), and removes a stale one when a side can't be
-cleaned. A sheet is cleaned only when lining up each side against the other
-clearly explains the ghosts on both sides at once.
+positions (default: every page), and removes a stale one when the sheet
+can't be cleaned. Pages pair by their printed numbers (odd page N is backed
+by page N + 1); unnumbered front matter pairs by position. A sheet is cleaned
+only when one alignment clearly explains the ghosts on both sides at once.
 """
 import sys
 from pathlib import Path
@@ -21,11 +23,16 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage, signal
 
-BACK_INK = 0.35       # back pixels this much darker than paper are ink
-BLURS = (0.5, 1.0, 1.5, 2.0, 3.0)  # ghost softness to try, in px
-REGION = 40           # px scale over which ghost strength may vary
+STAMP_INK = 0.55      # back pixels this much darker than paper are stamp ink (pencil is lighter)
+FOOTPRINT_INK = 0.35  # looser, for where ghosts are removed: stamps print unevenly
+GROW = 4              # px the footprint is widened by, to cover the ghost's blur
+FILL = 4              # px scale of the neighborhood a ghost pixel is rebuilt from
+KEEP = 0.6            # front pixels darker than this (relative to paper) are never changed
+ANGLES = (-0.5, -0.25, 0.0, 0.25, 0.5)  # degrees the sides may be rotated against each other
 EDGE = 0.07           # share of each page edge ignored when lining up
-SEARCH_X, SEARCH_Y = 15, 15  # quarter-size px searched around where the sheet's sides line up
+SCALE = 2             # search at half size: thin faint ghost lines vanish at quarter size
+SEARCH_X, SEARCH_Y = 120, 60  # px at SCALE searched: scanner placement varies between spreads
+PAD_X = 120           # extra px at SCALE for the sheet's width difference
 MIN_LEAD = 1.15       # how much the chosen shift must beat any other
 QUALITY = 80
 
@@ -71,7 +78,7 @@ def ink_maps(front_g, back_g):
     h, w = faint.shape
     my, mx = int(h * EDGE), int(w * EDGE)
     faint[:my], faint[h - my:], faint[:, :mx], faint[:, w - mx:] = 0, 0, 0, 0
-    ink = np.where(1 - br > BACK_INK, 1 - br, 0)
+    ink = np.where(1 - br > STAMP_INK, 1 - br, 0)
     return faint, ink
 
 
@@ -88,33 +95,44 @@ def correlate(faint, ink):
 
 def ink_amount(g):
     """How much dark ink a page has, as a weight for its ghosts."""
-    _, ink = ink_maps(shrink(g, 4), shrink(g, 4))
+    _, ink = ink_maps(shrink(g, SCALE), shrink(g, SCALE))
     return float(np.sqrt((ink ** 2).sum()))
 
 
 def search(ga, gb):
-    """Score every shift of b's mirrored ink onto a, at quarter size."""
-    f, b = ink_maps(shrink(ga, 4), shrink(gb, 4))
+    """Score every shift of b's mirrored ink onto a, at SCALE size."""
+    f, b = ink_maps(shrink(ga, SCALE), shrink(gb, SCALE))
     if not b.any():
         return None
     c = correlate(f, b)
     oy, ox = b.shape[0] - 1, b.shape[1] - 1
-    return c[oy - SEARCH_Y:oy + SEARCH_Y + 1, ox - SEARCH_X - 60:ox + SEARCH_X + 61]
+    return c[oy - SEARCH_Y:oy + SEARCH_Y + 1, ox - SEARCH_X - PAD_X:ox + SEARCH_X + PAD_X + 1]
+
+
+def overlap(f, b, dx, dy):
+    fy, fx, by, bx = max(dy, 0), max(dx, 0), max(-dy, 0), max(-dx, 0)
+    h, w = min(f.shape[0] - fy, b.shape[0] - by), min(f.shape[1] - fx, b.shape[1] - bx)
+    return float((f[fy:fy + h, fx:fx + w] * b[by:by + h, bx:bx + w]).sum())
 
 
 def refine(ga, gb, dx, dy):
-    """The best full-size shift within a few px of (dx, dy)."""
-    f, b = ink_maps(ga, gb)
-    best = (-1, dx, dy)
-    for ddy in range(dy - 6, dy + 7):
-        for ddx in range(dx - 6, dx + 7):
-            fy, fx, by, bx = max(ddy, 0), max(ddx, 0), max(-ddy, 0), max(-ddx, 0)
-            h = min(f.shape[0] - fy, b.shape[0] - by)
-            w = min(f.shape[1] - fx, b.shape[1] - bx)
-            s = (f[fy:fy + h, fx:fx + w] * b[by:by + h, bx:bx + w]).sum()
-            if s > best[0]:
-                best = (s, ddx, ddy)
-    return best[1], best[2]
+    """The best full-size (dx, dy, angle) near (dx, dy): scanned pages can sit
+    a little crooked, so small rotations of the back are tried too."""
+    f, _ = ink_maps(ga, gb)
+    best = (-1, dx, dy, 0.0)
+    for angle in ANGLES:
+        rotated = gb if angle == 0 else ndimage.rotate(gb, angle, reshape=False, mode="nearest")
+        _, b = ink_maps(ga, rotated)
+        for ddy in range(dy - 6, dy + 7, 2):
+            for ddx in range(dx - 6, dx + 7, 2):
+                s = overlap(f, b, ddx, ddy)
+                if s > best[0]:
+                    best = (s, ddx, ddy, angle)
+    _, dx, dy, angle = best
+    rotated = gb if angle == 0 else ndimage.rotate(gb, angle, reshape=False, mode="nearest")
+    _, b = ink_maps(ga, rotated)
+    best = max((overlap(f, b, ddx, ddy), ddx, ddy) for ddy in range(dy - 1, dy + 2) for ddx in range(dx - 1, dx + 2))
+    return best[1], best[2], angle
 
 
 def align_sheet(ga, gb):
@@ -129,9 +147,9 @@ def align_sheet(ga, gb):
     # A blank back casts no ghost; that side's scores then count for nothing.
     sab = np.zeros_like(sba) if sab is None else sab
     sba = np.zeros_like(sab) if sba is None else sba
-    # With no scanner shift, a wider back lines up offset by the width
-    # difference and a narrower one lines up at dx = 0.
-    wq = shrink(gb, 4).shape[1] - shrink(ga, 4).shape[1]
+    # Centered where the sides would meet if both spreads sat in the same spot
+    # on the scanner; the search is wide because they rarely do.
+    wq = shrink(gb, SCALE).shape[1] - shrink(ga, SCALE).shape[1]
     x0 = -max(wq, 0)
     # Each side counts by how much ink its back has; a blank back adds nothing.
     wab, wba = ink_amount(gb), ink_amount(ga)
@@ -139,57 +157,44 @@ def align_sheet(ga, gb):
     for dy in range(-SEARCH_Y, SEARCH_Y + 1):
         for i, dx in enumerate(range(x0 - SEARCH_X, x0 + SEARCH_X + 1)):
             ex = wq + dx
-            scores[dy + SEARCH_Y, i] = (wab * sab[dy + SEARCH_Y, dx + SEARCH_X + 60]
-                                        + wba * sba[-dy + SEARCH_Y, ex + SEARCH_X + 60])
+            scores[dy + SEARCH_Y, i] = (wab * sab[dy + SEARCH_Y, dx + SEARCH_X + PAD_X]
+                                        + wba * sba[-dy + SEARCH_Y, ex + SEARCH_X + PAD_X])
     y, x = np.unravel_index(np.argmax(scores), scores.shape)
     top = scores[y, x]
     away = scores.copy()
     away[max(y - 3, 0):y + 4, max(x - 3, 0):x + 4] = -np.inf
     if not np.isfinite(top) or top < MIN_LEAD * away.max():
         return None
-    dx, dy = (x0 - SEARCH_X + x) * 4, (y - SEARCH_Y) * 4
+    dx, dy = (x0 - SEARCH_X + x) * SCALE, (y - SEARCH_Y) * SCALE
     ab = refine(ga, gb, dx, dy)
     ba = refine(gb, ga, gb.shape[1] - ga.shape[1] + dx, -dy)
     return ab, ba
 
 
-def place(back_g, dx, dy, shape):
-    """The mirrored back's ink darkness, positioned in front-page coordinates."""
-    ink = 1 - relative(back_g[:, ::-1])
-    ink = np.where(ink > BACK_INK, ink, 0)
-    out = np.zeros(shape, np.float32)
+def footprint(back_g, dx, dy, angle, shape):
+    """Where the mirrored back's ink lands on the front, widened a little."""
+    if angle:
+        back_g = ndimage.rotate(back_g, angle, reshape=False, mode="nearest")
+    ink = (1 - relative(back_g[:, ::-1])) > FOOTPRINT_INK
+    out = np.zeros(shape, bool)
     h, w = ink.shape
     ys, xs = slice(max(dy, 0), min(dy + h, shape[0])), slice(max(dx, 0), min(dx + w, shape[1]))
-    out[ys, xs] = ink[ys.start - dy:ys.stop - dy, xs.start - dx:xs.stop - dx]
-    return out
+    if ys.start < ys.stop and xs.start < xs.stop:
+        out[ys, xs] = ink[ys.start - dy:ys.stop - dy, xs.start - dx:xs.stop - dx]
+    return ndimage.binary_dilation(out, iterations=GROW)
 
 
-def ghost_model(front_g, back_ink):
-    """Fit how strongly and how softly the back's ink shows through.
-    Measured only on blank paper; returns (softened ink, local strength)."""
-    fr = relative(front_g)
-    d = 1 - fr
-    blank = (fr > 0.75) & ~ndimage.maximum_filter(fr < 0.75, 7)
-    best = None
-    for sigma in BLURS:
-        b = ndimage.gaussian_filter(back_ink, sigma)
-        num = ndimage.gaussian_filter(d * b * blank, REGION)
-        den = ndimage.gaussian_filter(b * b * blank, REGION)
-        k = np.clip(num / np.maximum(den, 1e-6), 0, 0.9)
-        k = np.where(den > 1e-4, k, 0)
-        resid = ((d - k * b) ** 2 * blank * (b > 0.05)).sum()
-        if best is None or resid < best[0]:
-            best = (resid, b, k)
-    return best[1], best[2]
-
-
-def clean(front, back_g, dx, dy):
-    """The front with the back's ghost divided out, never brighter than paper."""
+def clean(front, back_g, dx, dy, angle):
+    """The front with ghost pixels rebuilt from their neighborhood."""
     g = front.mean(axis=2)
-    b, k = ghost_model(g, place(back_g, dx, dy, g.shape))
-    gain = 1 / np.maximum(1 - k * b, 0.1)
-    plain = np.stack([paper(front[..., c]) for c in range(3)], -1)
-    return np.minimum(front * gain[..., None], np.maximum(front, plain))
+    ghost = footprint(back_g, dx, dy, angle, g.shape) & (relative(g) >= KEEP)
+    known = ~ghost
+    weight = ndimage.gaussian_filter(known.astype(np.float32), FILL)
+    out = front.copy()
+    for c in range(3):
+        fill = ndimage.gaussian_filter(front[..., c] * known, FILL) / np.maximum(weight, 1e-3)
+        out[..., c] = np.where(ghost, np.maximum(front[..., c], fill), front[..., c])
+    return out
 
 
 def clean_sheet(a, b):
@@ -207,9 +212,26 @@ def save(arr, path):
     Image.fromarray((np.clip(arr, 0, 1) * 255).round().astype(np.uint8)).save(path, quality=QUALITY, optimize=True)
 
 
-def clean_pages(scans, positions):
+def pair(pages, i):
+    """The other side of page position i. Numbered pages pair by number: odd
+    page N (a right page) is backed by page N + 1 (the next left page).
+    Unnumbered front matter pairs by position."""
+    n = pages[i].get("number") if i < len(pages) else None
+    if n is not None:
+        want = n + 1 if n % 2 else n - 1
+        match = [j for j, p in enumerate(pages) if p.get("number") == want]
+        return match[0] if match else None
+    return back_of(i)
+
+
+def clean_pages(scans, positions, pages=()):
     image = lambda i: scans / f"{i + 1:02d}.jpg"
-    sheets = {tuple(sorted((i, back_of(i)))) for i in positions if back_of(i) is not None}
+    pages = list(pages)
+    sheets = set()
+    for i in positions:
+        j = pair(pages, i) if pages else back_of(i)
+        if j is not None:
+            sheets.add(tuple(sorted((i, j))))
     cleaned = []
     for a, b in sorted(sheets):
         if not (image(a).exists() and image(b).exists()):
@@ -228,8 +250,11 @@ def clean_pages(scans, positions):
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         sys.exit(__doc__)
+    import json
     scans = Path("scans") / sys.argv[1]
+    notebook = Path("data/notebooks") / f"{sys.argv[1]}.json"
+    pages = json.loads(notebook.read_text())["pages"] if notebook.exists() else []
     count = len([p for p in scans.glob("[0-9][0-9].jpg")])
     positions = [int(p) for p in sys.argv[2:]] or list(range(count))
-    cleaned = clean_pages(scans, positions)
+    cleaned = clean_pages(scans, positions, pages)
     print(f"Cleaned {len(cleaned)} pages in {scans}/: {', '.join(str(i + 1) for i in sorted(cleaned)) or 'none'}")
