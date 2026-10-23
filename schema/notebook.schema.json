@@ -30,7 +30,7 @@
           "enum": [0, 90, 180, 270]
         },
         "split": {
-          "description": "Where the fold sits, as a fraction of the upright spread's width.",
+          "description": "Where the fold sits, as a fraction of the upright spread's width, for spreads whose fold can't be found.",
           "type": "number",
           "exclusiveMinimum": 0,
           "exclusiveMaximum": 1
