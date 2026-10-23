@@ -48,10 +48,14 @@
       "minItems": 1,
       "items": { "type": "string" }
     },
-    "scans": {
-      "description": "Paths to the original page scans, relative to the repo root.",
+    "notebook": {
+      "description": "Id of the notebook the session is written in (data/notebooks/<id>.json).",
+      "type": "string"
+    },
+    "pages": {
+      "description": "Notebook page numbers the session covers.",
       "type": "array",
-      "items": { "type": "string" }
+      "items": { "type": "integer", "minimum": 1 }
     },
     "notes": { "type": ["string", "null"] },
     "observations": {
@@ -99,6 +103,11 @@
           "description": "Every known designation, including cross-catalog IDs.",
           "type": "array",
           "items": { "type": "string" }
+        },
+        "page": {
+          "description": "Notebook page number the entry is on.",
+          "type": ["integer", "null"],
+          "minimum": 1
         },
         "local_time": { "$ref": "#/$defs/time" },
         "ut": { "$ref": "#/$defs/time" },

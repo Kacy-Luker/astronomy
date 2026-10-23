@@ -12,12 +12,14 @@
     "f_ratio": 5.9
   },
   "observers": ["Kacy Luker"],
-  "scans": [],
+  "notebook": "astronomy-001",
+  "pages": [2],
   "observations": [
     {
       "catalog_id": "M51",
       "aka": "Whirlpool Galaxy",
       "ids": ["M51", "NGC 5194", "NGC 5195"],
+      "page": 2,
       "local_time": "20:50",
       "seeing": 3,
       "transparency": 4,
@@ -26,9 +28,10 @@
       "description": "2 bright cores with a dimmer halo; halos overlap; larger is top right of eyepiece"
     },
     {
-      "catalog_id": "M87",
+      "catalog_id": "M28",
       "aka": null,
-      "ids": ["M87", "NGC 4486"],
+      "ids": ["M28", "NGC 6626"],
+      "page": 2,
       "local_time": "23:15",
       "seeing": 2,
       "transparency": 4,
