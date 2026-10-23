@@ -44,30 +44,43 @@ rotation and fold position come from the notebook file's `scan` setting.
 Use `redact` on a page to blur personal details such as a phone number.
 Keep unredacted scans out of the repo, since it's public.
 
-## Importing a notebook
+## Importing a session
 
-When a notebook is full (or whenever you want to catch up):
+After each observing session:
 
-1. Scan every spread, cover to last page, into one PDF.
-2. Upload it to the private **astronomy-scans** repo as `<notebook id>.pdf`,
-   for example `astronomy-002.pdf`.
-3. Here, open **Actions → Import notebook → Run workflow** and enter the
-   notebook id.
+1. Scan the spreads you wrote on. Include the spread you started on even if
+   part of it was imported before; already recorded entries aren't added again.
+2. Upload the PDF (or image) to the private **astronomy-scans** repo as
+   `<notebook id>/<date>.pdf`, for example `astronomy-001/2026-10-20.pdf`.
+3. Here, open **Actions → Import session → Run workflow** and enter the
+   notebook id. It picks the newest file in that notebook's folder. Tick
+   **This was the last session in the notebook** when the notebook is full.
 4. Review the pull request it opens: compare each session with its pages
    in the notebook view, fix anything misread in the JSON, then merge.
+   Merge each import before running the next.
 
-The import splits the pages and asks Claude (Opus 5.5) to read each one.
-It numbers the pages, groups entries into sessions, and blurs phone
+For a new notebook, the first upload should start at the inside front
+cover so the front matter is recorded too.
+
+The import splits the spreads into pages and asks Claude (Opus 5.5) to
+read each one. Printed odd page numbers place the pages in the notebook;
+if none are visible, the upload is placed after the last page with entries
+and the pull request says so. It groups entries into sessions (a page
+without a NEW SESSION header continues the last one) and blurs phone
 numbers, emails and addresses. After blurring it checks each page again
-and blurs the whole page if anything is still readable. Pages the notebook
-file already lists are left alone, so re-importing a notebook you've added
-to only reads the new pages and keeps your corrections. Expect roughly
-5–10 cents per new page.
+and blurs the whole page if anything is still readable. Rescanned pages
+get a new image, but only entries beyond those already recorded on the
+page are added, so corrections made by hand survive. Expect roughly 5–10
+cents per uploaded page.
+
+A notebook's `status` is `in_progress` until an import is run with the
+"last session" box ticked, which sets it to `completed` and fills in
+`finished`. You can also change both by editing the notebook's JSON.
 
 Locally, the same thing runs as:
 
 ```sh
-ANTHROPIC_API_KEY=... node scripts/import-notebook.mjs astronomy-002 path/to/scan.pdf
+ANTHROPIC_API_KEY=... node scripts/import-notebook.mjs astronomy-001 path/to/scan.pdf [--completed]
 ```
 
 One-time setup:
