@@ -216,7 +216,7 @@ leaves `gh-pages/pr-preview/` alone.
 ### Docs check
 
 Pull requests that change code (scripts, site, schemas, workflows,
-`data/categories.json`) also run **Docs**: Claude reads the change and
+dependencies, `data/categories.json`) also run **Docs**: Claude reads the change and
 updates this README and `CLAUDE.md` where they no longer match it, and
 commits the fix to the pull request's branch as "Update docs for this
 change". Review that commit with the rest. Import pull requests are
