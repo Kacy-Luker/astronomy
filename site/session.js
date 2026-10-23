@@ -1,13 +1,17 @@
-// Session page: one night's header, scans, and observations.
-import { el, formatDate, loadSessions } from "./lib.js";
+// Session page: one night's header, notebook pages, and observations.
+import {
+  el, formatDate, link, loadNotebooks, loadSessions, notebookHref, pageFigure, pageName,
+  scanToggle, seeingText, transparencyText,
+} from "./lib.js";
 
 const main = document.getElementById("session");
-const ROMAN = ["I", "II", "III", "IV", "V"];
 
-// Append a <dt>/<dd> pair, skipping empty values.
+// Append a <dt>/<dd> pair, skipping empty values. value may be a node.
 function field(dl, label, value) {
   if (value == null || value === "") return;
-  dl.append(el("dt", null, label), el("dd", null, String(value)));
+  const dd = el("dd");
+  dd.append(value instanceof Node ? value : String(value));
+  dl.append(el("dt", null, label), dd);
 }
 
 function scopeText(scope) {
@@ -21,7 +25,7 @@ function scopeText(scope) {
   return specs.length ? `${scope.name} (${specs.join(", ")})` : scope.name;
 }
 
-function renderHeader(s) {
+function renderHeader(s, notebook) {
   const header = el("section", "session-header");
   const head = el("div", "session-head");
   const title = el("h2", "session-title");
@@ -37,63 +41,36 @@ function renderHeader(s) {
   field(dl, "Sky notes", s.sky?.notes);
   field(dl, "Scope", scopeText(s.scope));
   field(dl, s.observers.length > 1 ? "Observers" : "Observer", s.observers.join(", "));
+  if (notebook) {
+    const pages = s.pages?.length ? `, ${s.pages.length > 1 ? "pages" : "page"} ${s.pages.join("–")}` : "";
+    field(dl, "Notebook", link(notebookHref(notebook.id, pageOf(notebook, s.pages?.[0])),
+      notebook.title + pages));
+  }
   field(dl, "Notes", s.notes);
   header.append(dl);
   return header;
 }
 
-// The viewer's last choice is remembered; storage can be unavailable.
-const VIEW_KEY = "scan-view";
-function savedView() {
-  try { return localStorage.getItem(VIEW_KEY); } catch { return null; }
-}
-function saveView(view) {
-  try { localStorage.setItem(VIEW_KEY, view); } catch { /* not persisted */ }
-}
+const pageOf = (notebook, number) => notebook?.pages.find((p) => p.number === number);
 
-// Original / Inverted buttons that flip the scans' colors in place.
-function renderScanToggle(section) {
-  const group = el("div", "toggle");
-  group.setAttribute("role", "group");
-  group.setAttribute("aria-label", "Scan colors");
-  const buttons = ["original", "inverted"].map((view) => {
-    const b = el("button", null, view[0].toUpperCase() + view.slice(1));
-    b.type = "button";
-    b.dataset.view = view;
-    b.addEventListener("click", () => { apply(view); saveView(view); });
-    return b;
-  });
-  function apply(view) {
-    section.classList.toggle("inverted", view === "inverted");
-    for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.view === view));
-  }
-  apply(savedView() === "inverted" ? "inverted" : "original");
-  group.append(...buttons);
-  return group;
-}
-
-function renderScans(s) {
+function renderPages(s, notebook) {
   const section = el("section", "scans");
   section.append(el("h3", null, "Original notes"));
-  if (!s.scans?.length) {
+  const pages = (s.pages ?? []).map((n) => pageOf(notebook, n)).filter(Boolean);
+  if (!pages.length) {
     section.append(el("p", "muted", "No scans for this session yet."));
     return section;
   }
-  section.append(renderScanToggle(section));
-  for (const [i, src] of s.scans.entries()) {
-    const link = el("a", "scan");
-    link.href = src;
-    const img = el("img");
-    img.src = src;
-    img.alt = `Page ${i + 1} of the paper log for ${s.date}`;
-    img.loading = "lazy";
-    link.append(img);
-    section.append(link);
-  }
+  section.append(scanToggle(section));
+  const grid = el("div", "pages");
+  grid.append(...pages.map((p) => pageFigure(p,
+    `${pageName(p)} of ${notebook.title}, ${s.date}`,
+    link(notebookHref(notebook.id, p), `${pageName(p)} · ${notebook.title}`))));
+  section.append(grid);
   return section;
 }
 
-function renderObservation(o) {
+function renderObservation(o, notebook) {
   const card = el("article", "observation");
   const head = el("div", "session-head");
   head.append(el("h3", "object-id", o.catalog_id));
@@ -110,12 +87,14 @@ function renderObservation(o) {
   const dl = el("dl", "facts");
   field(dl, "Local time", o.local_time);
   field(dl, "UT", o.ut);
-  field(dl, "Seeing", o.seeing && ROMAN[o.seeing - 1]);
-  field(dl, "Transparency", o.transparency && ROMAN[o.transparency - 1]);
+  field(dl, "Seeing", seeingText(o.seeing));
+  field(dl, "Transparency", transparencyText(o.transparency));
   if (o.scope) field(dl, "Scope", scopeText(o.scope));
   field(dl, "Eyepiece", o.eyepiece);
   field(dl, "Magnification", o.magnification && `${o.magnification}×`);
   field(dl, "Filter", o.filter);
+  const page = pageOf(notebook, o.page);
+  if (page) field(dl, "Notebook", link(notebookHref(notebook.id, page), pageName(page)));
   card.append(dl);
 
   if (o.description) card.append(el("p", "description", o.description));
@@ -124,15 +103,17 @@ function renderObservation(o) {
 
 try {
   const id = new URLSearchParams(location.search).get("id");
-  const s = (await loadSessions()).find((x) => x.id === id);
+  const [sessions, notebooks] = await Promise.all([loadSessions(), loadNotebooks()]);
+  const s = sessions.find((x) => x.id === id);
   if (!s) throw new Error(id ? `no session "${id}"` : "no session id in the link");
+  const notebook = notebooks.find((n) => n.id === s.notebook);
 
   document.title = `${formatDate(s.date)} · ${s.site.name} · Observing Log`;
   main.replaceChildren(
-    renderHeader(s),
-    renderScans(s),
+    renderHeader(s, notebook),
+    renderPages(s, notebook),
     el("h3", "section-title", "Observations"),
-    ...s.observations.map(renderObservation),
+    ...s.observations.map((o) => renderObservation(o, notebook)),
   );
 } catch (err) {
   main.replaceChildren(el("p", "summary", `Couldn't load this session (${err.message}).`));
