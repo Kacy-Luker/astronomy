@@ -10,14 +10,17 @@ const IMAGE_EXT = new Set([".jpg", ".jpeg", ".png", ".tif", ".tiff"]);
 export const pageImage = (notebookId, index) =>
   join("scans", notebookId, `${String(index + 1).padStart(2, "0")}.jpg`);
 
-// The scanned spreads in order: embedded images from a PDF, or a folder.
+// The scanned spreads in order: embedded images from a PDF, a single image,
+// or a folder of images.
 export async function listSpreads(source, workDir) {
-  if (extname(source).toLowerCase() === ".pdf") {
+  const ext = extname(source).toLowerCase();
+  if (ext === ".pdf") {
     // pdfimages (poppler-utils) extracts the scanned JPEGs without re-encoding.
     execFileSync("pdfimages", ["-j", source, join(workDir, "spread")]);
     return (await readdir(workDir)).filter((f) => f.startsWith("spread")).sort()
       .map((f) => join(workDir, f));
   }
+  if (IMAGE_EXT.has(ext)) return [source];
   return (await readdir(source))
     .filter((f) => IMAGE_EXT.has(extname(f).toLowerCase()))
     .sort()
