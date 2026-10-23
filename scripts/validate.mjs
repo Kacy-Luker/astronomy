@@ -54,6 +54,9 @@ const sessions = await load("data/sessions", await compile("session"));
 
 for (const { path, data: nb } of notebooks.values()) {
   const { errors } = assignSections(nb.sections, nb.pages);
+  if (nb.front_cover && !existsSync(join("scans", nb.id, "cover-front.jpg"))) {
+    errors.push(`/front_cover has no image at scans/${nb.id}/cover-front.jpg`);
+  }
   nb.pages.forEach((_, i) => {
     const image = join("scans", nb.id, `${String(i + 1).padStart(2, "0")}.jpg`);
     if (!existsSync(image)) errors.push(`/pages/${i} has no image at ${image}`);
