@@ -90,6 +90,12 @@ jobs:
           cache: npm
       - run: command -v pdfimages || (sudo apt-get update && sudo apt-get install -y poppler-utils)
       - run: npm ci
+      # Stamp show-through is removed by scripts/showthrough.py.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
       - name: Import
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
