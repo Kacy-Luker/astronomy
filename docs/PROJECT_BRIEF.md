@@ -6,7 +6,8 @@ lands as its own pull request.
 ```text
 Build an astronomy observation-log website in this repo
 (Kacy-Luker/Astronomy), hosted on GitHub Pages at
-astronomy.kacyluker.com (add a CNAME file). Static site, no server.
+kacyluker.com/astronomy (served under the kacy-luker.github.io
+user site's custom domain; no CNAME here). Static site, no server.
 
 RULES
 - One PR per feature, opened against main.
@@ -39,7 +40,7 @@ ARCHITECTURE
 - Client-side search index (MiniSearch) built at deploy time.
 
 PR PLAN
-1. Scaffold, JSON schema, Pages config + CNAME
+1. Scaffold, JSON schema, Pages config
 2. Session viewer with original/inverted image toggle
 3. Search across all fields
 4. Inbox Action: scan -> Claude transcription -> JSON

@@ -1,7 +1,7 @@
 # Observing Log
 
 Astronomy observations transcribed from paper notes, published at
-<https://astronomy.kacyluker.com>.
+<https://kacyluker.com/astronomy/>.
 
 ## Layout
 
@@ -10,7 +10,7 @@ Astronomy observations transcribed from paper notes, published at
 | `data/sessions/` | One JSON file per observing session |
 | `schema/session.schema.json` | The shape every session file must match |
 | `scans/` | Original page scans |
-| `site/` | Static site source (HTML, CSS, JS, `CNAME`) |
+| `site/` | Static site source (HTML, CSS, JS) |
 | `scripts/` | Build and validation scripts |
 | `docs/PROJECT_BRIEF.md` | The plan this site is built from |
 
@@ -32,10 +32,16 @@ log sheet's I–V scale, stored as 1–5.
 
 ## Hosting
 
-Pushes to `main` build and deploy through GitHub Actions. One-time setup:
+Pushes to `main` build and deploy through GitHub Actions. The site is a
+GitHub Pages project site, so it is served under the custom domain of the
+`kacy-luker.github.io` user site at `/<repo name>/`. Keep the repo named
+`astronomy` (lowercase) so the URL is `kacyluker.com/astronomy/`.
 
-1. Repo **Settings → Pages → Source**: choose **GitHub Actions**.
-2. Same page, **Custom domain**: `astronomy.kacyluker.com`, then tick
-   **Enforce HTTPS** once the certificate is issued.
-3. At your DNS provider, add a `CNAME` record for `astronomy` pointing
-   to `kacy-luker.github.io`.
+One-time setup: repo **Settings → Pages → Source**, choose
+**GitHub Actions**. Leave **Custom domain** empty, and don't add DNS
+records; the user site's domain already covers this path. Avoid an
+`astronomy/` folder in the user site repo, since it would claim the
+same path.
+
+Asset and data paths in `site/` are relative so the site works under
+that subpath.
