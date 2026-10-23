@@ -60,8 +60,8 @@ const PAD = 0.02; // margin added around each personal-info box
 
 const notebookPath = join("data", "notebooks", `${id}.json`);
 const existing = existsSync(notebookPath) ? JSON.parse(await readFile(notebookPath, "utf8")) : null;
-if (mode === "new" && existing) throw new Error(`notebook ${id} already exists; use Add session instead`);
-if (mode !== "new" && !existing) throw new Error(`there is no notebook ${id}; make it with Create new notebook first`);
+if (mode === "new" && existing) throw new Error(`notebook ${id} already exists; pick it in the notebook dropdown instead of new-notebook`);
+if (mode !== "new" && !existing) throw new Error(`there is no notebook ${id}; import its first scan with new-notebook picked`);
 const scan = existing?.scan ?? { rotate: 90, split: 0.47 };
 const notes = []; // lines for the PR summary
 const nn = (i) => String(i + 1).padStart(2, "0");
@@ -72,7 +72,7 @@ const named = opts.category ? CATEGORIES.find((c) => [c.kind, c.label].includes(
 if (opts.category && !named) {
   throw new Error(`"${opts.category}" isn't a category; pick one of ${CATEGORIES.map((c) => c.label).join(", ")}`);
 }
-if (named?.kind === "front_cover") throw new Error("import the front cover with Add front cover");
+if (named?.kind === "front_cover") throw new Error("import the front cover with scripts/import-cover.mjs (Front cover in the Import form's category)");
 if (named) notes.push(`- Every non-blank page was put in **${named.label}**, as chosen.`);
 
 // The notebook's pages as they are, with their images, so pages can be
@@ -141,7 +141,7 @@ if (mode === "add" && list.length && !named && startPage == null) {
   const start = await matchPosition(uploaded, list.map((_, i) => pageImage(id, i)));
   if (start != null) toRead = all.filter((u) => !list[start + u] || list[start + u].page.open);
   const skipped = all.length - toRead.length;
-  if (skipped) notes.push(`- Skipped ${skipped} uploaded page(s) that were already recorded. Use **Replace pages** to re-read them.`);
+  if (skipped) notes.push(`- Skipped ${skipped} uploaded page(s) that were already recorded. Tick **reread** to re-read them.`);
 }
 await read(toRead);
 
@@ -231,7 +231,7 @@ for (const u of toRead.filter((u) => kindOf(u) !== "blank" || numberOf(u) != nul
     }
     const old = existingOf.get(kind)?.[k];
     if (old && !replaceable(old)) {
-      notes.push(`- Uploaded page ${nn(u)}: the notebook already has its ${category(kind).label.toLowerCase()}, so it was skipped. Use **Replace pages** to re-read it.`);
+      notes.push(`- Uploaded page ${nn(u)}: the notebook already has its ${category(kind).label.toLowerCase()}, so it was skipped. Tick **reread** to re-read it.`);
     }
     const after = list.findLastIndex((e) => pageNow(e).kind === kind);
     put(u, old, after >= 0 ? after + 1 : slotFor(rankOf(kind), null));
@@ -519,7 +519,7 @@ if (status === "completed") {
       "**Complete notebook** again with that file. Each page goes back where its category belongs.");
   }
   if (todo.some((t) => t.todo && t.c.kind === "front_cover")) {
-    lines.push("", "Scan the closed notebook's front cover on its own, upload it, and run **Add front cover**.");
+    lines.push("", "Scan the closed notebook's front cover on its own, upload it, and run **Import** with **Front cover** picked as the category.");
   }
   // Blank pages are confirmed by hand, and categories never scanned are listed.
   const blanks = notebook.pages.flatMap((p, i) => (p.kind === "blank" ? [p.number != null ? `page ${p.number}` : `scan position ${nn(i)}`] : []));
