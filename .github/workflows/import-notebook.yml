@@ -1,4 +1,4 @@
-name: Import session
+name: Import
 
 # Run from the Actions tab after uploading a scan to the private
 # astronomy-scans repo as <notebook id>/<date>.pdf. Opens a pull request
@@ -6,41 +6,59 @@ name: Import session
 on:
   workflow_dispatch:
     inputs:
+      action:
+        description: "What to do"
+        type: choice
+        default: Add session
+        options:
+          - Add session
+          - Create new notebook
+          - Replace pages
+          - Complete notebook
       notebook:
-        description: "Notebook id, e.g. astronomy-001"
-        required: true
-      scan:
-        description: "File in astronomy-scans (default: the newest file in the notebook's folder)"
+        description: "Notebook (for everything except Create new notebook)"
+        type: choice
+        options:
+          # Written by scripts/sync-workflow.mjs from data/notebooks/.
+          # notebooks:start
+          - astronomy-001
+          # notebooks:end
+      new_notebook:
+        description: "Create new notebook only: its id, e.g. astronomy-002"
         required: false
-      completed:
-        description: "This was the last session in the notebook"
-        type: boolean
-        default: false
-      title:
-        description: "Title, only for a brand new notebook (default: read from its label)"
+      scan:
+        description: "File in astronomy-scans. Empty = the newest in the notebook's folder; for Complete notebook, empty = just mark it completed"
         required: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
-  group: import-${{ inputs.notebook }}
+  group: import
 
 jobs:
   import:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      NOTEBOOK: ${{ inputs.notebook }}
+      ACTION: ${{ inputs.action }}
       SCAN: ${{ inputs.scan }}
-      TITLE: ${{ inputs.title }}
-      COMPLETED: ${{ inputs.completed }}
     steps:
       - name: Check inputs
+        env:
+          PICKED: ${{ inputs.notebook }}
+          NEW: ${{ inputs.new_notebook }}
         run: |
-          [[ "$NOTEBOOK" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "::error::Notebook id must be lowercase letters, digits and dashes"; exit 1; }
+          case "$ACTION" in
+            "Add session") MODE=add; NOTEBOOK=$PICKED ;;
+            "Create new notebook") MODE=new; NOTEBOOK=$NEW ;;
+            "Replace pages") MODE=replace; NOTEBOOK=$PICKED ;;
+            "Complete notebook") MODE=complete; NOTEBOOK=$PICKED ;;
+          esac
+          [[ "$NOTEBOOK" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "::error::Notebook id must be lowercase letters, digits and dashes (got '$NOTEBOOK')"; exit 1; }
           [[ "$SCAN" != *..* ]] || { echo "::error::Scan path can't contain '..'"; exit 1; }
+          echo "MODE=$MODE" >> "$GITHUB_ENV"
+          echo "NOTEBOOK=$NOTEBOOK" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - name: Fetch the private scans
         uses: actions/checkout@v4
@@ -50,7 +68,7 @@ jobs:
           path: .scans
       - name: Pick the scan
         run: |
-          if [ -z "$SCAN" ]; then
+          if [ -z "$SCAN" ] && [ "$MODE" != complete ]; then
             # Names are dates (optionally -HHMM), so the newest upload sorts
             # last. Compare without the extension so 2026-10-23.pdf comes
             # before 2026-10-23-1350.pdf.
@@ -59,10 +77,13 @@ jobs:
             done | LC_ALL=C sort | tail -n 1 | cut -f2)
             [ -n "$SCAN" ] || { echo "::error::No files in astronomy-scans/$NOTEBOOK/"; exit 1; }
           fi
-          [ -e ".scans/$SCAN" ] || { echo "::error::astronomy-scans has no $SCAN"; exit 1; }
-          echo "Importing $SCAN"
+          if [ -n "$SCAN" ]; then
+            [ -e ".scans/$SCAN" ] || { echo "::error::astronomy-scans has no $SCAN"; exit 1; }
+            echo "Importing $SCAN: $(file -b ".scans/$SCAN"), $(stat -c %s ".scans/$SCAN") bytes"
+          fi
+          NAME=$(basename "${SCAN:-completed}")
           echo "SCAN=$SCAN" >> "$GITHUB_ENV"
-          echo "BRANCH=import/$NOTEBOOK-$(basename "${SCAN%.*}" | tr -c 'A-Za-z0-9.\n-' '-')" >> "$GITHUB_ENV"
+          echo "BRANCH=import/$NOTEBOOK-$MODE-$(echo "${NAME%.*}" | tr -c 'A-Za-z0-9.\n-' '-')" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -73,19 +94,24 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          args=()
-          [ -n "$TITLE" ] && args+=(--title "$TITLE")
-          [ "$COMPLETED" = "true" ] && args+=(--completed)
-          node scripts/import-notebook.mjs "$NOTEBOOK" ".scans/$SCAN" "${args[@]}" --summary "$RUNNER_TEMP/summary.md"
+          node scripts/import-notebook.mjs "$NOTEBOOK" ${SCAN:+".scans/$SCAN"} --mode "$MODE" \
+            --summary "$RUNNER_TEMP/summary.md"
+          cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Add a new notebook to the dropdown
+        run: node scripts/sync-workflow.mjs
       - run: npm run validate
       - name: Remove the unredacted scans
         run: rm -rf .scans
+      # SCANS_TOKEN also needs write access to this repo: pushing a change to
+      # the workflow's dropdown isn't allowed with the built-in token.
       - uses: peter-evans/create-pull-request@v7
         with:
+          token: ${{ secrets.SCANS_TOKEN }}
           branch: ${{ env.BRANCH }}
-          title: Import ${{ env.SCAN }}
-          commit-message: Import ${{ env.SCAN }}
+          title: "${{ inputs.action }}: ${{ env.NOTEBOOK }}${{ env.SCAN && format(' ({0})', env.SCAN) || '' }}"
+          commit-message: "${{ inputs.action }}: ${{ env.NOTEBOOK }}"
           body-path: ${{ runner.temp }}/summary.md
           add-paths: |
             data
             scans
+            .github/workflows/import-notebook.yml
