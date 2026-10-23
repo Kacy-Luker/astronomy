@@ -33,8 +33,26 @@ on:
       scan:
         description: "File in astronomy-scans. Empty = the newest in the notebook's folder; for Complete notebook, empty = just mark it completed"
         required: false
+      category:
+        description: "Optional: put every non-blank page in the scan in this category, when Claude gets it wrong"
+        type: choice
+        default: Detect automatically
+        options:
+          # Written by scripts/sync-workflow.mjs from data/categories.json.
+          # categories:start
+          - Detect automatically
+          - Inside front cover
+          - Volume label
+          - Title page
+          - Table of contents
+          - Scales
+          - Session pages
+          - Index
+          - Notebook info
+          - Inside back cover
+          # categories:end
       start_page:
-        description: "Optional: the page number of the first session page in the scan, when page numbers didn't scan. Session pages are numbered from it in order"
+        description: "Optional: the page number of the first session page in the scan, used only when no printed page number could be read"
         required: false
       confirm:
         description: "Remove notebook only: type the selected notebook's id to confirm"
@@ -54,6 +72,7 @@ jobs:
       ACTION: ${{ inputs.action }}
       SCAN: ${{ inputs.scan }}
       START_PAGE: ${{ inputs.start_page }}
+      CATEGORY: ${{ inputs.category != 'Detect automatically' && inputs.category || '' }}
     steps:
       - name: Check inputs
         env:
@@ -133,7 +152,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           node scripts/import-notebook.mjs "$NOTEBOOK" ${SCAN:+".scans/$SCAN"} --mode "$MODE" \
-            ${START_PAGE:+--start "$START_PAGE"} --summary "$RUNNER_TEMP/summary.md"
+            ${CATEGORY:+--category "$CATEGORY"} ${START_PAGE:+--start "$START_PAGE"} --summary "$RUNNER_TEMP/summary.md"
           cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Import the front cover
         if: env.MODE == 'cover'
