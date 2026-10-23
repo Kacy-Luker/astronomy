@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://astronomy.kacyluker.com/schema/session.schema.json",
+  "title": "Observing session",
+  "description": "One night of observing, transcribed from a paper log sheet.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "date", "site", "observers", "observations"],
+  "properties": {
+    "id": {
+      "description": "Unique slug; matches the file name without .json.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "program": {
+      "description": "Observing program, e.g. Messier, Herschel 400.",
+      "type": ["string", "null"]
+    },
+    "date": {
+      "description": "Local date the session started.",
+      "type": "string",
+      "format": "date"
+    },
+    "site": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "lat": { "type": ["number", "null"], "minimum": -90, "maximum": 90 },
+        "lon": { "type": ["number", "null"], "minimum": -180, "maximum": 180 }
+      }
+    },
+    "sky": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sqm": {
+          "description": "Sky Quality Meter reading, mag/arcsec^2.",
+          "type": ["number", "null"]
+        },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "scope": { "$ref": "#/$defs/scope" },
+    "observers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "scans": {
+      "description": "Paths to the original page scans, relative to the repo root.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "notes": { "type": ["string", "null"] },
+    "observations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/observation" }
+    }
+  },
+  "$defs": {
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": ["string", "null"] },
+        "aperture_mm": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "focal_length_mm": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "f_ratio": { "type": ["number", "null"], "exclusiveMinimum": 0 }
+      }
+    },
+    "scale": {
+      "description": "Seeing/transparency on the sheet's I-V scale, stored as 1-5.",
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "maximum": 5
+    },
+    "time": {
+      "type": ["string", "null"],
+      "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["catalog_id"],
+      "properties": {
+        "catalog_id": {
+          "description": "The designation written on the sheet, e.g. M51.",
+          "type": "string"
+        },
+        "aka": {
+          "description": "Common name, e.g. Whirlpool Galaxy.",
+          "type": ["string", "null"]
+        },
+        "ids": {
+          "description": "Every known designation, including cross-catalog IDs.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "local_time": { "$ref": "#/$defs/time" },
+        "ut": { "$ref": "#/$defs/time" },
+        "seeing": { "$ref": "#/$defs/scale" },
+        "transparency": { "$ref": "#/$defs/scale" },
+        "scope": {
+          "description": "Overrides the session scope when a different one was used.",
+          "$ref": "#/$defs/scope"
+        },
+        "eyepiece": { "type": ["string", "null"] },
+        "magnification": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "filter": { "type": ["string", "null"] },
+        "description": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
