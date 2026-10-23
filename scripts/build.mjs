@@ -25,15 +25,21 @@ sessions.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)
 // on it. Image sizes let pages reserve their space before the images load.
 const notebooks = await Promise.all((await readAll("data/notebooks")).map(async ({ scan, ...nb }) => {
   const { owner } = assignSections(nb.sections, nb.pages);
+  const cover = `scans/${nb.id}/cover-front.jpg`;
   return {
     ...nb,
+    // The outside front cover, scanned on its own.
+    front_cover: nb.front_cover && existsSync(cover)
+      ? { label: "Front cover", slot: 0, sessions: [], image: cover, ...await sharp(cover).metadata().then(({ width, height }) => ({ width, height })) }
+      : null,
     pages: await Promise.all(nb.pages.map(async ({ redact, ...page }, i) => {
       const image = `scans/${nb.id}/${String(i + 1).padStart(2, "0")}.jpg`;
       const { width, height } = await sharp(image).metadata();
-      // Pages that will still change aren't published until they're final, and
-      // an unfinished notebook leaves out its blank pages.
-      const hidden = Boolean(page.open && page.kind !== "session") ||
-        (page.kind === "blank" && nb.status !== "completed");
+      // Pages that will still change aren't published until they're final. An
+      // unfinished notebook also leaves out its blank pages and the sections
+      // marked hidden_until_complete.
+      const hidden = Boolean(page.open && page.kind !== "session") || (nb.status !== "completed" &&
+        (page.kind === "blank" || Boolean(nb.sections[owner[i]]?.hidden_until_complete)));
       // The show-through-cleaned copy, when scripts/showthrough.py made one.
       const clean = image.replace(/\.jpg$/, ".clean.jpg");
       if (hidden) await rm(join(OUT, image));
