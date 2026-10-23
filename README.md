@@ -52,6 +52,8 @@ After each observing session:
    part of it was imported before; already recorded entries aren't added again.
 2. Upload the PDF (or image) to the private **astronomy-scans** repo as
    `<notebook id>/<date>.pdf`, for example `astronomy-001/2026-10-20.pdf`.
+   Add a 24-hour time when you upload more than once a day:
+   `astronomy-001/2026-10-20-1350.pdf`.
 3. Here, open **Actions → Import session → Run workflow** and enter the
    notebook id. It picks the newest file in that notebook's folder. Tick
    **This was the last session in the notebook** when the notebook is full.
