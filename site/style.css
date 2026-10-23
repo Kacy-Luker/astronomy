@@ -123,3 +123,9 @@ a { color: var(--accent); }
 
 /* Swap light and dark; the hue turn keeps ink colors recognizable. */
 .scans.inverted img { filter: invert(1) hue-rotate(180deg); }
+
+.session-link { color: inherit; text-decoration: none; }
+.session-link:hover { text-decoration: underline; }
+/* Make the whole card clickable via the date link. */
+.session { position: relative; }
+.session-link::after { content: ""; position: absolute; inset: 0; }

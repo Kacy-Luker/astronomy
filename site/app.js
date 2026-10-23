@@ -7,7 +7,10 @@ const summary = document.getElementById("summary");
 function renderSession(s) {
   const item = el("li", "session");
   const head = el("div", "session-head");
-  head.append(el("time", "session-date", formatDate(s.date)));
+  const link = el("a", "session-link");
+  link.href = `session.html?id=${encodeURIComponent(s.id)}`;
+  link.append(el("time", "session-date", formatDate(s.date)));
+  head.append(link);
   if (s.program) head.append(el("span", "tag", s.program));
   item.append(head);
 
