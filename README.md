@@ -110,16 +110,25 @@ key reads seeing I as excellent and transparency I as magnitude 1.
 
 ## Hosting
 
-Pushes to `main` build and deploy through GitHub Actions. The site is a
-GitHub Pages project site, so it is served under the custom domain of the
-`kacy-luker.github.io` user site at `/<repo name>/`. Keep the repo named
-`astronomy` (lowercase) so the URL is `kacyluker.com/astronomy/`.
+Pushes to `main` build the site and publish it to the `gh-pages` branch,
+which GitHub Pages serves. The site is a GitHub Pages project site, so it
+is served under the custom domain of the `kacy-luker.github.io` user site
+at `/<repo name>/`. Keep the repo named `astronomy` (lowercase) so the URL
+is `kacyluker.com/astronomy/`.
 
-One-time setup: repo **Settings → Pages → Source**, choose
-**GitHub Actions**. Leave **Custom domain** empty, and don't add DNS
-records; the user site's domain already covers this path. Avoid an
-`astronomy/` folder in the user site repo, since it would claim the
-same path.
+One-time setup: repo **Settings → Pages → Build and deployment → Source**,
+choose **Deploy from a branch**, then branch `gh-pages`, folder `/ (root)`.
+Leave **Custom domain** empty, and don't add DNS records; the user site's
+domain already covers this path. Avoid an `astronomy/` folder in the user
+site repo, since it would claim the same path.
 
 Asset and data paths in `site/` are relative so the site works under
-that subpath.
+that subpath and under preview paths.
+
+### Pull request previews
+
+Every pull request, including import PRs, is built and published at
+`kacyluker.com/astronomy/pr-preview/pr-<number>/`, with a banner saying
+it's a preview. A comment on the PR links to it and updates on each push.
+The preview is removed when the PR is merged or closed. The main deploy
+leaves `gh-pages/pr-preview/` alone.
