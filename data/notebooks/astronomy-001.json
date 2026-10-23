@@ -6,6 +6,18 @@
   "started": "2026-08-12",
   "finished": null,
   "scan": { "rotate": 90, "split": 0.47 },
+  "sections": [
+    { "kind": "cover", "label": "Front cover" },
+    { "kind": "cover", "label": "Inside front cover" },
+    { "kind": "cover", "label": "Volume label" },
+    { "kind": "blank" },
+    { "kind": "title", "label": "Title page" },
+    { "kind": "index", "label": "Index", "pages": 4 },
+    { "kind": "reference", "label": "Seeing and transparency key" },
+    { "kind": "session" },
+    { "kind": "contents", "label": "Table of contents" },
+    { "kind": "info", "label": "Notebook info" }
+  ],
   "pages": [
     { "kind": "cover", "label": "Inside front cover" },
     { "kind": "cover", "label": "Volume label", "open": true },

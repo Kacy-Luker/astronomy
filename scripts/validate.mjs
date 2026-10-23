@@ -1,10 +1,12 @@
 // Validate every notebook and session file against its schema, and check
-// that sessions point at notebook pages that exist.
+// that notebook pages follow the notebook's sections and that sessions point
+// at notebook pages that exist.
 import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { basename, join } from "node:path";
 import Ajv from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
+import { assignSections } from "./lib/sections.mjs";
 
 const ajv = new Ajv({ allErrors: true });
 addFormats(ajv);
@@ -51,7 +53,7 @@ const notebooks = await load("data/notebooks", await compile("notebook"));
 const sessions = await load("data/sessions", await compile("session"));
 
 for (const { path, data: nb } of notebooks.values()) {
-  const errors = [];
+  const { errors } = assignSections(nb.sections, nb.pages);
   nb.pages.forEach((_, i) => {
     const image = join("scans", nb.id, `${String(i + 1).padStart(2, "0")}.jpg`);
     if (!existsSync(image)) errors.push(`/pages/${i} has no image at ${image}`);

@@ -5,7 +5,7 @@
   "description": "One paper notebook, page by page, in scan order.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "title", "pages"],
+  "required": ["id", "title", "sections", "pages"],
   "properties": {
     "id": {
       "description": "Unique slug; matches the file name without .json and the scans/<id>/ folder.",
@@ -37,6 +37,12 @@
         }
       }
     },
+    "sections": {
+      "description": "The parts this notebook is expected to have, in order (front cover, title page, index, scales, session pages, table of contents, notebook info, ...). Scanned pages are matched to them in order; a section with nothing scanned yet isn't shown.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/section" }
+    },
     "pages": {
       "description": "Every scanned page in order; the nth entry is scans/<id>/<nn>.jpg.",
       "type": "array",
@@ -44,13 +50,33 @@
     }
   },
   "$defs": {
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "description": "What its pages are. A session section also holds unused and blank pages.",
+          "enum": ["cover", "title", "index", "reference", "session", "blank", "contents", "info"]
+        },
+        "label": {
+          "description": "Its name, e.g. 'Front cover'. Pages with a label must carry the same one.",
+          "type": "string"
+        },
+        "pages": {
+          "description": "How many pages it has. Defaults to 1, or to as many as it needs for session pages and the table of contents.",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
     "page": {
       "type": "object",
       "additionalProperties": false,
       "required": ["kind"],
       "properties": {
         "kind": {
-          "enum": ["cover", "title", "index", "reference", "session", "unused", "blank"]
+          "enum": ["cover", "title", "index", "reference", "session", "unused", "blank", "contents", "info"]
         },
         "number": {
           "description": "Page number: printed on odd pages, inferred for even ones. Front matter has none.",
