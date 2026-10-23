@@ -43,14 +43,12 @@ export function pageAnchor(page) {
   return page.number != null ? `p${page.number}` : `scan-${page.slot}`;
 }
 
-export const KIND_NAMES = {
-  cover: "Cover", title: "Title page", index: "Index", reference: "Reference",
-  session: "Session", unused: "Unused", blank: "Blank", contents: "Table of contents",
-  info: "Notebook info",
-};
+// Category labels come with the pages (data/categories.json); these are the
+// kinds that aren't categories.
+export const KIND_NAMES = { session: "Session", unused: "Unused", blank: "Blank" };
 
 export function pageName(page) {
-  return page.number != null ? `Page ${page.number}` : page.label ?? KIND_NAMES[page.kind];
+  return page.number != null ? `Page ${page.number}` : page.label ?? KIND_NAMES[page.kind] ?? page.kind;
 }
 
 // The notebook's own key. Seeing I is best; transparency I is worst.
