@@ -38,7 +38,7 @@ needs to change things safely.
 
 | Path | What |
 | --- | --- |
-| `data/notebooks/<id>.json` | Every scanned page in order: `kind`, `number`, `label`, `open`, `redact` (schema: `schema/notebook.schema.json`) |
+| `data/notebooks/<id>.json` | Expected `sections` in order, and every scanned page in order: `kind`, `number`, `label`, `open`, `redact` (schema: `schema/notebook.schema.json`; sections are matched by `scripts/lib/sections.mjs`) |
 | `data/sessions/<id>.json` | One observing night; `notebook`, `pages`, and `page` on each observation (schema: `schema/session.schema.json`) |
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
@@ -60,10 +60,15 @@ as excellent and transparency I as magnitude 1 (`site/lib.js`).
 - Entries are rubber-stamped forms filled in pencil. A session starts with
   a NEW SESSION header; later pages without one continue it. Crossed-out
   entries are skipped.
+- Kacy defines each notebook's sections (front cover, front matter,
+  session pages, table of contents, notebook info, ...); the outside front
+  cover is shown alone. Pages are matched to sections in order, and a
+  section with nothing scanned isn't shown.
 - Pages that will still change (index, volume label without a finish date,
   blank pages after the last written one, session pages with room) are
-  `open`: re-read on the next import and, except session pages, hidden on
-  the site until the notebook is completed.
+  `open`: re-read on the next import and, except session pages, left off
+  the site until the notebook is completed. Blank pages are left off until
+  then too; no placeholders. Completing lists blanks to check.
 
 ## Import pipeline (`scripts/import-notebook.mjs`)
 

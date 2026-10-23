@@ -32,6 +32,27 @@ that lists every scanned page in order: covers, title, index, reference,
 session pages, and blanks. Page numbers are printed on odd pages; even
 ones are inferred. Front matter has a label instead of a number.
 
+Its `sections` say which parts the notebook is expected to have, in order.
+For Astronomy 001:
+
+| Section | Kind | Pages |
+| --- | --- | --- |
+| Front cover (outside) | `cover` | 1 |
+| Inside front cover, Volume label | `cover` | 1 each |
+| (blank) | `blank` | 1 |
+| Title page | `title` | 1 |
+| Index | `index` | 4 |
+| Seeing and transparency key | `reference` | 1 |
+| Session pages | `session` | as many as it takes (also `unused` and `blank` pages) |
+| Table of contents | `contents` | as many as it takes |
+| Notebook info | `info` | 1 |
+
+`pages` defaults to 1, and to as many as it takes for session pages and
+the table of contents. Scanned pages are matched to sections in order, and
+validation fails if one doesn't fit. A section with nothing scanned yet
+isn't shown. **Create new notebook** writes sections from the front matter
+it reads; edit them if a notebook is laid out differently.
+
 To turn a notebook scan (a PDF of two-page spreads, or a folder of
 images) into page images:
 
@@ -74,8 +95,10 @@ is merged.
 **Open pages.** Pages that will still change are marked `"open": true`:
 the index, a volume label with no finish date, blank pages after the last
 one written on, and session pages with room for another entry. Open pages
-are re-read by **Add session**, and all but session pages are hidden on
-the site until the notebook is completed.
+are re-read by **Add session**, and all but session pages are left off
+the site until the notebook is completed. Blank pages are left off too
+until then. **Complete notebook** lists every blank page for you to check,
+and the sections that have nothing scanned yet.
 
 **How it reads.** The import splits each spread into pages and asks
 Claude (Opus 5.5) to read them. Pages are placed by their printed odd
