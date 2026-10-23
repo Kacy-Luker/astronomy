@@ -9,13 +9,18 @@
 //   add       After a session: reads only pages that are new or still open
 //             (pages that were going to change); everything else is skipped.
 //   replace   Re-read the uploaded pages and replace what was recorded for them.
-//   complete  Mark the notebook completed. Without a scan, lists the spreads
-//             to rescan (index, volume label); with one, fills those in.
+//   complete  Mark the notebook completed. Without a scan, lists what to
+//             rescan (sections marked rescan, pages still open); with one,
+//             fills those in.
 //
 // Pages are placed by printed odd page numbers, by matching the rescanned
 // pages against the published images, or (for completion) by the list of
-// spreads to rescan. Readings are cached in .import-cache/ so a rerun doesn't
-// pay for the same page twice.
+// spreads to rescan. Back matter (index, info page, inside back cover) is
+// kept at the end of the notebook: uploaded pages of those kinds at the end
+// of a scan replace that section, and new session pages go in before it.
+// The outside front cover is imported by scripts/import-cover.mjs.
+// Readings are cached in .import-cache/ so a rerun doesn't pay for the same
+// page twice.
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -24,7 +29,7 @@ import { parseArgs } from "node:util";
 import { formatJSON } from "./lib/format-json.mjs";
 import { matchPosition } from "./lib/match.mjs";
 import { cleanShowThrough, listSpreads, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
-import { assignSections, defaultSections } from "./lib/sections.mjs";
+import { assignSections, backStart, defaultSections, missingSections } from "./lib/sections.mjs";
 
 const MODES = ["add", "new", "replace", "complete"];
 const { positionals: [id, source], values: opts } = parseArgs({
@@ -49,8 +54,19 @@ const notebookPath = join("data", "notebooks", `${id}.json`);
 const existing = existsSync(notebookPath) ? JSON.parse(await readFile(notebookPath, "utf8")) : null;
 if (mode === "new" && existing) throw new Error(`notebook ${id} already exists; use Add session instead`);
 if (mode !== "new" && !existing) throw new Error(`there is no notebook ${id}; make it with Create new notebook first`);
-const known = existing?.pages ?? [];
 const scan = existing?.scan ?? { rotate: 90, split: 0.47 };
+
+// Back matter is set aside while the other pages are placed, then put back
+// after them. Its images are read now, before any are overwritten.
+const sections = existing?.sections ?? null;
+const firstBack = backStart(sections ?? defaultSections([]));
+const backSections = (sections ?? defaultSections([])).slice(firstBack);
+const owners = existing ? assignSections(sections, existing.pages).owner : [];
+let bodyCount = owners.findIndex((o) => o >= firstBack);
+if (bodyCount < 0) bodyCount = existing?.pages.length ?? 0;
+const known = existing?.pages.slice(0, bodyCount) ?? [];
+const oldBack = await Promise.all((existing?.pages.slice(bodyCount) ?? []).map(async (page, k) =>
+  ({ page, section: owners[bodyCount + k] - firstBack, image: await readFile(pageImage(id, bodyCount + k)) })));
 const notes = []; // lines for the PR summary
 const nn = (i) => String(i + 1).padStart(2, "0");
 
@@ -117,6 +133,18 @@ const all = uploaded.map((_, u) => u);
 let positions = []; // upload index -> notebook position
 let toRecord = []; // upload indices to record (read, re-image, merge)
 
+// Back matter at the end of the upload: unnumbered pages of the back
+// sections' kinds, with any blank page scanned alongside them (dropped).
+function trailingBack() {
+  const run = [];
+  for (let u = uploaded.length - 1; u >= 0; u--) {
+    const r = readings.get(u);
+    if (!r || r.printed_number != null || !(backSections.some((s) => s.kind === r.kind) || r.kind === "blank")) break;
+    run.unshift(u);
+  }
+  return run.some((u) => readings.get(u).kind !== "blank") ? run : [];
+}
+
 if (mode === "new") {
   await read(all);
   const o = uploadOffset();
@@ -125,16 +153,17 @@ if (mode === "new") {
   positions = all;
   toRecord = all;
 } else if (mode === "complete" && uploaded.length) {
-  const spreads = awaitingRescan(known);
-  if (!spreads.length) throw new Error("no pages are waiting to be rescanned; run Complete notebook without a scan");
-  if (uploaded.length !== spreads.length * 2) {
-    throw new Error(`expected ${spreads.length} spread(s) to rescan (` +
-      `${spreads.map((s) => describeSpread(known, s)).join("; ")}), but the scan has ${uploaded.length / 2}`);
-  }
-  positions = all.map((u) => spreads[Math.floor(u / 2)] + (u % 2));
-  toRecord = all;
+  // The spreads to rescan, in order, then any back matter.
   await read(all);
-  for (const u of all) {
+  const body = all.slice(0, all.length - trailingBack().length);
+  const spreads = awaitingRescan(known);
+  if (body.length !== spreads.length * 2) {
+    throw new Error(`expected ${spreads.length} spread(s) to rescan (` +
+      `${spreads.map((s) => describeSpread(known, s)).join("; ") || "none"}) before the back matter, but the scan has ${body.length / 2}`);
+  }
+  positions = body.map((u) => spreads[Math.floor(u / 2)] + (u % 2));
+  toRecord = body;
+  for (const u of body) {
     const want = known[positions[u]].kind, got = readings.get(u).kind;
     if (want !== got) notes.push(`- Uploaded page ${nn(u)} looks like a ${got} page but replaces a ${want} page. Check the spreads were scanned in order.`);
   }
@@ -168,6 +197,8 @@ if (mode === "new") {
   }
   positions = all.map((u) => start + u);
 }
+const backUploads = trailingBack().filter((u) => mode === "complete" || toRecord.includes(u));
+toRecord = toRecord.filter((u) => !backUploads.includes(u));
 for (const u of toRecord) {
   const r = readings.get(u);
   const expected = known[positions[u]]?.number ?? (offset != null ? positions[u] + offset : null);
@@ -179,19 +210,16 @@ for (const u of toRecord) {
 // 4. Record the processed pages.
 const clamp = (v) => Math.min(1, Math.max(0, v));
 const round = (v) => Math.round(v * 1000) / 1000;
-const pages = [...known];
-await inBatches(toRecord, async (u) => {
-  const i = positions[u];
+// One uploaded page as a notebook page entry, keeping what was recorded
+// for it before (label, number, note, redaction).
+async function recordPage(u, before, { number, label, where }) {
   const r = readings.get(u);
-  const before = known[i];
   const page = { kind: r.kind };
   if (before && r.kind === "blank" && before.kind !== "blank") {
     page.kind = before.kind;
-    notes.push(`- Page ${before.number ?? before.label} now reads as blank, so its old kind (${before.kind}) was kept. Check the scan.`);
+    notes.push(`- ${where} now reads as blank, so its old kind (${before.kind}) was kept. Check the scan.`);
   }
-  const label = before?.label ?? (["session", "blank", "unused"].includes(r.kind) ? null : r.label);
   if (label) page.label = label;
-  const number = before ? before.number : offset != null && i + offset >= 1 ? i + offset : null;
   if (number != null) page.number = number;
   if (before?.note) page.note = before.note;
   if (r.will_change) page.open = true;
@@ -203,7 +231,6 @@ await inBatches(toRecord, async (u) => {
     });
     const check = await cached(`${nn(u)}.check`, async (c) =>
       c.checkRedaction(await webImage(await redact(uploaded[u], page.redact), READ_HEIGHT)));
-    const where = number != null ? `Page ${number}` : label ?? `Scan position ${nn(i)}`;
     if (check.legible) {
       page.redact = [[0, 0, 1, 1]];
       notes.push(`- ${where}: details were still readable after blurring (${check.what.join(", ")}), so the whole page is blurred. Narrow \`redact\` by hand if you like.`);
@@ -212,8 +239,44 @@ await inBatches(toRecord, async (u) => {
     }
   }
   if (!page.redact) delete page.redact;
-  pages[i] = page;
+  return page;
+}
+
+const pages = [...known];
+const fresh = new Set(); // pages recorded by this run
+await inBatches(toRecord, async (u) => {
+  const i = positions[u];
+  const r = readings.get(u);
+  const before = known[i];
+  const label = before?.label ?? (["session", "blank", "unused"].includes(r.kind) ? null : r.label);
+  const number = before ? before.number : offset != null && i + offset >= 1 ? i + offset : null;
+  pages[i] = await recordPage(u, before, { number, label, where: number != null ? `Page ${number}` : label ?? `Scan position ${nn(i)}` });
+  fresh.add(pages[i]);
 });
+
+// Back matter: uploaded pages replace their whole section, and the others
+// keep theirs. Blank pages scanned alongside it aren't kept.
+const backUpload = backUploads.filter((u) => readings.get(u).kind !== "blank");
+const { owner: backOwner } = assignSections(backSections, backUpload.map((u) => ({ kind: readings.get(u).kind })));
+if (backOwner.length < backUpload.length) {
+  throw new Error(`the back matter in this scan (${backUpload.map((u) => readings.get(u).kind).join(", ")}) ` +
+    `doesn't fit the notebook's back sections in order (${backSections.map((s) => s.label ?? s.kind).join(", ")})`);
+}
+const back = [];
+for (const [k, section] of backSections.entries()) {
+  const old = oldBack.filter((b) => b.section === k);
+  const ups = backUpload.filter((_, j) => backOwner[j] === k);
+  if (!ups.length) {
+    back.push(...old);
+    continue;
+  }
+  for (const [j, u] of ups.entries()) {
+    const label = section.label ?? null;
+    const page = await recordPage(u, old[j]?.page, { number: null, label, where: label ?? section.kind });
+    fresh.add(page);
+    back.push({ page, image: await webImage(await redact(uploaded[u], page.redact)) });
+  }
+}
 
 // 5. Sessions. A header starts a session; entries without one continue the
 // latest session. On a page that already has entries, only entries beyond
@@ -329,13 +392,24 @@ for (const s of mine()) {
   }
 }
 
-// 6. Which pages are still open. Completing closes everything except front
-// matter still waiting to be rescanned; otherwise blank pages after the last
-// written page stay open, since that's where the next session goes.
+// 6. Which pages are still open. Completing without a scan asks for the
+// sections marked rescan (and pages still waiting) to be rescanned; later
+// completion scans close what they record. While the notebook is in
+// progress, blank pages after the last written page stay open, since that's
+// where the next session goes.
 const status = mode === "complete" ? "completed" : existing?.status ?? "in_progress";
+const finalSections = sections ?? defaultSections(pages);
+const allPages = [...pages, ...back.map((b) => b.page)];
+const { owner: finalOwner } = assignSections(finalSections, allPages);
+const toRescan = (p, i) => Boolean(finalSections[finalOwner[i]]?.rescan) || (p.open && !["session", "blank"].includes(p.kind));
+let frontCover = existing?.front_cover ?? null;
 if (status === "completed") {
-  const waiting = uploaded.length ? [] : awaitingRescan(pages).flatMap((s) => [s, s + 1]);
-  pages.forEach((p, i) => { if (!waiting.includes(i)) delete p.open; });
+  const asking = mode === "complete" && !uploaded.length && existing.status !== "completed";
+  allPages.forEach((p, i) => {
+    if (asking ? toRescan(p, i) : !fresh.has(p) && p.open && toRescan(p, i)) p.open = true;
+    else delete p.open;
+  });
+  if (asking && frontCover && finalSections.some((s) => s.kind === "front_cover" && s.rescan)) frontCover = { open: true };
 } else {
   const lastWritten = pages.findLastIndex((p) => p.kind !== "blank");
   pages.forEach((p, i) => {
@@ -344,9 +418,9 @@ if (status === "completed") {
   });
 }
 // Keep the key order of hand-written entries, with open last before redact.
-for (const [i, p] of pages.entries()) {
+for (const [i, p] of allPages.entries()) {
   const { kind, label, number, note, open, redact: boxes } = p;
-  pages[i] = present({ kind, label, number, note, open, redact: boxes });
+  allPages[i] = present({ kind, label, number, note, open, redact: boxes });
 }
 
 // 7. Write the notebook, sessions, and processed page images.
@@ -361,10 +435,11 @@ const notebook = {
   // The finish date written on the volume label wins once it's been rescanned.
   finished: label.finished ?? existing?.finished ?? (status === "completed" ? dates.at(-1) ?? null : null),
   scan,
+  ...(frontCover && { front_cover: frontCover }),
   // A new notebook's sections follow its front matter as read; edit them by
   // hand if the notebook is laid out differently.
-  sections: existing?.sections ?? defaultSections(pages),
-  pages,
+  sections: finalSections,
+  pages: allPages,
 };
 await mkdir(join("data", "notebooks"), { recursive: true });
 await writeFile(notebookPath, formatJSON(notebook) + "\n");
@@ -375,7 +450,17 @@ for (const sid of touched) {
 for (const sid of removed) await rm(join("data", "sessions", `${sid}.json`), { force: true });
 await mkdir(join("scans", id), { recursive: true });
 for (const u of toRecord) {
-  await writeFile(pageImage(id, positions[u]), await webImage(await redact(uploaded[u], pages[positions[u]].redact)));
+  await writeFile(pageImage(id, positions[u]), await webImage(await redact(uploaded[u], allPages[positions[u]].redact)));
+}
+// Back matter goes after the other pages, wherever they now end. It has no
+// show-through cleaning: the blank pages it backs onto aren't scanned.
+for (const [k, b] of back.entries()) {
+  await writeFile(pageImage(id, pages.length + k), b.image);
+  await rm(pageImage(id, pages.length + k).replace(/\.jpg$/, ".clean.jpg"), { force: true });
+}
+for (let i = allPages.length; i < (existing?.pages.length ?? 0); i++) {
+  await rm(pageImage(id, i), { force: true });
+  await rm(pageImage(id, i).replace(/\.jpg$/, ".clean.jpg"), { force: true });
 }
 // New pages may complete a sheet whose other side came in an earlier upload.
 if (toRecord.length) cleanShowThrough(id, toRecord.map((u) => positions[u]));
@@ -385,12 +470,13 @@ const what = {
   new: "Created", add: "Added to", replace: "Replaced pages in", complete: "Completed",
 }[mode];
 const placed = toRecord.map((u) => positions[u]).sort((a, b) => a - b);
-const pageName = (i) => (pages[i].number != null ? `page ${pages[i].number}` : (pages[i].label ?? pages[i].kind).toLowerCase());
+const pageName = (i) => (allPages[i].number != null ? `page ${allPages[i].number}` : (allPages[i].label ?? allPages[i].kind).toLowerCase());
 const pageRange = (a, b) => (a === b ? pageName(a) : `${pageName(a)} to ${pageName(b)}`);
 const lines = [
   `${what} **${notebook.title}**` + (source
-    ? ` from \`${basename(source)}\`: ${toRecord.length} of ${uploaded.length} uploaded pages recorded` +
-      (placed.length ? ` (${pageRange(placed[0], placed.at(-1))})` : "") + "."
+    ? ` from \`${basename(source)}\`: ${toRecord.length + backUpload.length} of ${uploaded.length} uploaded pages recorded` +
+      (placed.length ? ` (${pageRange(placed[0], placed.at(-1))})` : "") + "." +
+      (backUpload.length ? ` At the back: ${backUpload.map((u) => readings.get(u).kind).join(", ")}.` : "")
     : "."),
   `Status: **${status === "completed" ? "completed" : "in progress"}**.`,
   "",
@@ -406,26 +492,40 @@ if (touched.size || removed.size) {
 } else {
   lines.push("No session entries changed.");
 }
-const rescan = awaitingRescan(pages);
-if (rescan.length) {
-  lines.push("", status === "completed"
-    ? "### Rescan these spreads\n\nScan them in this order into one file, upload it, and run **Complete notebook** again with that file:\n"
-    : "### When the notebook is complete\n\nThese spreads are hidden until then, and will need rescanning:\n");
-  rescan.forEach((s, k) => lines.push(`${k + 1}. ${describeSpread(pages, s)}`));
-}
+const rescan = awaitingRescan(allPages.slice(0, pages.length));
 if (status === "completed") {
-  // Blank pages are confirmed by hand, and sections still to scan are listed.
-  const blanks = pages.flatMap((p, i) => (p.kind === "blank" ? [p.number != null ? `page ${p.number}` : `scan position ${nn(i)}`] : []));
+  // What completing asks to be rescanned, and whether it has been.
+  const todo = finalSections.flatMap((section, k) => {
+    if (!section.rescan) return [];
+    const name = section.label ?? section.kind;
+    if (section.kind === "front_cover") return [{ name, k, todo: !frontCover ? "not scanned yet" : frontCover.open ? "rescan it" : null }];
+    const ps = allPages.filter((_, i) => finalOwner[i] === k);
+    return [{ name, k, todo: !ps.length ? "not scanned yet" : ps.some((p) => p.open) ? "rescan it" : null }];
+  });
+  lines.push("", "### Rescan checklist", "",
+    ...todo.map(({ name, todo: t }) => `- [${t ? " " : "x"}] ${name}${t ? `: ${t}` : ""}`));
+  const backTodo = todo.filter((t) => t.todo && t.k >= backStart(finalSections)).map((t) => t.name.toLowerCase());
+  if (rescan.length || backTodo.length) {
+    lines.push("", "Scan these in this order into one file, upload it, and run **Complete notebook** again with that file:", "");
+    rescan.forEach((s, k) => lines.push(`${k + 1}. ${describeSpread(allPages, s)}`));
+    if (backTodo.length) lines.push(`${rescan.length + 1}. then the ${backTodo.join(" and ")} spreads at the back`);
+  }
+  if (todo.some((t) => t.todo && finalSections[t.k].kind === "front_cover")) {
+    lines.push("", "Scan the closed notebook's front cover on its own, upload it, and run **Add front cover**.");
+  }
+  // Blank pages are confirmed by hand, and other sections still to scan are listed.
+  const blanks = allPages.flatMap((p, i) => (p.kind === "blank" ? [p.number != null ? `page ${p.number}` : `scan position ${nn(i)}`] : []));
   if (blanks.length) {
     lines.push("", "### Blank pages", "", "These pages were read as blank. Check each is meant to be blank before merging:", "",
       ...blanks.map((b) => `- ${b}`));
   }
-  const { owner } = assignSections(notebook.sections, pages);
-  const missing = notebook.sections.filter((_, s) => !owner.includes(s));
+  const missing = missingSections(notebook).filter((s) => !s.rescan);
   if (missing.length) {
-    lines.push("", "### Not scanned yet", "", "Sections the notebook expects that have no pages yet:", "",
-      ...missing.map((s) => `- ${s.label ?? s.kind}`));
+    lines.push("", "### Not scanned yet", "", ...missing.map((s) => `- ${s.label ?? s.kind}`));
   }
+} else if (rescan.length) {
+  lines.push("", "### When the notebook is complete", "", "These spreads are hidden until then, and will need rescanning:", "");
+  rescan.forEach((s, k) => lines.push(`${k + 1}. ${describeSpread(allPages, s)}`));
 }
 if (notes.length) lines.push("", "### Check these", "", ...notes);
 const summary = lines.join("\n") + "\n";

@@ -73,11 +73,12 @@ numeral each), EP/MAG (eyepiece and magnification), FILTER, a sketch circle, and
 DESCRIPTION lines that often run past the printed lines.
 
 Front matter can include covers, a volume label (title, start and finish dates),
-a title page with the owner's contact details, an index table, and a reference
-key. Back matter can include a handwritten table of contents (kind "contents":
-objects by catalog with their page numbers) and the notebook maker's info page
-(kind "info": paper brand, page count, copyright). Odd pages carry a small
-printed page number in the top outer corner.
+a title page with the owner's contact details, a table of contents (kind
+"contents": a table of PROGRAM, DATE/EVENT, OBJ COUNT/HRS, PG #), and a
+reference key. Back matter can include an index (kind "index": every object
+observed, by catalog, with its page number), the notebook maker's info page
+(kind "info": paper brand, page count, copyright), and the inside back cover.
+Odd pages carry a small printed page number in the top outer corner.
 
 Rules:
 - Transcribe what is written. Do not add facts, cross-catalog IDs, or names that
@@ -90,9 +91,10 @@ Rules:
 - SQM like "~21.99 mag/arcsec^2" is 21.99.
 - Eyepiece like "13mm Ethos;" with nothing after the ";" means no magnification.
 - kind "unused" is a page whose only entries are crossed out or never filled in.
-- will_change is true for an index with empty rows left, a volume label whose
-  finish date is blank, and a session page with unused space below its last
-  entry where another entry could still go. Otherwise false.
+- will_change is true for a table of contents or index with empty rows left,
+  a volume label whose finish date is blank, and a session page with unused
+  space below its last entry where another entry could still go. Otherwise
+  false.
 - personal_info boxes must fully cover each item with a little margin.
 - List anything you had to guess in "uncertain".`;
 
