@@ -8,13 +8,13 @@
   "scan": { "rotate": 90, "split": 0.47 },
   "pages": [
     { "kind": "cover", "label": "Inside front cover" },
-    { "kind": "cover", "label": "Volume label" },
+    { "kind": "cover", "label": "Volume label", "open": true },
     { "kind": "blank" },
     { "kind": "title", "label": "Title page", "redact": [[0.42, 0.485, 0.38, 0.06]] },
-    { "kind": "index", "label": "Index" },
-    { "kind": "index", "label": "Index" },
-    { "kind": "index", "label": "Index" },
-    { "kind": "index", "label": "Index" },
+    { "kind": "index", "label": "Index", "open": true },
+    { "kind": "index", "label": "Index", "open": true },
+    { "kind": "index", "label": "Index", "open": true },
+    { "kind": "index", "label": "Index", "open": true },
     { "kind": "reference", "label": "Seeing and transparency key" },
     { "kind": "blank", "number": 1 },
     { "kind": "session", "number": 2 },
@@ -22,6 +22,6 @@
     { "kind": "session", "number": 4 },
     { "kind": "session", "number": 5 },
     { "kind": "session", "number": 6 },
-    { "kind": "blank", "number": 7 }
+    { "kind": "blank", "number": 7, "open": true }
   ]
 }
