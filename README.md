@@ -44,56 +44,60 @@ rotation and fold position come from the notebook file's `scan` setting.
 Use `redact` on a page to blur personal details such as a phone number.
 Keep unredacted scans out of the repo, since it's public.
 
-## Importing a session
+## Importing
 
-After each observing session:
+Scans go to the private **astronomy-scans** repo as
+`<notebook id>/<date>.pdf` (a JPEG works too), for example
+`astronomy-001/2026-10-20.pdf`. Add a 24-hour time when you upload more
+than once a day: `astronomy-001/2026-10-20-1350.pdf`. Then open
+**Actions → Import → Run workflow** here, choose an action, and review the
+pull request it opens before merging. Merge each import before the next.
 
-1. Scan the spreads you wrote on. Include the spread you started on even if
-   part of it was imported before; already recorded entries aren't added again.
-2. Upload the PDF (or image) to the private **astronomy-scans** repo as
-   `<notebook id>/<date>.pdf`, for example `astronomy-001/2026-10-20.pdf`.
-   Add a 24-hour time when you upload more than once a day:
-   `astronomy-001/2026-10-20-1350.pdf`.
-3. Here, open **Actions → Import session → Run workflow** and enter the
-   notebook id. It picks the newest file in that notebook's folder. Tick
-   **This was the last session in the notebook** when the notebook is full.
-4. Review the pull request it opens: compare each session with its pages
-   in the notebook view, fix anything misread in the JSON, then merge.
-   Merge each import before running the next.
+| Action | When | Scan |
+| --- | --- | --- |
+| **Create new notebook** | Starting a notebook | From the inside front cover through any sessions so far. Type the id in **new notebook** |
+| **Add session** | After each session | The spreads you wrote on, including the one you started on. Only new pages and pages still being written on are read |
+| **Replace pages** | A page was misread or rescanned | The spreads to re-read. What was recorded for those pages is replaced |
+| **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the list of spreads to rescan; then upload those, in that order, and run it again with that file |
 
-For a new notebook, the first upload should start at the inside front
-cover so the front matter is recorded too.
+The scan field can be left empty to use the newest file in the notebook's
+folder (for **Complete notebook**, empty means no scan). The notebook
+dropdown is generated from `data/notebooks/` by
+`scripts/sync-workflow.mjs`; a new notebook appears in it once its import
+is merged.
 
-The import splits the spreads into pages and asks Claude (Opus 5.5) to
-read each one. Printed odd page numbers place the pages in the notebook;
-if none are visible, the upload is placed after the last page with entries
-and the pull request says so. It groups entries into sessions (a page
-without a NEW SESSION header continues the last one) and blurs phone
-numbers, emails and addresses. After blurring it checks each page again
-and blurs the whole page if anything is still readable. Rescanned pages
-get a new image, but only entries beyond those already recorded on the
-page are added, so corrections made by hand survive. Expect roughly 5–10
-cents per uploaded page.
+**Open pages.** Pages that will still change are marked `"open": true`:
+the index, a volume label with no finish date, blank pages after the last
+one written on, and session pages with room for another entry. Open pages
+are re-read by **Add session**, and all but session pages are hidden on
+the site until the notebook is completed.
 
-A notebook's `status` is `in_progress` until an import is run with the
-"last session" box ticked, which sets it to `completed` and fills in
-`finished`. You can also change both by editing the notebook's JSON.
+**How it reads.** The import splits each spread into pages and asks
+Claude (Opus 5.5) to read them. Pages are placed by their printed odd
+page numbers, by matching rescanned pages against the published ones, or
+for completion by the rescan list. Entries are grouped into sessions (a
+page without a NEW SESSION header continues the last one); on a page that
+already has entries, only entries beyond those are added, so nothing is
+duplicated and hand corrections survive. Phone numbers, emails and
+addresses are blurred, and each blurred page is checked again; if anything
+is still readable the whole page is blurred. Expect roughly 5–10 cents per
+page read.
 
 Locally, the same thing runs as:
 
 ```sh
-ANTHROPIC_API_KEY=... node scripts/import-notebook.mjs astronomy-001 path/to/scan.pdf [--completed]
+ANTHROPIC_API_KEY=... node scripts/import-notebook.mjs astronomy-001 path/to/scan.pdf --mode add
 ```
 
 One-time setup:
 
 1. Create a **private** repo named `astronomy-scans`.
-2. Create a fine-grained token with read-only **Contents** access to
-   `astronomy-scans` only.
+2. Create a fine-grained token with access to `astronomy-scans` (Contents:
+   read-only) and to this repo (Contents, Pull requests and Workflows:
+   read and write). Workflows access lets an import update the notebook
+   dropdown.
 3. In this repo, under **Settings → Secrets and variables → Actions**, add
-   `SCANS_TOKEN` (that token) and `ANTHROPIC_API_KEY`.
-4. Under **Settings → Actions → General**, tick **Allow GitHub Actions to
-   create and approve pull requests**.
+   the repository secrets `SCANS_TOKEN` (that token) and `ANTHROPIC_API_KEY`.
 
 ## Session files
 

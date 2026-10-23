@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Observation logs transcribed from paper notes.",
   "scripts": {
-    "validate": "node scripts/validate.mjs",
+    "validate": "node scripts/validate.mjs && node scripts/sync-workflow.mjs --check",
     "build": "node scripts/build.mjs",
     "serve": "npm run build && npx --yes serve dist"
   },

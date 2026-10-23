@@ -40,7 +40,7 @@ export const notebookHref = (id, page) =>
 
 // Numbered pages anchor by number; front matter by its position in the scan.
 export function pageAnchor(page) {
-  return page.number != null ? `p${page.number}` : `scan-${page.image.match(/(\d+)\.jpg$/)[1]}`;
+  return page.number != null ? `p${page.number}` : `scan-${page.slot}`;
 }
 
 export const KIND_NAMES = {
@@ -90,18 +90,26 @@ export function scanToggle(target) {
   return group;
 }
 
-// One scanned page, linking to the full image, with a caption.
+// One scanned page, linking to the full image, with a caption. A page that
+// will still change shows a same-sized placeholder instead.
 export function pageFigure(page, alt, caption) {
   const figure = el("figure", "page");
   figure.id = pageAnchor(page);
-  const a = link(page.image);
-  const img = el("img");
-  img.src = page.image;
-  if (page.width) [img.width, img.height] = [page.width, page.height];
-  img.alt = alt;
-  img.loading = "lazy";
-  a.append(img);
-  figure.append(a);
+  if (page.hidden) {
+    const box = el("div", "page-hidden",
+      page.kind === "blank" ? "Not written on yet" : "Shown when the notebook is complete");
+    if (page.width) box.style.aspectRatio = `${page.width} / ${page.height}`;
+    figure.append(box);
+  } else {
+    const a = link(page.image);
+    const img = el("img");
+    img.src = page.image;
+    if (page.width) [img.width, img.height] = [page.width, page.height];
+    img.alt = alt;
+    img.loading = "lazy";
+    a.append(img);
+    figure.append(a);
+  }
   if (caption) {
     const fc = el("figcaption");
     fc.append(...[caption].flat());

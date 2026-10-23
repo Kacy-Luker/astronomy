@@ -27,9 +27,14 @@ const notebooks = await Promise.all((await readAll("data/notebooks")).map(async 
   pages: await Promise.all(nb.pages.map(async ({ redact, ...page }, i) => {
     const image = `scans/${nb.id}/${String(i + 1).padStart(2, "0")}.jpg`;
     const { width, height } = await sharp(image).metadata();
+    // Pages that will still change aren't published until they're final.
+    const hidden = Boolean(page.open && page.kind !== "session");
+    if (hidden) await rm(join(OUT, image));
     return {
       ...page,
-      image,
+      slot: i + 1,
+      image: hidden ? null : image,
+      hidden,
       width,
       height,
       sessions: sessions
