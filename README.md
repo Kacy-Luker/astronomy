@@ -30,37 +30,36 @@ npm run serve      # build and preview locally
 Each paper notebook has a file like `data/notebooks/astronomy-001.json`
 that lists every scanned page in order: covers, title, table of contents,
 reference, session pages, blanks, and back matter. Page numbers are
-printed on odd pages; even ones are inferred. Front and back matter have a
-label instead of a number.
+printed on odd pages; even ones are inferred. Other pages are named by
+their category.
 
-Its `sections` say which parts the notebook is expected to have, in order.
-For Astronomy 001:
+Pages belong to categories, listed once for every notebook in
+`data/categories.json` in the order they come in the book and on the site:
 
-| Section | Kind | Pages | In progress | Completing |
+| Category | Kind | In progress | Completing | Only one |
 | --- | --- | --- | --- | --- |
-| Front cover (outside) | `front_cover` | 1 | shown | rescanned |
-| Inside front cover, Volume label | `cover` | 1 each | hidden | |
-| (blank) | `blank` | 1 | hidden | |
-| Title page | `title` | 1 | shown | |
-| Table of contents | `contents` | 4 | hidden | rescanned |
-| Seeing and transparency key | `reference` | 1 | shown | |
-| Session pages | `session` | as many as it takes | shown | |
-| Index (objects by catalog) | `index` | as many as it takes | hidden | scanned |
-| Notebook info | `info` | 1 | shown | |
-| Inside back cover | `cover` | 1 | hidden | |
+| Front cover (outside) | `front_cover` | shown | rescanned | yes |
+| Inside front cover | `inside_front_cover` | hidden | | yes |
+| Volume label | `volume_label` | hidden | | yes |
+| Title page | `title` | shown | | yes |
+| Table of contents | `contents` | hidden | rescanned | |
+| Scales | `reference` | shown | | |
+| Session pages | `session` (and `unused`) | shown | | |
+| Index (objects by catalog) | `index` | hidden | scanned | |
+| Notebook info | `info` | shown | | yes |
+| Inside back cover | `inside_back_cover` | hidden | | yes |
 
-`pages` defaults to 1, and to as many as it takes for session pages and
-the index. `hidden_until_complete` leaves a section off the site until the
-notebook is completed, and `rescan` makes **Complete notebook** check it
-was rescanned. Blank pages are left off while a notebook is in progress.
-Scanned pages are matched to sections in order, and validation fails if
-one doesn't fit; a section with nothing scanned yet isn't shown.
-**Create new notebook** writes sections like these from the front matter
-it reads; edit them if a notebook is laid out differently.
+Reorder or change them by editing that file. Claude puts each scanned page
+in a category, and the import places it where its category comes; session
+pages go by page number. Blank pages go beside the page they face, and are
+left off while a notebook is in progress. Once a notebook has a page from
+an only-one category, later uploads skip it unless it's being re-read. The
+info page can be scanned early: later session pages go in before it.
 
-The sections after the session pages are back matter. The info page can be
-scanned early: back matter stays at the end of the notebook, and new
-session pages go in before it.
+If Claude puts pages in the wrong category, name the upload after the
+right one, e.g. `astronomy-001/2026-10-23-index.pdf` or
+`…-table-of-contents.pdf` (the kind or the label, at the end of the name),
+and every non-blank page in it goes in that category.
 
 To turn a notebook scan (a PDF of two-page spreads, or a folder of
 images) into page images:
@@ -93,7 +92,7 @@ pull request it opens before merging. Merge each import before the next.
 | **Add session** | After each session | The spreads you wrote on, including the one you started on. Only new pages and pages still being written on are read |
 | **Replace pages** | A page was misread or rescanned | The spreads to re-read. What was recorded for those pages is replaced |
 | **Add front cover** | Starting a notebook, and again when completing it | The closed notebook on the scanner, on its own. The scanner bed is trimmed off and the cover turned upright |
-| **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the rescan checklist; then upload the spreads it lists, in that order, followed by the index spreads, and run it again with that file. Rescan the front cover with **Add front cover** |
+| **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the rescan checklist; then scan the spreads it lists, in any order, into one file and run it again with that file. Rescan the front cover with **Add front cover** |
 | **Remove notebook** | Taking a notebook off the site | No scan. Type the notebook's id in **confirm**; it opens a pull request deleting the notebook, its page images and its sessions (the scans in astronomy-scans are kept) |
 
 The scan field can be left empty to use the newest file in the notebook's
@@ -108,16 +107,17 @@ after the last one written on, and session pages with room for another
 entry. Open pages are re-read by **Add session**, and all but session
 pages are left off the site until the notebook is completed.
 
-**Completing.** **Complete notebook** marks the sections with `rescan`
-(front cover, table of contents, index) as waiting, and its pull request
-has a checklist of them; later completion scans tick them off. It also
-lists every blank page for you to check, and any other section with
-nothing scanned yet.
+**Completing.** **Complete notebook** marks the categories that are
+rescanned (front cover, table of contents, index) as waiting, and its pull
+request has a checklist of them; later completion scans tick them off. It
+also lists every blank page for you to check, and any other category with
+nothing scanned.
 
 **How it reads.** The import splits each spread into pages and asks
-Claude (Opus 5.5) to read them. Pages are placed by their printed odd
-page numbers, by matching rescanned pages against the published ones, or
-for completion by the rescan list. Entries are grouped into sessions (a
+Claude (Opus 5.5) to read them. Pages are placed by category and printed
+odd page numbers; **Add session** first matches the upload against the
+published pages so pages already recorded aren't read again (a file named
+for a category is always read in full). Entries are grouped into sessions (a
 page without a NEW SESSION header continues the last one); on a page that
 already has entries, only entries beyond those are added, so nothing is
 duplicated and hand corrections survive. Phone numbers, emails and
