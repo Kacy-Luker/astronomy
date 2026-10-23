@@ -28,30 +28,39 @@ npm run serve      # build and preview locally
 ## Notebooks
 
 Each paper notebook has a file like `data/notebooks/astronomy-001.json`
-that lists every scanned page in order: covers, title, index, reference,
-session pages, and blanks. Page numbers are printed on odd pages; even
-ones are inferred. Front matter has a label instead of a number.
+that lists every scanned page in order: covers, title, table of contents,
+reference, session pages, blanks, and back matter. Page numbers are
+printed on odd pages; even ones are inferred. Front and back matter have a
+label instead of a number.
 
 Its `sections` say which parts the notebook is expected to have, in order.
 For Astronomy 001:
 
-| Section | Kind | Pages |
-| --- | --- | --- |
-| Front cover (outside) | `cover` | 1 |
-| Inside front cover, Volume label | `cover` | 1 each |
-| (blank) | `blank` | 1 |
-| Title page | `title` | 1 |
-| Index | `index` | 4 |
-| Seeing and transparency key | `reference` | 1 |
-| Session pages | `session` | as many as it takes (also `unused` and `blank` pages) |
-| Table of contents | `contents` | as many as it takes |
-| Notebook info | `info` | 1 |
+| Section | Kind | Pages | In progress | Completing |
+| --- | --- | --- | --- | --- |
+| Front cover (outside) | `front_cover` | 1 | shown | rescanned |
+| Inside front cover, Volume label | `cover` | 1 each | hidden | |
+| (blank) | `blank` | 1 | hidden | |
+| Title page | `title` | 1 | shown | |
+| Table of contents | `contents` | 4 | hidden | rescanned |
+| Seeing and transparency key | `reference` | 1 | shown | |
+| Session pages | `session` | as many as it takes | shown | |
+| Index (objects by catalog) | `index` | as many as it takes | hidden | scanned |
+| Notebook info | `info` | 1 | shown | |
+| Inside back cover | `cover` | 1 | hidden | |
 
 `pages` defaults to 1, and to as many as it takes for session pages and
-the table of contents. Scanned pages are matched to sections in order, and
-validation fails if one doesn't fit. A section with nothing scanned yet
-isn't shown. **Create new notebook** writes sections from the front matter
+the index. `hidden_until_complete` leaves a section off the site until the
+notebook is completed, and `rescan` makes **Complete notebook** check it
+was rescanned. Blank pages are left off while a notebook is in progress.
+Scanned pages are matched to sections in order, and validation fails if
+one doesn't fit; a section with nothing scanned yet isn't shown.
+**Create new notebook** writes sections like these from the front matter
 it reads; edit them if a notebook is laid out differently.
+
+The sections after the session pages are back matter. The info page can be
+scanned early: back matter stays at the end of the notebook, and new
+session pages go in before it.
 
 To turn a notebook scan (a PDF of two-page spreads, or a folder of
 images) into page images:
@@ -83,7 +92,8 @@ pull request it opens before merging. Merge each import before the next.
 | **Create new notebook** | Starting a notebook | From the inside front cover through any sessions so far. Pick **new-notebook** in the notebook dropdown and type the id in **new notebook** |
 | **Add session** | After each session | The spreads you wrote on, including the one you started on. Only new pages and pages still being written on are read |
 | **Replace pages** | A page was misread or rescanned | The spreads to re-read. What was recorded for those pages is replaced |
-| **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the list of spreads to rescan; then upload those, in that order, and run it again with that file |
+| **Add front cover** | Starting a notebook, and again when completing it | The closed notebook on the scanner, on its own. The scanner bed is trimmed off and the cover turned upright |
+| **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the rescan checklist; then upload the spreads it lists, in that order, followed by the index spreads, and run it again with that file. Rescan the front cover with **Add front cover** |
 | **Remove notebook** | Taking a notebook off the site | No scan. Type the notebook's id in **confirm**; it opens a pull request deleting the notebook, its page images and its sessions (the scans in astronomy-scans are kept) |
 
 The scan field can be left empty to use the newest file in the notebook's
@@ -93,12 +103,16 @@ dropdown is generated from `data/notebooks/` by
 is merged.
 
 **Open pages.** Pages that will still change are marked `"open": true`:
-the index, a volume label with no finish date, blank pages after the last
-one written on, and session pages with room for another entry. Open pages
-are re-read by **Add session**, and all but session pages are left off
-the site until the notebook is completed. Blank pages are left off too
-until then. **Complete notebook** lists every blank page for you to check,
-and the sections that have nothing scanned yet.
+the table of contents, a volume label with no finish date, blank pages
+after the last one written on, and session pages with room for another
+entry. Open pages are re-read by **Add session**, and all but session
+pages are left off the site until the notebook is completed.
+
+**Completing.** **Complete notebook** marks the sections with `rescan`
+(front cover, table of contents, index) as waiting, and its pull request
+has a checklist of them; later completion scans tick them off. It also
+lists every blank page for you to check, and any other section with
+nothing scanned yet.
 
 **How it reads.** The import splits each spread into pages and asks
 Claude (Opus 5.5) to read them. Pages are placed by their printed odd
