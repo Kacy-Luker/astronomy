@@ -51,8 +51,12 @@ jobs:
       - name: Pick the scan
         run: |
           if [ -z "$SCAN" ]; then
-            # Names sort by date, so the newest upload is last.
-            SCAN=$(cd .scans && ls -1 "$NOTEBOOK"/* 2>/dev/null | sort | tail -n 1)
+            # Names are dates (optionally -HHMM), so the newest upload sorts
+            # last. Compare without the extension so 2026-10-23.pdf comes
+            # before 2026-10-23-1350.pdf.
+            SCAN=$(cd .scans && for f in "$NOTEBOOK"/*; do
+              [ -f "$f" ] && printf '%s\t%s\n' "${f%.*}" "$f"
+            done | LC_ALL=C sort | tail -n 1 | cut -f2)
             [ -n "$SCAN" ] || { echo "::error::No files in astronomy-scans/$NOTEBOOK/"; exit 1; }
           fi
           [ -e ".scans/$SCAN" ] || { echo "::error::astronomy-scans has no $SCAN"; exit 1; }
