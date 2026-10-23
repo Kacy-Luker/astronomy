@@ -58,7 +58,7 @@ pull request it opens before merging. Merge each import before the next.
 
 | Action | When | Scan |
 | --- | --- | --- |
-| **Create new notebook** | Starting a notebook | From the inside front cover through any sessions so far. Type the id in **new notebook** |
+| **Create new notebook** | Starting a notebook | From the inside front cover through any sessions so far. Pick **new-notebook** in the notebook dropdown and type the id in **new notebook** |
 | **Add session** | After each session | The spreads you wrote on, including the one you started on. Only new pages and pages still being written on are read |
 | **Replace pages** | A page was misread or rescanned | The spreads to re-read. What was recorded for those pages is replaced |
 | **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the list of spreads to rescan; then upload those, in that order, and run it again with that file |

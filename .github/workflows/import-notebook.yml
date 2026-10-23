@@ -18,15 +18,16 @@ on:
           - Complete notebook
           - Remove notebook
       notebook:
-        description: "Notebook (for everything except Create new notebook)"
+        description: "Notebook (pick new-notebook for Create new notebook)"
         type: choice
         options:
           # Written by scripts/sync-workflow.mjs from data/notebooks/.
           # notebooks:start
           - astronomy-001
+          - new-notebook
           # notebooks:end
       new_notebook:
-        description: "Create new notebook only: its id, e.g. astronomy-002"
+        description: "Create new notebook only (with new-notebook picked above): its id, e.g. astronomy-002"
         required: false
       scan:
         description: "File in astronomy-scans. Empty = the newest in the notebook's folder; for Complete notebook, empty = just mark it completed"
@@ -62,7 +63,13 @@ jobs:
             "Complete notebook") MODE=complete; NOTEBOOK=$PICKED ;;
             "Remove notebook") MODE=remove; NOTEBOOK=$PICKED ;;
           esac
-          [ "$NOTEBOOK" != none ] || { echo "::error::There are no notebooks yet; use Create new notebook"; exit 1; }
+          # new-notebook in the dropdown goes with Create new notebook, and only with it.
+          if [ "$MODE" = new ]; then
+            [ "$PICKED" = new-notebook ] || { echo "::error::To create a notebook, pick new-notebook in the notebook dropdown (got '$PICKED')"; exit 1; }
+            [ -n "$NOTEBOOK" ] && [ "$NOTEBOOK" != new-notebook ] || { echo "::error::Type the new notebook's id in new_notebook, e.g. astronomy-002"; exit 1; }
+          else
+            [ "$PICKED" != new-notebook ] || { echo "::error::Pick an existing notebook for $ACTION, or choose Create new notebook"; exit 1; }
+          fi
           [[ "$NOTEBOOK" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "::error::Notebook id must be lowercase letters, digits and dashes (got '$NOTEBOOK')"; exit 1; }
           [[ "$SCAN" != *..* ]] || { echo "::error::Scan path can't contain '..'"; exit 1; }
           if [ "$MODE" = remove ]; then

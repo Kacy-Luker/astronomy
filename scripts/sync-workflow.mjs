@@ -8,11 +8,12 @@ import { readFile, readdir, writeFile } from "node:fs/promises";
 const WORKFLOW = ".github/workflows/import-notebook.yml";
 const START = "# notebooks:start";
 const END = "# notebooks:end";
+export const NEW = "new-notebook";
 
 const files = existsSync("data/notebooks") ? await readdir("data/notebooks") : [];
 const ids = files.filter((f) => f.endsWith(".json"))
   .map((f) => f.replace(/\.json$/, "")).sort().reverse(); // newest notebook first
-if (!ids.length) ids.push("none"); // a dropdown needs at least one choice
+ids.push(NEW); // chosen, deliberately, to create a notebook
 
 const yaml = await readFile(WORKFLOW, "utf8");
 const block = new RegExp(`^( *)${START}\\n[\\s\\S]*?^ *${END}$`, "m");
