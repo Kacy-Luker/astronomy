@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://astronomy.kacyluker.com/schema/session.schema.json",
+  "$id": "https://kacyluker.com/astronomy/schema/session.schema.json",
   "title": "Observing session",
   "description": "One night of observing, transcribed from a paper log sheet.",
   "type": "object",
