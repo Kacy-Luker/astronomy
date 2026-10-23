@@ -23,8 +23,9 @@ needs to change things safely.
 - `npm run validate` and `npm run build` must pass. Every PR runs them and
   gets a preview at `kacyluker.com/astronomy/pr-preview/pr-<n>/`.
 - Keep README.md and CLAUDE.md in step with the code in the same PR. The
-  **Docs** workflow also checks code PRs and commits fixes ("Update docs
-  for this change") to the branch; pull before pushing again.
+  **Docs** workflow also checks code PRs, commits fixes ("Update docs for
+  this change") to the branch and comments what changed; pull before
+  pushing again.
 
 ## Privacy
 
