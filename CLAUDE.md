@@ -124,10 +124,11 @@ Remove list only existing notebooks) can be updated.
    session pages from N in scan order, for numbers missed by the scanner.
    An unnumbered blank goes beside the page it faces. A page replaces
    what's there when re-reading (replace, complete) or when that page is
-   open; otherwise it's skipped, so only-one pages aren't duplicated. Add mode first matches the upload against published
-   images (`scripts/lib/match.mjs`) and reads only new and open pages; on a
-   page that already has entries, only entries beyond that count are added,
-   so hand corrections survive.
+   open; otherwise it's skipped, so only-one pages aren't duplicated. Add
+   mode first matches the upload against published images
+   (`scripts/lib/match.mjs`) and reads only new and open pages; on a page
+   that already has entries, only entries beyond that count are added, so
+   hand corrections survive.
 4. **Clean show-through** (`scripts/showthrough.py`, Python with numpy,
    scipy, Pillow from `requirements.txt`; locally `.venv/bin/python`).
    Stamp ink soaks through the paper; pencil doesn't. Pages pair by number

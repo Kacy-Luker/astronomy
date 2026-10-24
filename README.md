@@ -20,7 +20,7 @@ Astronomy observations transcribed from paper notes, published at
 
 ```sh
 npm install
-npm run validate   # check notebooks and sessions against the schemas
+npm run validate   # check data against the schemas and page order, and the forms' dropdowns
 npm run build      # write the site to dist/
 npm run serve      # build and preview locally
 ```
@@ -150,13 +150,18 @@ Locally, the same thing runs as:
 ANTHROPIC_API_KEY=... node scripts/import-notebook.mjs astronomy-001 path/to/scan.pdf --mode add
 ```
 
+`--mode` is `new`, `add`, `replace` or `complete`; `--category` and
+`--start` are the form's category and start page. A front cover is
+imported with `node scripts/import-cover.mjs astronomy-001 path/to/cover.jpg`.
+
 One-time setup:
 
 1. Create a **private** repo named `astronomy-scans`.
 2. Create a fine-grained token with access to `astronomy-scans` (Contents:
    read-only) and to this repo (Contents, Pull requests and Workflows:
-   read and write). Workflows access lets an import update the notebook
-   dropdown.
+   read and write). Imports open pull requests with it, and Workflows
+   access lets them update the forms' dropdowns. The Docs check also
+   pushes its fixes with it.
 3. In this repo, under **Settings → Secrets and variables → Actions**, add
    the repository secrets `SCANS_TOKEN` (that token) and `ANTHROPIC_API_KEY`.
 
@@ -168,7 +173,8 @@ ghost on the other side of the sheet; pencil doesn't.
 `scans/<id>/NN.clean.jpg`, beside each page it can clean:
 
 1. Pages pair by printed number (odd page N is backed by page N + 1;
-   unnumbered front matter pairs by position).
+   unnumbered front matter pairs by position). Back matter (index, info
+   page) isn't cleaned, since the pages behind it aren't scanned.
 2. The back is mirrored and best-fit onto the front using its stamp ink
    only, scoring both sides of the sheet together. Scanner placement varies
    between spreads, so the search is wide and allows a slight rotation; the
