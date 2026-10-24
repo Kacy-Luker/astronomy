@@ -20,7 +20,10 @@ const Scope = z.object({
   f_ratio: z.number().nullable(),
 });
 
-const Scale = z.number().int().nullable().describe("Circled roman numeral as 1-5; null if none circled");
+// The writer puts N/A in fields that don't apply; a blank field is null.
+const NA = z.literal("N/A");
+const Scale = z.union([z.number().int(), NA]).nullable()
+  .describe('Circled roman numeral as 1-5; "N/A" if written; null if none circled');
 
 export const PageReading = z.object({
   kind: z.enum(PAGE_KINDS).describe("The page's category"),
@@ -42,9 +45,9 @@ export const PageReading = z.object({
     program: z.string().nullable(),
     date: z.string().describe("YYYY-MM-DD"),
     site: z.string(),
-    lat: z.number().nullable(),
-    lon: z.number().nullable(),
-    sqm: z.number().nullable(),
+    lat: z.union([z.number(), NA]).nullable(),
+    lon: z.union([z.number(), NA]).nullable(),
+    sqm: z.union([z.number(), NA]).nullable(),
     sky_notes: z.string().nullable(),
     scope: Scope.nullable(),
     observers: z.array(z.string()),
@@ -84,7 +87,10 @@ Rules:
   aren't on the page. Leave a field null when it's blank.
 - Skip an entry that is crossed out. Leave out individual struck-through words.
 - Join description lines into one string; use "; " where the writer used ";".
-- "N/A" means null. Dates as YYYY-MM-DD (the writer uses MM/DD/YYYY). Times as HH:MM.
+- Where the writer wrote N/A, use the string "N/A": the field doesn't apply.
+  null means the field is blank, which the writer will come back to; keep
+  the two apart. Dates as YYYY-MM-DD (the writer uses MM/DD/YYYY). Times as
+  HH:MM.
 - SCOPE like "Orion XT8; DOB 203mm, FL 1200mm, f5.9" becomes name "Orion XT8",
   type "Dobsonian", aperture 203, focal length 1200, f-ratio 5.9.
 - SQM like "~21.99 mag/arcsec^2" is 21.99.
