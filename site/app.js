@@ -2,6 +2,7 @@
 import {
   el, formatDate, link, loadNotebooks, loadSessions, notebookHref, plural, sessionHref,
 } from "./lib.js";
+import { todoCount } from "./todos.js";
 
 const notebookList = document.getElementById("notebooks");
 const list = document.getElementById("sessions");
@@ -26,7 +27,9 @@ function renderSession(s) {
   const a = link(sessionHref(s.id), null, "session-link");
   a.append(el("time", "session-date", formatDate(s.date)));
   head.append(a);
-  if (s.program) head.append(el("span", "tag", s.program));
+  if (s.program && s.program !== "N/A") head.append(el("span", "tag", s.program));
+  const todos = todoCount(s);
+  if (todos) head.append(el("span", "tag todo", `${todos} to do`));
   item.append(head);
 
   const meta = [s.site.name, s.scope?.name, s.observers.join(", ")].filter(Boolean);
