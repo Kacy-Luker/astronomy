@@ -22,7 +22,7 @@ body {
 
 a { color: var(--accent); }
 
-.site-header, main {
+.site-header, main, .site-footer {
   max-width: 48rem;
   margin: 0 auto;
   padding: 0 16px;
@@ -144,6 +144,8 @@ a { color: var(--accent); }
   padding: 1rem;
 }
 .object-id { margin: 0; font-size: 1.2rem; }
+.site-footer { padding-bottom: 2rem; font-size: .85rem; }
+.catalog { margin: .25rem 0 0; font-size: .9rem; }
 .ids { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0 0; padding: 0; }
 .description { margin: .75rem 0 0; }
 

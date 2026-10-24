@@ -1,7 +1,7 @@
 // Session page: one night's header, notebook pages, and observations.
 import {
   el, formatDate, link, loadNotebooks, loadSessions, notebookHref, pageFigure, pageName,
-  scanToggle, seeingText, transparencyText,
+  catalogText, objectName, scanToggle, seeingText, transparencyText,
 } from "./lib.js";
 import { isBlank, isNA, todoCount } from "./todos.js";
 
@@ -89,8 +89,11 @@ function renderObservation(o, notebook) {
   const card = el("article", "observation");
   const head = el("div", "session-head");
   head.append(el("h3", "object-id", o.catalog_id));
-  if (o.aka) head.append(el("span", "muted", o.aka));
+  const name = objectName(o);
+  if (name) head.append(el("span", "muted", name));
   card.append(head);
+  const about = catalogText(o.catalog);
+  if (about) card.append(el("p", "catalog muted", about));
 
   const others = (o.ids ?? []).filter((id) => id !== o.catalog_id);
   if (others.length) {

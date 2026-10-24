@@ -1,6 +1,6 @@
 // Home page: notebooks, then every session, newest first.
 import {
-  el, formatDate, link, loadNotebooks, loadSessions, notebookHref, plural, sessionHref,
+  el, formatDate, link, loadNotebooks, loadSessions, notebookHref, objectName, plural, sessionHref,
 } from "./lib.js";
 import { todoCount } from "./todos.js";
 
@@ -37,7 +37,8 @@ function renderSession(s) {
 
   const objects = el("ul", "objects");
   for (const o of s.observations) {
-    const label = o.aka ? `${o.catalog_id} — ${o.aka}` : o.catalog_id;
+    const name = objectName(o);
+    const label = name ? `${o.catalog_id} — ${name}` : o.catalog_id;
     objects.append(el("li", "object", label));
   }
   item.append(objects);

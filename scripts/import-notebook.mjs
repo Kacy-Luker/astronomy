@@ -29,6 +29,7 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { parseArgs } from "node:util";
 import { CATEGORIES, SESSION_RANK, category, ranks } from "./lib/categories.mjs";
+import { enrichSessions, loadCatalog, objectsFile } from "./lib/catalog.mjs";
 import { formatJSON } from "./lib/format-json.mjs";
 import { sessionTodos } from "../site/todos.js";
 import { matchPosition } from "./lib/match.mjs";
@@ -439,6 +440,18 @@ for (const e of list) {
   e.page = present({ kind, label, number, note, open, redact: boxes });
 }
 
+// Catalog info (OpenNGC): every designation in ids, and data/objects.json.
+// A session whose ids grew is written too. Without the catalog (no network)
+// the import goes on without it.
+let objects = null;
+try {
+  const enriched = enrichSessions([...sessions.values()], await loadCatalog());
+  objects = enriched.objects;
+  for (const sid of enriched.changed) touched.add(sid);
+} catch (err) {
+  console.warn(`Catalog lookup skipped: ${err.message}`);
+}
+
 // 7. Write the notebook, sessions, and page images.
 const label = [...readings.values()].map((r) => r.notebook_label).find(Boolean) ?? {};
 const dates = mine().map((s) => s.date).sort();
@@ -461,6 +474,7 @@ for (const sid of touched) {
   await writeFile(join("data", "sessions", `${sid}.json`), formatJSON(sessions.get(sid)) + "\n");
 }
 for (const sid of removed) await rm(join("data", "sessions", `${sid}.json`), { force: true });
+if (objects) await writeFile(join("data", "objects.json"), formatJSON(objectsFile(objects)) + "\n");
 // Images are named by position, so pages after an inserted one move along.
 await mkdir(join("scans", id), { recursive: true });
 const changed = [];

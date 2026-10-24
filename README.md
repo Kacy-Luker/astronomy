@@ -9,6 +9,7 @@ Astronomy observations transcribed from paper notes, published at
 | --- | --- |
 | `data/notebooks/` | One JSON file per paper notebook, listing every page |
 | `data/sessions/` | One JSON file per observing session |
+| `data/objects.json` | Catalog info for every observed object, from OpenNGC (generated) |
 | `schema/` | The shape every notebook and session file must match |
 | `scans/<notebook>/` | One image per notebook page, in order (`01.jpg`, `02.jpg`, …) |
 | `site/` | Static site source (HTML, CSS, JS) |
@@ -216,6 +217,17 @@ eyepiece and magnification, so a missing magnification is its own
 to-do. The site marks to-dos with **To do** and shows a count on each
 session; an import's pull request lists the new ones. Which fields
 count is set in `site/todos.js`.
+
+**Catalog info.** Each import looks the objects up in
+[OpenNGC](https://github.com/mattiaverga/OpenNGC) (a pinned release,
+CC BY-SA 4.0, credited on the session page). It adds every designation
+to `ids` (M31 gets NGC 224) and writes `data/objects.json` with each
+object's common name, type, constellation, magnitude and size. IDs
+already there stay, and `aka` stays as written; the site shows the
+catalog's common name when the sheet has none. Don't edit
+`data/objects.json` by hand. To fill in existing sessions, run
+`node scripts/enrich-ids.mjs`; it only adds. Objects OpenNGC doesn't
+cover (stars, planets, most non-NGC catalogs) are left as written.
 
 ## Hosting
 

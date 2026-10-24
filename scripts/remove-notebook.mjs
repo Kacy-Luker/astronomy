@@ -8,6 +8,7 @@ import { existsSync } from "node:fs";
 import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { formatJSON } from "./lib/format-json.mjs";
 
 const { positionals: [id], values: opts } = parseArgs({
   allowPositionals: true,
@@ -31,6 +32,19 @@ for (const file of (await readdir(join("data", "sessions"))).filter((f) => f.end
 await rm(notebookPath);
 await rm(join("scans", id), { recursive: true, force: true });
 for (const { file } of sessions) await rm(join("data", "sessions", file));
+
+// Drop catalog info for objects no remaining session observed.
+const objectsPath = join("data", "objects.json");
+if (existsSync(objectsPath)) {
+  const doc = JSON.parse(await readFile(objectsPath, "utf8"));
+  const seen = new Set();
+  for (const file of (await readdir(join("data", "sessions"))).filter((f) => f.endsWith(".json"))) {
+    const s = JSON.parse(await readFile(join("data", "sessions", file), "utf8"));
+    for (const o of s.observations ?? []) for (const x of o.ids ?? [o.catalog_id]) seen.add(x);
+  }
+  doc.objects = Object.fromEntries(Object.entries(doc.objects).filter(([, o]) => o.ids.some((x) => seen.has(x))));
+  await writeFile(objectsPath, formatJSON(doc) + "\n");
+}
 
 const lines = [
   `Removes **${notebook.title}** (\`${id}\`) from the site:`,

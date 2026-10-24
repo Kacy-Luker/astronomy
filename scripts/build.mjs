@@ -21,6 +21,18 @@ if (existsSync("scans")) await cp("scans", join(OUT, "scans"), { recursive: true
 const sessions = await readAll("data/sessions");
 sessions.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
 
+// Catalog info (data/objects.json, from OpenNGC) goes with each observation
+// whose designation it knows, under its key in the objects file.
+const objects = existsSync("data/objects.json") ? JSON.parse(await readFile("data/objects.json", "utf8")).objects : {};
+const objectOf = new Map(Object.entries(objects).flatMap(([key, o]) => o.ids.map((id) => [id, key])));
+for (const o of sessions.flatMap((s) => s.observations ?? [])) {
+  const key = [o.catalog_id, ...(o.ids ?? [])].map((id) => objectOf.get(id)).find(Boolean);
+  if (key) {
+    const { name, type, constellation, magnitude, size } = objects[key];
+    o.catalog = { key, name, type, constellation, magnitude, size };
+  }
+}
+
 // Give each notebook page its name, its image, and the sessions written on
 // it. Image sizes let pages reserve their space before the images load.
 const notebooks = await Promise.all((await readAll("data/notebooks")).map(async ({ scan, ...nb }) => {
@@ -67,6 +79,7 @@ notebooks.sort((a, b) => (b.started ?? "").localeCompare(a.started ?? ""));
 await mkdir(join(OUT, "data"), { recursive: true });
 await writeFile(join(OUT, "data", "sessions.json"), JSON.stringify(sessions));
 await writeFile(join(OUT, "data", "notebooks.json"), JSON.stringify(notebooks));
+if (existsSync("data/objects.json")) await cp("data/objects.json", join(OUT, "data", "objects.json"));
 
 // Every page gets the site's icons (site/icons/: Kacy's telescope photos,
 // a wide crop for tab sizes and a close-up for larger ones), so a new page

@@ -85,5 +85,22 @@ for (const { path, data: s } of sessions.values()) {
   report(path, errors);
 }
 
+// Catalog info (scripts/enrich-ids.mjs): schema, and each object is keyed
+// by its first designation.
+const objectsPath = join("data", "objects.json");
+if (existsSync(objectsPath)) {
+  const validate = await compile("objects");
+  let doc;
+  try {
+    doc = JSON.parse(await readFile(objectsPath, "utf8"));
+  } catch (err) {
+    report(objectsPath, [`invalid JSON: ${err.message}`]);
+  }
+  if (doc && !validate(doc)) report(objectsPath, validate.errors.map((e) => `${e.instancePath || "/"} ${e.message}`));
+  else if (doc) {
+    report(objectsPath, Object.entries(doc.objects).filter(([k, o]) => o.ids[0] !== k).map(([k]) => `/objects/${k} must be keyed by its first id`));
+  }
+}
+
 console.log(`${notebooks.size} notebooks, ${sessions.size} sessions; ${failed ? `${failed} problem files` : "all valid"}`);
 process.exit(failed ? 1 : 0);
