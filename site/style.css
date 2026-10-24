@@ -172,7 +172,11 @@ a { color: var(--accent); }
 .toggle button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
 
 /* Swap light and dark; the hue turn keeps ink colors recognizable. */
-.scans.inverted img { filter: invert(1) hue-rotate(180deg); }
+.scans.inverted img, .viewer .inverted img { filter: invert(1) hue-rotate(180deg); }
+
+/* view.html: one page, as large as the screen allows. */
+.viewer main { max-width: 72rem; }
+.viewer .page img { width: 100%; }
 
 .session-link { color: inherit; text-decoration: none; }
 .session-link:hover { text-decoration: underline; }

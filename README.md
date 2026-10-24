@@ -194,6 +194,7 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 On the site, scans have an **Inverted / Cleaned / Original** toggle.
 Inverted (the default) shows the cleaned page with light and dark swapped.
+Tapping a page opens it full size (`view.html`) in the same view.
 
 ## Session files
 

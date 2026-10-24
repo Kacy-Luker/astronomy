@@ -47,7 +47,7 @@ needs to change things safely.
 | `data/sessions/<id>.json` | One observing night; `notebook`, `pages`, and `page` on each observation (schema: `schema/session.schema.json`) |
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
-| `site/` | Static pages: home, `notebook.html?id=`, `session.html?id=` |
+| `site/` | Static pages: home, `notebook.html?id=`, `session.html?id=`, `view.html?img=&view=` (one page full size) |
 | `scripts/` | Build, validation, import, splitting, cleaning |
 | `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`) |
 
@@ -150,5 +150,6 @@ must match `PageReading` in `read-page.mjs`).
   the `kacy-luker.github.io` user site's domain, so all asset paths are
   relative. The main deploy must leave `gh-pages/pr-preview/` alone.
 - Scans have an Inverted / Cleaned / Original toggle; Inverted (of the
-  cleaned image) is the default.
+  cleaned image) is the default. Inversion is a CSS filter, so pages link
+  to `view.html` (which applies the same view), not to the bare JPEG.
 - The contents table on each notebook page is generated from sessions.
