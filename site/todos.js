@@ -24,6 +24,7 @@ export const entryFields = (o) => [
   ["Seeing", o.seeing],
   ["Transparency", o.transparency],
   ["Eyepiece", o.eyepiece],
+  ["Magnification", o.magnification],
   ["Filter", o.filter],
   ["Description", o.description],
 ];

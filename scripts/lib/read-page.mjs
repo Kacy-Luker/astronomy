@@ -60,7 +60,7 @@ export const PageReading = z.object({
     seeing: Scale,
     transparency: Scale,
     eyepiece: z.string().nullable(),
-    magnification: z.number().nullable(),
+    magnification: z.union([z.number(), NA]).nullable().describe("The MAG half of EP/MAG, e.g. 92 for 92x"),
     filter: z.string().nullable(),
     description: z.string().nullable(),
   })).describe("Object entries in page order, skipping crossed-out entries"),
@@ -94,7 +94,9 @@ Rules:
 - SCOPE like "Orion XT8; DOB 203mm, FL 1200mm, f5.9" becomes name "Orion XT8",
   type "Dobsonian", aperture 203, focal length 1200, f-ratio 5.9.
 - SQM like "~21.99 mag/arcsec^2" is 21.99.
-- Eyepiece like "13mm Ethos;" with nothing after the ";" means no magnification.
+- EP/MAG is two fields: eyepiece like "13mm Ethos", then magnification after
+  the ";" (e.g. "13mm Ethos; 92x" is 92). With nothing after the ";" the
+  magnification is blank (null); the writer fills it in later.
 - will_change is true for a table of contents or index with empty rows left,
   a volume label whose finish date is blank, and a session page with unused
   space below its last entry where another entry could still go. Otherwise
