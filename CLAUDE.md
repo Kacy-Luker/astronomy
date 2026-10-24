@@ -53,6 +53,7 @@ needs to change things safely.
 | `data/notebooks/<id>.json` | Every scanned page in order: `kind`, `number`, `label`, `open`, `redact` (schema: `schema/notebook.schema.json`) |
 | `data/categories.json` | Page categories for every notebook, in book order, with `in_progress`, `rescan` and `single` (read by `scripts/lib/categories.mjs`) |
 | `data/sessions/<id>.json` | One observing night; `notebook`, `pages`, and `page` on each observation (schema: `schema/session.schema.json`) |
+| `data/objects.json` | Generated catalog info for observed objects, keyed by first designation (`scripts/lib/catalog.mjs`, OpenNGC pinned and cached in `.catalog-cache/`; schema: `schema/objects.schema.json`) |
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
 | `site/` | Static pages: home, `notebook.html?id=`, `session.html?id=`, `view.html?img=&view=` (one page full size) |
@@ -64,6 +65,12 @@ as `"N/A"` (the schema allows it for numbers and times too). A blank field
 is `null` or missing and is a to-do. Every field but AKA counts; the list
 is `site/todos.js`, used by the site and the import summary. Keep the two
 apart in the reader prompt and importer.
+
+Catalog lookups (import and `scripts/enrich-ids.mjs`) only add: they
+append designations to `ids` and regenerate `data/objects.json`, but never
+change `catalog_id`, `aka` or IDs already there (M51's NGC 5195 was added
+by hand). The build attaches each object's catalog info to its
+observations, and the site prefers `aka` over the catalog name.
 
 JSON files are hand-edited by Kacy; write them with
 `scripts/lib/format-json.mjs` so diffs stay small. Seeing and transparency
