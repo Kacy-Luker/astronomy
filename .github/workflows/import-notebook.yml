@@ -1,22 +1,12 @@
 name: Import
 
 # Run from the Actions tab after uploading a scan to the private
-# astronomy-scans repo as <notebook id>/<date>.pdf. Import opens a pull
-# request with the new pages and sessions, working out from the form whether
-# it's a new notebook, a front cover, re-read pages or a session. Complete
-# notebook marks a notebook done; Remove notebook opens a pull request that
-# deletes one from the site.
+# astronomy-scans repo as <notebook id>/<date>.pdf. Opens a pull request with
+# the new pages and sessions, working out from the form whether it's a new
+# notebook, a front cover, re-read pages or a session.
 on:
   workflow_dispatch:
     inputs:
-      action:
-        description: "What to do"
-        type: choice
-        default: Import
-        options:
-          - Import
-          - Complete notebook
-          - Remove notebook
       notebook:
         description: "Notebook. For a new one, pick new-notebook: its id is the folder the scan is in (e.g. astronomy-002)"
         type: choice
@@ -27,7 +17,7 @@ on:
           - new-notebook
           # notebooks:end
       scan:
-        description: "File in astronomy-scans, e.g. astronomy-001/2026-10-23.pdf. Empty = the newest in the notebook's folder (a new notebook's folder is the one without a notebook yet); for Complete notebook, empty = just mark it completed"
+        description: "File in astronomy-scans, e.g. astronomy-001/2026-10-23.pdf. Empty = the newest in the notebook's folder (for a new notebook, the one folder without a notebook yet)"
         required: false
       category:
         description: "Optional: put every non-blank page in the scan in this category, when Claude gets it wrong. Front cover imports the scan as the notebook's outside cover"
@@ -55,155 +45,22 @@ on:
       start_page:
         description: "Optional: the page number of the first session page in the scan, used only when no printed page number could be read"
         required: false
-      confirm:
-        description: "Remove notebook only: type the selected notebook's id to confirm"
-        required: false
 
 permissions:
   contents: read
 
+# One import at a time, across all three forms.
 concurrency:
   group: import
 
 jobs:
-  import:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    env:
-      ACTION: ${{ inputs.action }}
-      PICKED: ${{ inputs.notebook }}
-      SCAN: ${{ inputs.scan }}
-      START_PAGE: ${{ inputs.start_page }}
-      CATEGORY: ${{ inputs.category != 'Detect automatically' && inputs.category || '' }}
-    steps:
-      - name: Check inputs
-        env:
-          REREAD: ${{ inputs.reread }}
-          CONFIRM: ${{ inputs.confirm }}
-        run: |
-          case "$ACTION" in
-            Import) MODE=add ;;
-            "Complete notebook") MODE=complete ;;
-            "Remove notebook") MODE=remove ;;
-          esac
-          # An import works out what it is from the notebook, category and
-          # re-read box: a new notebook, its front cover, re-read pages, or a
-          # session.
-          if [ "$PICKED" = new-notebook ]; then
-            [ "$MODE" = add ] || { echo "::error::Pick an existing notebook for $ACTION"; exit 1; }
-            [ "$CATEGORY" != "Front cover" ] || { echo "::error::Import the new notebook's pages first, then its front cover"; exit 1; }
-            MODE=new
-          elif [ "$MODE" = add ] && [ "$CATEGORY" = "Front cover" ]; then
-            MODE=cover
-          elif [ "$MODE" = add ] && [ "$REREAD" = true ]; then
-            MODE=replace
-          fi
-          [[ "$SCAN" != *..* ]] || { echo "::error::Scan path can't contain '..'"; exit 1; }
-          [[ -z "$START_PAGE" || "$START_PAGE" =~ ^[1-9][0-9]*$ ]] || { echo "::error::Start page must be a page number, like 12 (got '$START_PAGE')"; exit 1; }
-          if [ "$MODE" = remove ]; then
-            [ "$CONFIRM" = "$PICKED" ] || { echo "::error::To remove $PICKED, type $PICKED in the confirm field (got '$CONFIRM')"; exit 1; }
-          fi
-          case "$MODE" in
-            new) TITLE="Create notebook" ;; add) TITLE="Add session" ;; replace) TITLE="Re-read pages" ;;
-            cover) TITLE="Front cover" ;; complete) TITLE="Complete notebook" ;; remove) TITLE="Remove notebook" ;;
-          esac
-          echo "MODE=$MODE" >> "$GITHUB_ENV"
-          echo "TITLE=$TITLE" >> "$GITHUB_ENV"
-          [ "$MODE" = new ] || echo "NOTEBOOK=$PICKED" >> "$GITHUB_ENV"
-          [ "$MODE" != remove ] || echo "BRANCH=remove/$PICKED" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
-      - name: Fetch the private scans
-        if: env.MODE != 'remove'
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository_owner }}/astronomy-scans
-          token: ${{ secrets.SCANS_TOKEN }}
-          path: .scans
-      - name: Pick the notebook and scan
-        if: env.MODE != 'remove'
-        run: |
-          if [ "$MODE" = new ]; then
-            # A new notebook is named for its folder in astronomy-scans: the
-            # scan's folder, or else the one folder with no notebook yet.
-            if [ -n "$SCAN" ]; then
-              NOTEBOOK=${SCAN%%/*}
-              [ "$NOTEBOOK" != "$SCAN" ] || { echo "::error::Put the scan in a folder named for the new notebook, e.g. astronomy-002/$SCAN"; exit 1; }
-            else
-              NEW=$(cd .scans && for d in */; do d=${d%/}; [ -e "../data/notebooks/$d.json" ] || echo "$d"; done)
-              [ -n "$NEW" ] || { echo "::error::Every folder in astronomy-scans already has a notebook; upload the new one's scan to a new folder, e.g. astronomy-002/"; exit 1; }
-              [ "$(echo "$NEW" | wc -l)" = 1 ] || { echo "::error::More than one folder has no notebook yet ($(echo $NEW)); type the scan's path"; exit 1; }
-              NOTEBOOK=$NEW
-            fi
-            [[ "$NOTEBOOK" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "::error::A notebook's folder must be lowercase letters, digits and dashes, e.g. astronomy-002 (got '$NOTEBOOK')"; exit 1; }
-            [ ! -e "data/notebooks/$NOTEBOOK.json" ] || { echo "::error::$NOTEBOOK already exists; pick it in the notebook dropdown"; exit 1; }
-          elif [ -n "$SCAN" ] && [ "${SCAN%%/*}" != "$NOTEBOOK" ]; then
-            echo "::error::$SCAN isn't in $NOTEBOOK's folder; pick the notebook it belongs to"; exit 1
-          fi
-          if [ -z "$SCAN" ] && [ "$MODE" != complete ]; then
-            # Names are dates (optionally -HHMM), so the newest upload sorts
-            # last. Compare without the extension so 2026-10-23.pdf comes
-            # before 2026-10-23-1350.pdf.
-            SCAN=$(cd .scans && for f in "$NOTEBOOK"/*; do
-              [ -f "$f" ] && printf '%s\t%s\n' "${f%.*}" "$f"
-            done | LC_ALL=C sort | tail -n 1 | cut -f2)
-            [ -n "$SCAN" ] || { echo "::error::No files in astronomy-scans/$NOTEBOOK/"; exit 1; }
-          fi
-          if [ -n "$SCAN" ]; then
-            [ -e ".scans/$SCAN" ] || { echo "::error::astronomy-scans has no $SCAN"; exit 1; }
-            echo "Importing $SCAN: $(file -b ".scans/$SCAN"), $(stat -c %s ".scans/$SCAN") bytes"
-          fi
-          NAME=$(basename "${SCAN:-completed}")
-          echo "NOTEBOOK=$NOTEBOOK" >> "$GITHUB_ENV"
-          echo "SCAN=$SCAN" >> "$GITHUB_ENV"
-          echo "BRANCH=import/$NOTEBOOK-$MODE-$(echo "${NAME%.*}" | tr -c 'A-Za-z0-9.\n-' '-')" >> "$GITHUB_ENV"
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - if: env.MODE != 'remove'
-        run: command -v pdfimages || (sudo apt-get update && sudo apt-get install -y poppler-utils)
-      - run: npm ci
-      # Stamp show-through is removed by scripts/showthrough.py.
-      - if: env.MODE != 'remove'
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-          cache: pip
-      - if: env.MODE != 'remove'
-        run: pip install -r requirements.txt
-      - name: Import
-        if: env.MODE != 'remove' && env.MODE != 'cover'
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          node scripts/import-notebook.mjs "$NOTEBOOK" ${SCAN:+".scans/$SCAN"} --mode "$MODE" \
-            ${CATEGORY:+--category "$CATEGORY"} ${START_PAGE:+--start "$START_PAGE"} --summary "$RUNNER_TEMP/summary.md"
-          cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
-      - name: Import the front cover
-        if: env.MODE == 'cover'
-        run: |
-          node scripts/import-cover.mjs "$NOTEBOOK" ".scans/$SCAN" --summary "$RUNNER_TEMP/summary.md"
-          cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
-      - name: Remove the notebook
-        if: env.MODE == 'remove'
-        run: |
-          node scripts/remove-notebook.mjs "$NOTEBOOK" --summary "$RUNNER_TEMP/summary.md"
-          cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
-      - name: Update the dropdowns
-        run: node scripts/sync-workflow.mjs
-      - run: npm run validate
-      - name: Remove the unredacted scans
-        run: rm -rf .scans
-      # SCANS_TOKEN also needs write access to this repo: pushing a change to
-      # the workflow's dropdown isn't allowed with the built-in token.
-      - uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.SCANS_TOKEN }}
-          branch: ${{ env.BRANCH }}
-          title: "${{ env.TITLE }}: ${{ env.NOTEBOOK }}${{ env.SCAN && format(' ({0})', env.SCAN) || '' }}"
-          commit-message: "${{ env.TITLE }}: ${{ env.NOTEBOOK }}"
-          body-path: ${{ runner.temp }}/summary.md
-          add-paths: |
-            data
-            scans
-            .github/workflows/import-notebook.yml
+  run:
+    uses: ./.github/workflows/notebook-job.yml
+    secrets: inherit
+    with:
+      action: Import
+      notebook: ${{ inputs.notebook }}
+      scan: ${{ inputs.scan }}
+      category: ${{ inputs.category }}
+      reread: ${{ inputs.reread }}
+      start_page: ${{ inputs.start_page }}
