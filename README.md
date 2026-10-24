@@ -86,8 +86,9 @@ than once a day: `astronomy-001/2026-10-20-1350.pdf`. Then open
 **Actions → Import → Run workflow** here, fill in the form, and review the
 pull request it opens before merging. Merge each import before the next.
 
-There are three actions. **Import** handles every upload, and works out
-what it is from the rest of the form:
+There are three forms in the Actions list, each with only the fields it
+needs. **Import** handles every upload, and works out what it is from the
+form:
 
 | To | Pick | Scan |
 | --- | --- | --- |
@@ -96,7 +97,7 @@ what it is from the rest of the form:
 | Re-read pages | the notebook, and tick **reread** | The spreads to re-read, for a misread page or a rescan. What was recorded for those pages is replaced |
 | Add the front cover | the notebook, and **Front cover** as the category | The closed notebook on the scanner, on its own. The scanner bed is trimmed off and the cover turned upright; run it again to replace it |
 
-| Action | When | Scan |
+| Form | When | Scan |
 | --- | --- | --- |
 | **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the rescan checklist; then scan the spreads it lists, in any order, into one file and run it again with that file. Rescan the front cover with **Import** and **Front cover** |
 | **Remove notebook** | Taking a notebook off the site | No scan. Type the notebook's id in **confirm**; it opens a pull request deleting the notebook, its page images and its sessions (the scans in astronomy-scans are kept) |
@@ -106,8 +107,9 @@ folder; for a new notebook, that's the one folder with no notebook yet
 (type the path if there's more than one). For **Complete notebook**, empty
 means no scan. The notebook and category dropdowns are generated from
 `data/notebooks/` and `data/categories.json` by
-`scripts/sync-workflow.mjs`; a new notebook appears in the dropdown once
-its import is merged.
+`scripts/sync-workflow.mjs`; a new notebook appears in them once its
+import is merged. All three forms share their steps through
+`.github/workflows/notebook-job.yml`, and run one at a time.
 
 **Start page.** Session pages are placed by the page numbers printed on
 odd pages, and a printed number always wins: if any page in the scan shows
