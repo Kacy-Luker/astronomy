@@ -30,6 +30,7 @@ import { basename, join } from "node:path";
 import { parseArgs } from "node:util";
 import { CATEGORIES, SESSION_RANK, category, ranks } from "./lib/categories.mjs";
 import { formatJSON } from "./lib/format-json.mjs";
+import { sessionTodos } from "../site/todos.js";
 import { matchPosition } from "./lib/match.mjs";
 import { cleanShowThrough, listSpreads, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
 
@@ -497,6 +498,10 @@ if (touched.size || removed.size) {
   for (const sid of touched) {
     const s = sessions.get(sid);
     lines.push(`- \`${sid}\`: ${s.observations.map((o) => o.catalog_id).join(", ")} (pages ${s.pages.join(", ")})`);
+    // Blank fields are to-dos (N/A means the field doesn't apply).
+    for (const t of sessionTodos(s)) {
+      lines.push(`  - To do, ${t.where}${t.page ? ` (page ${t.page})` : ""}: ${t.fields.join(", ")}`);
+    }
   }
   for (const sid of removed) lines.push(`- \`${sid}\`: removed (no entries left)`);
 } else {
