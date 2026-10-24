@@ -24,7 +24,7 @@ if (!id || !source) {
 }
 
 const notebookPath = join("data", "notebooks", `${id}.json`);
-if (!existsSync(notebookPath)) throw new Error(`there is no notebook ${id}; make it with Create new notebook first`);
+if (!existsSync(notebookPath)) throw new Error(`there is no notebook ${id}; import its pages with new-notebook picked first`);
 const notebook = JSON.parse(await readFile(notebookPath, "utf8"));
 
 const work = await mkdtemp(join(tmpdir(), "cover-"));

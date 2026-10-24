@@ -1,25 +1,24 @@
 name: Import
 
 # Run from the Actions tab after uploading a scan to the private
-# astronomy-scans repo as <notebook id>/<date>.pdf. Opens a pull request
-# with the new pages and sessions. Remove notebook opens a pull request that
-# deletes a notebook from the site.
+# astronomy-scans repo as <notebook id>/<date>.pdf. Import opens a pull
+# request with the new pages and sessions, working out from the form whether
+# it's a new notebook, a front cover, re-read pages or a session. Complete
+# notebook marks a notebook done; Remove notebook opens a pull request that
+# deletes one from the site.
 on:
   workflow_dispatch:
     inputs:
       action:
         description: "What to do"
         type: choice
-        default: Add session
+        default: Import
         options:
-          - Add session
-          - Create new notebook
-          - Replace pages
-          - Add front cover
+          - Import
           - Complete notebook
           - Remove notebook
       notebook:
-        description: "Notebook (pick new-notebook for Create new notebook)"
+        description: "Notebook. For a new one, pick new-notebook: its id is the folder the scan is in (e.g. astronomy-002)"
         type: choice
         options:
           # Written by scripts/sync-workflow.mjs from data/notebooks/.
@@ -27,20 +26,18 @@ on:
           - astronomy-001
           - new-notebook
           # notebooks:end
-      new_notebook:
-        description: "Create new notebook only (with new-notebook picked above): its id, e.g. astronomy-002"
-        required: false
       scan:
-        description: "File in astronomy-scans. Empty = the newest in the notebook's folder; for Complete notebook, empty = just mark it completed"
+        description: "File in astronomy-scans, e.g. astronomy-001/2026-10-23.pdf. Empty = the newest in the notebook's folder (a new notebook's folder is the one without a notebook yet); for Complete notebook, empty = just mark it completed"
         required: false
       category:
-        description: "Optional: put every non-blank page in the scan in this category, when Claude gets it wrong"
+        description: "Optional: put every non-blank page in the scan in this category, when Claude gets it wrong. Front cover imports the scan as the notebook's outside cover"
         type: choice
         default: Detect automatically
         options:
           # Written by scripts/sync-workflow.mjs from data/categories.json.
           # categories:start
           - Detect automatically
+          - Front cover
           - Inside front cover
           - Volume label
           - Title page
@@ -51,6 +48,10 @@ on:
           - Notebook info
           - Inside back cover
           # categories:end
+      reread:
+        description: "Re-read pages already recorded and replace what was recorded for them"
+        type: boolean
+        default: false
       start_page:
         description: "Optional: the page number of the first session page in the scan, used only when no printed page number could be read"
         required: false
@@ -70,40 +71,46 @@ jobs:
     timeout-minutes: 60
     env:
       ACTION: ${{ inputs.action }}
+      PICKED: ${{ inputs.notebook }}
       SCAN: ${{ inputs.scan }}
       START_PAGE: ${{ inputs.start_page }}
       CATEGORY: ${{ inputs.category != 'Detect automatically' && inputs.category || '' }}
     steps:
       - name: Check inputs
         env:
-          PICKED: ${{ inputs.notebook }}
-          NEW: ${{ inputs.new_notebook }}
+          REREAD: ${{ inputs.reread }}
           CONFIRM: ${{ inputs.confirm }}
         run: |
           case "$ACTION" in
-            "Add session") MODE=add; NOTEBOOK=$PICKED ;;
-            "Create new notebook") MODE=new; NOTEBOOK=$NEW ;;
-            "Replace pages") MODE=replace; NOTEBOOK=$PICKED ;;
-            "Add front cover") MODE=cover; NOTEBOOK=$PICKED ;;
-            "Complete notebook") MODE=complete; NOTEBOOK=$PICKED ;;
-            "Remove notebook") MODE=remove; NOTEBOOK=$PICKED ;;
+            Import) MODE=add ;;
+            "Complete notebook") MODE=complete ;;
+            "Remove notebook") MODE=remove ;;
           esac
-          # new-notebook in the dropdown goes with Create new notebook, and only with it.
-          if [ "$MODE" = new ]; then
-            [ "$PICKED" = new-notebook ] || { echo "::error::To create a notebook, pick new-notebook in the notebook dropdown (got '$PICKED')"; exit 1; }
-            [ -n "$NOTEBOOK" ] && [ "$NOTEBOOK" != new-notebook ] || { echo "::error::Type the new notebook's id in new_notebook, e.g. astronomy-002"; exit 1; }
-          else
-            [ "$PICKED" != new-notebook ] || { echo "::error::Pick an existing notebook for $ACTION, or choose Create new notebook"; exit 1; }
+          # An import works out what it is from the notebook, category and
+          # re-read box: a new notebook, its front cover, re-read pages, or a
+          # session.
+          if [ "$PICKED" = new-notebook ]; then
+            [ "$MODE" = add ] || { echo "::error::Pick an existing notebook for $ACTION"; exit 1; }
+            [ "$CATEGORY" != "Front cover" ] || { echo "::error::Import the new notebook's pages first, then its front cover"; exit 1; }
+            MODE=new
+          elif [ "$MODE" = add ] && [ "$CATEGORY" = "Front cover" ]; then
+            MODE=cover
+          elif [ "$MODE" = add ] && [ "$REREAD" = true ]; then
+            MODE=replace
           fi
-          [[ "$NOTEBOOK" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "::error::Notebook id must be lowercase letters, digits and dashes (got '$NOTEBOOK')"; exit 1; }
           [[ "$SCAN" != *..* ]] || { echo "::error::Scan path can't contain '..'"; exit 1; }
           [[ -z "$START_PAGE" || "$START_PAGE" =~ ^[1-9][0-9]*$ ]] || { echo "::error::Start page must be a page number, like 12 (got '$START_PAGE')"; exit 1; }
           if [ "$MODE" = remove ]; then
-            [ "$CONFIRM" = "$NOTEBOOK" ] || { echo "::error::To remove $NOTEBOOK, type $NOTEBOOK in the confirm field (got '$CONFIRM')"; exit 1; }
-            echo "BRANCH=remove/$NOTEBOOK" >> "$GITHUB_ENV"
+            [ "$CONFIRM" = "$PICKED" ] || { echo "::error::To remove $PICKED, type $PICKED in the confirm field (got '$CONFIRM')"; exit 1; }
           fi
+          case "$MODE" in
+            new) TITLE="Create notebook" ;; add) TITLE="Add session" ;; replace) TITLE="Re-read pages" ;;
+            cover) TITLE="Front cover" ;; complete) TITLE="Complete notebook" ;; remove) TITLE="Remove notebook" ;;
+          esac
           echo "MODE=$MODE" >> "$GITHUB_ENV"
-          echo "NOTEBOOK=$NOTEBOOK" >> "$GITHUB_ENV"
+          echo "TITLE=$TITLE" >> "$GITHUB_ENV"
+          [ "$MODE" = new ] || echo "NOTEBOOK=$PICKED" >> "$GITHUB_ENV"
+          [ "$MODE" != remove ] || echo "BRANCH=remove/$PICKED" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - name: Fetch the private scans
         if: env.MODE != 'remove'
@@ -112,9 +119,26 @@ jobs:
           repository: ${{ github.repository_owner }}/astronomy-scans
           token: ${{ secrets.SCANS_TOKEN }}
           path: .scans
-      - name: Pick the scan
+      - name: Pick the notebook and scan
         if: env.MODE != 'remove'
         run: |
+          if [ "$MODE" = new ]; then
+            # A new notebook is named for its folder in astronomy-scans: the
+            # scan's folder, or else the one folder with no notebook yet.
+            if [ -n "$SCAN" ]; then
+              NOTEBOOK=${SCAN%%/*}
+              [ "$NOTEBOOK" != "$SCAN" ] || { echo "::error::Put the scan in a folder named for the new notebook, e.g. astronomy-002/$SCAN"; exit 1; }
+            else
+              NEW=$(cd .scans && for d in */; do d=${d%/}; [ -e "../data/notebooks/$d.json" ] || echo "$d"; done)
+              [ -n "$NEW" ] || { echo "::error::Every folder in astronomy-scans already has a notebook; upload the new one's scan to a new folder, e.g. astronomy-002/"; exit 1; }
+              [ "$(echo "$NEW" | wc -l)" = 1 ] || { echo "::error::More than one folder has no notebook yet ($(echo $NEW)); type the scan's path"; exit 1; }
+              NOTEBOOK=$NEW
+            fi
+            [[ "$NOTEBOOK" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "::error::A notebook's folder must be lowercase letters, digits and dashes, e.g. astronomy-002 (got '$NOTEBOOK')"; exit 1; }
+            [ ! -e "data/notebooks/$NOTEBOOK.json" ] || { echo "::error::$NOTEBOOK already exists; pick it in the notebook dropdown"; exit 1; }
+          elif [ -n "$SCAN" ] && [ "${SCAN%%/*}" != "$NOTEBOOK" ]; then
+            echo "::error::$SCAN isn't in $NOTEBOOK's folder; pick the notebook it belongs to"; exit 1
+          fi
           if [ -z "$SCAN" ] && [ "$MODE" != complete ]; then
             # Names are dates (optionally -HHMM), so the newest upload sorts
             # last. Compare without the extension so 2026-10-23.pdf comes
@@ -129,6 +153,7 @@ jobs:
             echo "Importing $SCAN: $(file -b ".scans/$SCAN"), $(stat -c %s ".scans/$SCAN") bytes"
           fi
           NAME=$(basename "${SCAN:-completed}")
+          echo "NOTEBOOK=$NOTEBOOK" >> "$GITHUB_ENV"
           echo "SCAN=$SCAN" >> "$GITHUB_ENV"
           echo "BRANCH=import/$NOTEBOOK-$MODE-$(echo "${NAME%.*}" | tr -c 'A-Za-z0-9.\n-' '-')" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
@@ -164,7 +189,7 @@ jobs:
         run: |
           node scripts/remove-notebook.mjs "$NOTEBOOK" --summary "$RUNNER_TEMP/summary.md"
           cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
-      - name: Update the notebook dropdown
+      - name: Update the dropdowns
         run: node scripts/sync-workflow.mjs
       - run: npm run validate
       - name: Remove the unredacted scans
@@ -175,8 +200,8 @@ jobs:
         with:
           token: ${{ secrets.SCANS_TOKEN }}
           branch: ${{ env.BRANCH }}
-          title: "${{ inputs.action }}: ${{ env.NOTEBOOK }}${{ env.SCAN && format(' ({0})', env.SCAN) || '' }}"
-          commit-message: "${{ inputs.action }}: ${{ env.NOTEBOOK }}"
+          title: "${{ env.TITLE }}: ${{ env.NOTEBOOK }}${{ env.SCAN && format(' ({0})', env.SCAN) || '' }}"
+          commit-message: "${{ env.TITLE }}: ${{ env.NOTEBOOK }}"
           body-path: ${{ runner.temp }}/summary.md
           add-paths: |
             data

@@ -83,23 +83,31 @@ Scans go to the private **astronomy-scans** repo as
 `<notebook id>/<date>.pdf` (a JPEG works too), for example
 `astronomy-001/2026-10-20.pdf`. Add a 24-hour time when you upload more
 than once a day: `astronomy-001/2026-10-20-1350.pdf`. Then open
-**Actions → Import → Run workflow** here, choose an action, and review the
+**Actions → Import → Run workflow** here, fill in the form, and review the
 pull request it opens before merging. Merge each import before the next.
+
+There are three actions. **Import** handles every upload, and works out
+what it is from the rest of the form:
+
+| To | Pick | Scan |
+| --- | --- | --- |
+| Add a session | the notebook | The spreads you wrote on, including the one you started on. Only new pages and pages still being written on are read |
+| Start a notebook | **new-notebook** | From the inside front cover through any sessions so far, in a new folder named for the notebook, e.g. `astronomy-002/`. The folder name becomes the notebook's id |
+| Re-read pages | the notebook, and tick **reread** | The spreads to re-read, for a misread page or a rescan. What was recorded for those pages is replaced |
+| Add the front cover | the notebook, and **Front cover** as the category | The closed notebook on the scanner, on its own. The scanner bed is trimmed off and the cover turned upright; run it again to replace it |
 
 | Action | When | Scan |
 | --- | --- | --- |
-| **Create new notebook** | Starting a notebook | From the inside front cover through any sessions so far. Pick **new-notebook** in the notebook dropdown and type the id in **new notebook** |
-| **Add session** | After each session | The spreads you wrote on, including the one you started on. Only new pages and pages still being written on are read |
-| **Replace pages** | A page was misread or rescanned | The spreads to re-read. What was recorded for those pages is replaced |
-| **Add front cover** | Starting a notebook, and again when completing it | The closed notebook on the scanner, on its own. The scanner bed is trimmed off and the cover turned upright |
-| **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the rescan checklist; then scan the spreads it lists, in any order, into one file and run it again with that file. Rescan the front cover with **Add front cover** |
+| **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the rescan checklist; then scan the spreads it lists, in any order, into one file and run it again with that file. Rescan the front cover with **Import** and **Front cover** |
 | **Remove notebook** | Taking a notebook off the site | No scan. Type the notebook's id in **confirm**; it opens a pull request deleting the notebook, its page images and its sessions (the scans in astronomy-scans are kept) |
 
 The scan field can be left empty to use the newest file in the notebook's
-folder (for **Complete notebook**, empty means no scan). The notebook
-dropdown is generated from `data/notebooks/` by
-`scripts/sync-workflow.mjs`; a new notebook appears in it once its import
-is merged.
+folder; for a new notebook, that's the one folder with no notebook yet
+(type the path if there's more than one). For **Complete notebook**, empty
+means no scan. The notebook and category dropdowns are generated from
+`data/notebooks/` and `data/categories.json` by
+`scripts/sync-workflow.mjs`; a new notebook appears in the dropdown once
+its import is merged.
 
 **Start page.** Session pages are placed by the page numbers printed on
 odd pages, and a printed number always wins: if any page in the scan shows
@@ -107,13 +115,13 @@ one, the others are counted from it. If none came out in the scan, the
 number in **start page** is used instead: the scan's first session page
 gets it and the rest are numbered in scan order (a blank page just before
 them counts too). A start page that disagrees with printed numbers is
-noted in the pull request. A start page makes **Add session** read every
-page in the scan.
+noted in the pull request. A start page makes an import read every page
+in the scan.
 
 **Open pages.** Pages that will still change are marked `"open": true`:
 the table of contents, a volume label with no finish date, blank pages
 after the last one written on, and session pages with room for another
-entry. Open pages are re-read by **Add session**, and all but session
+entry. Open pages are re-read by the next import, and all but session
 pages are left off the site until the notebook is completed.
 
 **Completing.** **Complete notebook** marks the categories that are
@@ -124,12 +132,12 @@ nothing scanned.
 
 **How it reads.** The import splits each spread into pages and asks
 Claude (Opus 5.5) to read them. Pages are placed by category and printed
-odd page numbers; **Add session** first matches the upload against the
+odd page numbers; adding a session first matches the upload against the
 published pages so pages already recorded aren't read again (a scan with
-a chosen category is always read in full). Entries are grouped into sessions (a
-page without a NEW SESSION header continues the last one); on a page that
-already has entries, only entries beyond those are added, so nothing is
-duplicated and hand corrections survive. Phone numbers, emails and
+a chosen category is always read in full). Entries are grouped into
+sessions (a page without a NEW SESSION header continues the last one); on
+a page that already has entries, only entries beyond those are added, so
+nothing is duplicated and hand corrections survive. Phone numbers, emails and
 addresses are blurred, and each blurred page is checked again; if anything
 is still readable the whole page is blurred. Expect roughly 5–10 cents per
 page read.

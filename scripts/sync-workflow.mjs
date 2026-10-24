@@ -16,8 +16,8 @@ const ids = files.filter((f) => f.endsWith(".json"))
   .map((f) => f.replace(/\.json$/, "")).sort().reverse(); // newest notebook first
 ids.push(NEW); // chosen, deliberately, to create a notebook
 
-// The front cover has its own action, so it isn't offered here.
-const categories = [AUTO, ...CATEGORIES.filter((c) => c.kind !== "front_cover").map((c) => c.label)];
+// Front cover routes the import to scripts/import-cover.mjs.
+const categories = [AUTO, ...CATEGORIES.map((c) => c.label)];
 
 const lists = { notebooks: ids, categories };
 const yaml = await readFile(WORKFLOW, "utf8");
