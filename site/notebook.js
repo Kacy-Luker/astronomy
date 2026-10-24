@@ -86,12 +86,15 @@ function renderPages(nb, sessionsById) {
   const section = el("section", "scans");
   section.append(el("h3", null, "Pages"), scanToggle(section));
   for (const pair of spreadsOf(nb)) {
-    if (!pair.some((p) => p && !p.hidden)) continue;
+    const shown = pair.filter((p) => p && !p.hidden);
+    if (!shown.length) continue;
     const spread = el("div", "spread");
     pair.forEach((p, side) => {
       if (!p || p.hidden) return;
       const figure = pageFigure(p, `${pageName(p)} of ${nb.title}`, caption(p, sessionsById));
       figure.classList.add(side ? "right" : "left");
+      // Width in proportion to the page's shape, so facing pages match in height.
+      if (shown.length === 2 && p.width && p.height) figure.style.flexGrow = String(p.width / p.height);
       spread.append(figure);
     });
     section.append(spread);
