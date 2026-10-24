@@ -219,15 +219,19 @@ session; an import's pull request lists the new ones. Which fields
 count is set in `site/todos.js`.
 
 **Catalog info.** Each import looks the objects up in
-[OpenNGC](https://github.com/mattiaverga/OpenNGC) (a pinned release,
-CC BY-SA 4.0, credited on the session page). It adds every designation
-to `ids` (M31 gets NGC 224) and writes `data/objects.json` with each
-object's common name, type, constellation, magnitude and size. IDs
-already there stay, and `aka` stays as written; the site shows the
-catalog's common name when the sheet has none. Don't edit
-`data/objects.json` by hand. To fill in existing sessions, run
-`node scripts/enrich-ids.mjs`; it only adds. Objects OpenNGC doesn't
-cover (stars, planets, most non-NGC catalogs) are left as written.
+[OpenNGC](https://github.com/mattiaverga/OpenNGC) (a pinned release, CC
+BY-SA 4.0, credited on the session page). It adds the object's Messier,
+NGC, IC and Caldwell designations to `ids` (M31 gets NGC 224, NGC 7000
+gets C 20) and writes `data/objects.json` with each object's common name,
+type, constellation, magnitude and size. An object written by another
+catalog number OpenNGC knows (UGC, PGC, LBN, Sh2, …) is found too, but
+those numbers aren't added. M102 is taken as NGC 5866 (the Spindle
+Galaxy), as in the Astronomical League's Messier program, not OpenNGC's
+duplicate of M101. IDs already there stay, and `aka` stays as written; the
+site shows the catalog's common name when the sheet has none. Don't edit
+`data/objects.json` by hand. To fill in existing sessions, run `node
+scripts/enrich-ids.mjs`; it only adds. Objects OpenNGC doesn't cover
+(stars, planets, most Barnard and Abell objects) are left as written.
 
 ## Hosting
 

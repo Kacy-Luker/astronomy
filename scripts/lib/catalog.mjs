@@ -2,6 +2,9 @@
 // CC-BY-SA 4.0): every designation, common names and object data for NGC,
 // IC and Messier objects and the addendum's extras (Caldwell, Melotte, ...).
 // The CSVs are fetched once at a pinned release into .catalog-cache/.
+//
+// ids hold the catalogs observers use: Messier, NGC, IC and Caldwell. Other
+// numbers OpenNGC lists (UGC, PGC, LBN, MWSC, ...) only help find an object.
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -56,19 +59,33 @@ async function csv(file) {
 const list = (s) => (s ? s.split(",").map((x) => x.trim()).filter(Boolean) : []);
 const num = (s) => (s === "" || s == null ? null : Number(s));
 
-// One object's reference data, keyed later by its first designation.
+// Where we follow observing programs rather than OpenNGC. M102 is listed
+// there as a duplicate of M101; the Astronomical League's Messier program
+// and most lists take it as NGC 5866, the Spindle Galaxy.
+const MESSIER = { "NGC 5866": "M102" };
+
+// Lookup key for any designation, including ones normalize() doesn't parse
+// (e.g. "2MASX J00424433+4116074").
+const keyOf = (id) => normalize(id) ?? String(id).toUpperCase().replace(/\s+/g, "");
+
+// One object's reference data, keyed later by its first designation, and
+// the other catalog numbers it can be found by.
 function entry(row) {
   const ids = [];
-  if (row.M) ids.push(normalize(`M${row.M}`));
-  ids.push(normalize(row.Name) ?? row.Name);
+  const own = normalize(row.Name) ?? row.Name;
+  const messier = row.M ? normalize(`M${row.M}`) : MESSIER[own];
+  if (messier) ids.push(messier);
+  ids.push(own);
   for (const n of list(row.NGC)) ids.push(normalize(`NGC${n}`));
   for (const n of list(row.IC)) ids.push(normalize(`IC${n}`));
+  const others = list(row.Identifiers);
+  for (const x of others.filter((x) => /^C \d+$/.test(x))) ids.push(normalize(x.replace(" ", "")));
   const names = list(row["Common names"]);
   // Sizes in arcminutes, whole above 10′; magnitudes to one decimal.
   const arcmin = (x) => (x >= 10 ? Math.round(x) : Math.round(x * 10) / 10);
   const [maj, min] = [num(row.MajAx), num(row.MinAx)].map((x) => (x == null ? null : arcmin(x)));
   const mag = num(row["V-Mag"]) ?? num(row["B-Mag"]);
-  return {
+  const e = {
     ids: [...new Set(ids)],
     name: names[0] ?? null,
     ...(names.length > 1 ? { names } : {}),
@@ -79,6 +96,7 @@ function entry(row) {
     ra: row.RA || null,
     dec: row.Dec || null,
   };
+  return { e, aliases: others.map(keyOf) };
 }
 
 // Loads the catalog; returns lookup(designation) -> entry or null.
@@ -86,11 +104,18 @@ export async function loadCatalog() {
   const rows = (await Promise.all(FILES.map(csv))).flat();
   const byId = new Map();
   const dups = [];
+  const aliases = [];
+  const entries = [];
   for (const row of rows) {
     if (row.Type === "Dup") { dups.push(row); continue; }
-    const e = entry(row);
-    for (const id of e.ids) if (!byId.has(id)) byId.set(id, e);
+    const { e, aliases: more } = entry(row);
+    entries.push(e);
+    for (const a of more) aliases.push([a, e]);
   }
+  // Each object's own name and Messier number first, then the designations
+  // it shares with others (pairs list each other's NGC numbers).
+  for (const e of entries) for (const id of e.ids.slice(0, e.ids[0].startsWith("M") ? 2 : 1)) byId.set(id, e);
+  for (const e of entries) for (const id of e.ids) if (!byId.has(id)) byId.set(id, e);
   // A duplicate entry points at the real object through its M, NGC or IC column.
   for (const row of dups) {
     const target = [row.M && `M${row.M}`, ...list(row.NGC).map((n) => `NGC${n}`), ...list(row.IC).map((n) => `IC${n}`)]
@@ -98,10 +123,9 @@ export async function loadCatalog() {
     const own = normalize(row.Name);
     if (target && own && !byId.has(own)) byId.set(own, target);
   }
-  return (id) => {
-    const key = normalize(id);
-    return (key && byId.get(key)) ?? null;
-  };
+  // Other catalog numbers find an object but never take over a designation.
+  for (const [a, e] of aliases) if (!byId.has(a)) byId.set(a, e);
+  return (id) => byId.get(keyOf(id)) ?? null;
 }
 
 // Catalog order: Messier, NGC, IC, then other catalogs, each by number.
