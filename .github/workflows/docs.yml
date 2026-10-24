@@ -5,8 +5,8 @@ name: Docs
 # committed to the pull request's branch, and a comment on the pull request
 # says what changed and links the commit. It starts on every pull request so
 # the `docs` check always reports and can be required before merging; with
-# no code to check (docs-only, import and remove pull requests, forks) the
-# job is skipped, which counts as passing.
+# no code to check (docs-only, import and remove pull requests, forks) it
+# passes without running Claude.
 on:
   pull_request:
     types: [opened, reopened, synchronize]
@@ -20,36 +20,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Whether the pull request changes code the docs describe.
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      code: ${{ steps.diff.outputs.code }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - id: diff
-        env:
-          BASE: ${{ github.base_ref }}
-        run: |
-          if git diff --name-only "origin/$BASE...HEAD" |
-            grep -qE '^(scripts/|site/|schema/|data/categories\.json$|\.github/workflows/|package\.json$|requirements\.txt$)'; then
-            echo "code=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No code changes; the docs check is skipped." >> "$GITHUB_STEP_SUMMARY"
-          fi
-
+  # One job, so a pull request waits for one runner, not two. Only branches
+  # in this repo can be pushed to, and import and remove pull requests only
+  # change data, so those skip the job; the rest skip the Claude steps when
+  # no code changed.
   docs:
-    needs: changes
-    # Only branches in this repo can be pushed to; import and remove pull
-    # requests only change data, so their docs don't need checking.
     if: >-
-      needs.changes.outputs.code == 'true' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       !startsWith(github.head_ref, 'import/') && !startsWith(github.head_ref, 'remove/')
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Claude usually finishes in under a minute; a stuck run fails here
+    # instead of holding the merge.
+    timeout-minutes: 8
     steps:
       # SCANS_TOKEN (a personal token, as for imports) pushes the docs commit,
       # so the pull request's checks run on it. Pushes with the built-in
@@ -59,16 +41,23 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
           token: ${{ secrets.SCANS_TOKEN }}
-      # The run started by this workflow's own docs commit has nothing to do.
-      - name: Check for our own docs commit
-        id: own
+      # Whether the pull request changes code the docs describe, and isn't
+      # this workflow's own docs commit (that run has nothing to do).
+      - name: Check for code changes
+        id: check
+        env:
+          BASE: ${{ github.base_ref }}
         run: |
           if [ "$(git log -1 --format='%an|%s')" = "github-actions[bot]|Update docs for this change" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "The newest commit is this workflow's docs update; nothing to check." >> "$GITHUB_STEP_SUMMARY"
+          elif ! git diff --name-only "origin/$BASE...HEAD" |
+            grep -qE '^(scripts/|site/|schema/|data/categories\.json$|\.github/workflows/|package\.json$|requirements\.txt$)'; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "No code changes; nothing to check." >> "$GITHUB_STEP_SUMMARY"
           fi
       - uses: anthropics/claude-code-action@v1
-        if: steps.own.outputs.skip != 'true'
+        if: steps.check.outputs.skip != 'true'
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -99,7 +88,7 @@ jobs:
             --model claude-opus-5-5
             --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
       - name: Commit the doc updates
-        if: steps.own.outputs.skip != 'true'
+        if: steps.check.outputs.skip != 'true'
         id: commit
         env:
           BRANCH: ${{ github.head_ref }}

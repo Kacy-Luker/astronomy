@@ -30,8 +30,9 @@ needs to change things safely.
 - Keep README.md and CLAUDE.md in step with the code in the same PR. The
   **Docs** workflow also checks code PRs, commits fixes ("Update docs for
   this change") to the branch and comments what changed; pull before
-  pushing again. It runs on every PR (a `changes` job skips the `docs` job
-  when no code changed), so `preview` and `docs` can be required checks.
+  pushing again. It runs on every PR as one `docs` job (it skips Claude
+  when no code changed, and times out after 8 minutes), so `preview` and
+  `docs` can be required checks.
 
 ## Privacy
 

@@ -248,8 +248,12 @@ link to that commit, and the diff. Review it with the rest. It uses the
 run, and pushes with `SCANS_TOKEN` so the pull request's checks run on its
 commit.
 
-The `docs` check reports on every pull request: on ones without code
-changes (docs only, imports, removals) it shows as skipped, which counts
-as passing. So both `preview` and `docs` can be required before merging:
+The `docs` check reports on every pull request: without code changes it
+passes in a few seconds without running Claude, and on imports and
+removals it shows as skipped, which also counts as passing. A run
+normally takes under a minute and fails after 8; if it looks stuck longer
+than that, GitHub is slow (its own Pages jobs slow down too), so reload
+the page before re-running it. Both `preview` and `docs` can be required
+before merging:
 **Settings → Rules → Rulesets**, a branch ruleset on the default branch
 with **Require status checks to pass** and those two checks.
