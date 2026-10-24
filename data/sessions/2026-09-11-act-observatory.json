@@ -24,7 +24,7 @@
       "seeing": 3,
       "transparency": 4,
       "eyepiece": "21mm Ethos",
-      "filter": null,
+      "filter": "N/A",
       "description": "2 bright cores with a dimmer halo; halos overlap; larger is top right of eyepiece"
     },
     {
@@ -36,7 +36,7 @@
       "seeing": 2,
       "transparency": 4,
       "eyepiece": "21mm Ethos",
-      "filter": null,
+      "filter": "N/A",
       "description": "Bright core with a few distinct stars; dim halo with less dusty star distribution than core"
     }
   ]
