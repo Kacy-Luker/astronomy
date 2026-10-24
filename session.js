@@ -106,7 +106,7 @@ function renderObservation(o, notebook) {
   sheetField(dl, "Transparency", o.transparency, transparencyText(o.transparency));
   if (o.scope) field(dl, "Scope", scopeText(o.scope));
   sheetField(dl, "Eyepiece", o.eyepiece);
-  field(dl, "Magnification", o.magnification && `${o.magnification}×`);
+  sheetField(dl, "Magnification", o.magnification, `${o.magnification}×`);
   sheetField(dl, "Filter", o.filter);
   const page = pageOf(notebook, o.page);
   if (page) field(dl, "Notebook", link(notebookHref(notebook.id, page), pageName(page)));
