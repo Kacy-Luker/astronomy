@@ -119,9 +119,13 @@ jobs:
           # Pushed with SCANS_TOKEN by URL: the Claude step points git's own
           # credentials at the built-in token, whose pushes wait for approval.
           # The checks run on this commit; the docs check skips it (above).
-          git -c http.https://github.com/.extraheader= push "https://x-access-token:$TOKEN@github.com/$REPO.git" "HEAD:$BRANCH"
+          { echo "Docs update:"; echo '```diff'; git show --format= HEAD; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          if ! git -c http.https://github.com/.extraheader= push "https://x-access-token:$TOKEN@github.com/$REPO.git" "HEAD:$BRANCH"; then
+            echo "push_failed=true" >> "$GITHUB_OUTPUT"
+            echo "::error::Couldn't push the docs update to $BRANCH. SCANS_TOKEN needs Contents: Read and write on $REPO. The diff is in this run's summary and on the pull request."
+            exit 1
+          fi
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          { echo "Updated the docs:"; echo '```diff'; git show --stat --format= HEAD; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Say on the pull request what changed
         if: steps.commit.outputs.sha
         env:
@@ -137,6 +141,30 @@ jobs:
               git show --stat --format= HEAD | sed '$d' | sed 's/^ */- /'
             fi
             echo
+            echo "<details><summary>Diff</summary>"
+            echo
+            echo '```diff'
+            git show --format= HEAD
+            echo '```'
+            echo "</details>"
+          } > "$RUNNER_TEMP/comment.md"
+          gh pr comment "$PR" --body-file "$RUNNER_TEMP/comment.md"
+      # If the push was refused, the edit would otherwise be lost: put it on
+      # the pull request with what to fix.
+      - name: Share the docs update that couldn't be pushed
+        if: failure() && steps.commit.outputs.push_failed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.number }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "**Docs update not pushed.** The Docs workflow ([run]($RUN)) has a fix for README.md or CLAUDE.md, but pushing it with \`SCANS_TOKEN\` was refused."
+            echo
+            echo "To fix: give the \`SCANS_TOKEN\` personal access token access to **$REPO** with **Contents**, **Pull requests** and **Workflows** set to **Read and write** (and check it hasn't expired), then re-run the failed \`docs\` job. Or apply the diff below by hand."
+            echo
+            if [ -s docs-summary.md ]; then cat docs-summary.md; echo; fi
             echo "<details><summary>Diff</summary>"
             echo
             echo '```diff'
