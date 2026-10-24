@@ -169,10 +169,8 @@ must match `PageReading` in `read-page.mjs`).
 - `scripts/build.mjs` adds the icon and manifest links (`site/icons/`,
   `site/manifest.webmanifest`) to every page's `<head>`, so new pages
   don't need them; without them browsers show kacyluker.com's favicon.
-  Chrome on Android takes bookmark and home-screen icons from the
-  manifest. Strip photo metadata (location) from any image added there.
-  `og:image` needs a full URL, built from `SITE_URL` (set in `pages.yml`
-  and `preview.yml`; defaults to the live site).
+  Chrome on Android takes home-screen icons from the manifest. Strip
+  photo metadata (location) from any image added there.
 - The manifest makes the site installable (`display: standalone`): Chrome
   offers "Install app", and the installed log opens without an address
   bar and with a full-tile (maskable) icon. Keep pages navigable without

@@ -76,12 +76,8 @@ const icons = [
   `<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">`,
   `<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">`,
   `<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">`,
-  // Chrome on Android takes bookmark and home-screen icons from the manifest.
+  // Chrome on Android takes home-screen icons from the manifest.
   `<link rel="manifest" href="manifest.webmanifest">`,
-  // Chrome's bookmark list and link previews show this as the page's
-  // picture. They fetch it from a server, which needs the full address
-  // (SITE_URL, set by the deploy and preview workflows).
-  `<meta property="og:image" content="${new URL("icons/icon-512.png", process.env.SITE_URL ?? "https://kacyluker.com/astronomy/")}">`,
 ].map((tag) => `  ${tag}\n`).join("");
 
 // A PR preview build also gets a banner on every page so it isn't mistaken

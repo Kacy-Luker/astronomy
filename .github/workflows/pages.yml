@@ -27,8 +27,6 @@ jobs:
       - run: npm ci
       - run: npm run validate
       - run: npm run build
-        env:
-          SITE_URL: https://kacyluker.com/astronomy/
       - uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
