@@ -13,6 +13,10 @@ needs to change things safely.
 
 - One pull request per feature, against `main`, with short logical commits.
   Open new work as issues rather than widening a PR.
+- Every change has an issue, and its branch is named for it:
+  `<issue number>-<short-description>`, cut from `main` (e.g.
+  `21-blank-field-todos`). The PR says "Closes #<n>". Merged branches are
+  deleted automatically.
 - Show Kacy before/after evidence (zoomed crops, screenshots) for anything
   that changes how pages look, and ask before building when a choice is
   theirs (privacy, layout, workflow).
@@ -25,7 +29,8 @@ needs to change things safely.
 - Keep README.md and CLAUDE.md in step with the code in the same PR. The
   **Docs** workflow also checks code PRs, commits fixes ("Update docs for
   this change") to the branch and comments what changed; pull before
-  pushing again.
+  pushing again. It runs on every PR (a `changes` job skips the `docs` job
+  when no code changed), so `preview` and `docs` can be required checks.
 
 ## Privacy
 
