@@ -82,10 +82,10 @@ jobs:
           echo "TITLE=$TITLE" >> "$GITHUB_ENV"
           [ "$MODE" = new ] || echo "NOTEBOOK=$PICKED" >> "$GITHUB_ENV"
           [ "$MODE" != remove ] || echo "BRANCH=remove/$PICKED" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch the private scans
         if: env.MODE != 'remove'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ${{ github.repository_owner }}/astronomy-scans
           token: ${{ secrets.SCANS_TOKEN }}
@@ -127,7 +127,7 @@ jobs:
           echo "NOTEBOOK=$NOTEBOOK" >> "$GITHUB_ENV"
           echo "SCAN=$SCAN" >> "$GITHUB_ENV"
           echo "BRANCH=import/$NOTEBOOK-$MODE-$(echo "${NAME%.*}" | tr -c 'A-Za-z0-9.\n-' '-')" >> "$GITHUB_ENV"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -136,7 +136,7 @@ jobs:
       - run: npm ci
       # Stamp show-through is removed by scripts/showthrough.py.
       - if: env.MODE != 'remove'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
@@ -167,7 +167,7 @@ jobs:
         run: rm -rf .scans
       # SCANS_TOKEN also needs write access to this repo: pushing a change to
       # the forms' dropdowns isn't allowed with the built-in token.
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.SCANS_TOKEN }}
           branch: ${{ env.BRANCH }}
