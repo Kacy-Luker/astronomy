@@ -229,6 +229,12 @@ site repo, since it would claim the same path.
 Asset and data paths in `site/` are relative so the site works under
 that subpath and under preview paths.
 
+On an Android phone, Chrome's menu offers **Install app** (or **Add to
+Home screen**, then **Install**). The installed log gets the full-tile
+telescope icon and opens without Chrome's address bar. A plain shortcut
+instead shows the icon on a white tile. Each PR preview installs as its
+own app, so remove a preview's icon once you're done testing.
+
 ### Pull request previews
 
 Every pull request, including import PRs, is built and published at

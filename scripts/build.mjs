@@ -78,6 +78,8 @@ const icons = [
   `<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">`,
   // Chrome on Android takes bookmark and home-screen icons from the manifest.
   `<link rel="manifest" href="manifest.webmanifest">`,
+  // Chrome's bookmark list and link previews show this as the page's picture.
+  `<meta property="og:image" content="icons/icon-512.png">`,
 ].map((tag) => `  ${tag}\n`).join("");
 
 // A PR preview build also gets a banner on every page so it isn't mistaken
