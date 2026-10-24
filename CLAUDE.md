@@ -166,3 +166,12 @@ must match `PageReading` in `read-page.mjs`).
   cleaned image) is the default. Inversion is a CSS filter, so pages link
   to `view.html` (which applies the same view), not to the bare JPEG.
 - The contents table on each notebook page is generated from sessions.
+- `scripts/build.mjs` adds the icon and manifest links (`site/icons/`,
+  `site/manifest.webmanifest`) to every page's `<head>`, so new pages
+  don't need them; without them browsers show kacyluker.com's favicon.
+  Chrome on Android takes home-screen icons from the manifest. Strip
+  photo metadata (location) from any image added there.
+- The manifest makes the site installable (`display: standalone`): Chrome
+  offers "Install app", and the installed log opens without an address
+  bar and with a full-tile (maskable) icon. Keep pages navigable without
+  the browser's own controls.

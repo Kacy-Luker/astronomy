@@ -68,15 +68,29 @@ await mkdir(join(OUT, "data"), { recursive: true });
 await writeFile(join(OUT, "data", "sessions.json"), JSON.stringify(sessions));
 await writeFile(join(OUT, "data", "notebooks.json"), JSON.stringify(notebooks));
 
-// A PR preview build gets a banner on every page so it isn't mistaken for the live site.
+// Every page gets the site's icons (site/icons/: Kacy's telescope photos,
+// a wide crop for tab sizes and a close-up for larger ones), so a new page
+// can't miss them. Without these, browsers show kacyluker.com's favicon.
+const icons = [
+  `<link rel="icon" href="icons/icon-16.png" sizes="16x16" type="image/png">`,
+  `<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">`,
+  `<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">`,
+  `<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">`,
+  // Chrome on Android takes home-screen icons from the manifest.
+  `<link rel="manifest" href="manifest.webmanifest">`,
+].map((tag) => `  ${tag}\n`).join("");
+
+// A PR preview build also gets a banner on every page so it isn't mistaken
+// for the live site.
+let banner = "";
 if (process.env.PREVIEW_OF) {
   const escape = (text) => text.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
   const link = process.env.PREVIEW_LINK ? ` <a href="${escape(process.env.PREVIEW_LINK)}">View the pull request</a>` : "";
-  const banner = `<div class="preview-banner">Preview of ${escape(process.env.PREVIEW_OF)}.${link}</div>`;
-  for (const file of (await readdir(OUT)).filter((f) => f.endsWith(".html"))) {
-    const html = await readFile(join(OUT, file), "utf8");
-    await writeFile(join(OUT, file), html.replace("<body>", `<body>\n  ${banner}`).replace(/<body class="([^"]*)">/, `<body class="$1">\n  ${banner}`));
-  }
+  banner = `\n  <div class="preview-banner">Preview of ${escape(process.env.PREVIEW_OF)}.${link}</div>`;
+}
+for (const file of (await readdir(OUT)).filter((f) => f.endsWith(".html"))) {
+  const html = (await readFile(join(OUT, file), "utf8")).replace("</head>", `${icons}</head>`);
+  await writeFile(join(OUT, file), html.replace(/<body( class="[^"]*")?>/, (body) => body + banner));
 }
 
 console.log(`Built ${notebooks.length} notebooks and ${sessions.length} sessions into ${OUT}/`);

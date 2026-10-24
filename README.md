@@ -12,6 +12,7 @@ Astronomy observations transcribed from paper notes, published at
 | `schema/` | The shape every notebook and session file must match |
 | `scans/<notebook>/` | One image per notebook page, in order (`01.jpg`, `02.jpg`, …) |
 | `site/` | Static site source (HTML, CSS, JS) |
+| `site/icons/` | Site icons from Kacy's telescope photos: a wide crop at 16 and 32 px, a close-up at 180, 192 and 512 px (the larger ones also listed in `site/manifest.webmanifest`, with wider "maskable" crops that fill Android's home-screen tile) |
 | `scripts/` | Build and validation scripts |
 | `docs/PROJECT_BRIEF.md` | The plan this site is built from |
 | `CLAUDE.md` | Context for AI agents working on the repo |
@@ -227,6 +228,12 @@ site repo, since it would claim the same path.
 
 Asset and data paths in `site/` are relative so the site works under
 that subpath and under preview paths.
+
+On an Android phone, Chrome's menu offers **Install app** (or **Add to
+Home screen**, then **Install**). The installed log gets the full-tile
+telescope icon and opens without Chrome's address bar. A plain shortcut
+instead shows the icon on a white tile. Each PR preview installs as its
+own app, so remove a preview's icon once you're done testing.
 
 ### Pull request previews
 
