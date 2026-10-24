@@ -212,7 +212,8 @@ apply. A field left blank is `null` (or left out) and counts as a to-do,
 to come back to. Every field counts except AKA. EP/MAG is two fields,
 eyepiece and magnification, so a missing magnification is its own
 to-do. The site marks to-dos with **To do** and shows a count on each
-session; an import's pull request lists the new ones. Which fields count is set in `site/todos.js`.
+session; an import's pull request lists the new ones. Which fields
+count is set in `site/todos.js`.
 
 ## Hosting
 
