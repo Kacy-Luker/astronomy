@@ -74,6 +74,11 @@ let currentView = VIEWS[savedView()] ? savedView() : "inverted";
 
 const imageFor = (img, view) => (view === "original" ? img.dataset.original : img.dataset.clean || img.dataset.original);
 
+// Tapping a page opens it full size in view.html, in the same view: the
+// inversion is a style here, so the bare image file would show un-inverted.
+const viewerHref = (img, view) =>
+  `view.html?${new URLSearchParams({ img: imageFor(img, view), view, name: img.dataset.name ?? "" })}`;
+
 // Inverted / Cleaned / Original buttons for the scans inside target.
 export function scanToggle(target) {
   const group = el("div", "toggle");
@@ -91,7 +96,7 @@ export function scanToggle(target) {
     target.classList.toggle("inverted", view === "inverted");
     for (const img of target.querySelectorAll("img[data-original]")) {
       img.src = imageFor(img, view);
-      img.closest("a").href = img.src;
+      img.closest("a").href = viewerHref(img, view);
     }
     for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.view === view));
   }
@@ -108,7 +113,8 @@ export function pageFigure(page, alt, caption) {
   img.dataset.original = page.image;
   if (page.clean) img.dataset.clean = page.clean;
   img.src = imageFor(img, currentView);
-  const a = link(img.src);
+  img.dataset.name = alt;
+  const a = link(viewerHref(img, currentView));
   if (page.width) [img.width, img.height] = [page.width, page.height];
   img.alt = alt;
   img.loading = "lazy";
