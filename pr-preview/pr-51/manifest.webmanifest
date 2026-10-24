@@ -1,8 +1,10 @@
 {
+  "id": "./",
   "name": "Observing Log",
   "short_name": "Observing Log",
   "start_url": "./",
-  "display": "browser",
+  "scope": "./",
+  "display": "standalone",
   "background_color": "#0d0f14",
   "theme_color": "#0d0f14",
   "icons": [
