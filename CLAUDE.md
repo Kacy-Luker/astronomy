@@ -67,8 +67,9 @@ apart in the reader prompt and importer.
 
 JSON files are hand-edited by Kacy; write them with
 `scripts/lib/format-json.mjs` so diffs stay small. Seeing and transparency
-are stored 1–5 for the sheet's I–V; the notebook's own key reads seeing I
-as excellent and transparency I as magnitude 1 (`site/lib.js`).
+are stored 1–5 for the sheet's I–V and shown with the Clear Sky Chart's
+words: seeing I is Excellent and V Bad, transparency I is Poor and V
+Transparent (`site/lib.js`). The key printed in the notebook isn't used.
 
 ## The notebook
 

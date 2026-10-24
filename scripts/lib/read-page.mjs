@@ -23,7 +23,7 @@ const Scope = z.object({
 // The writer puts N/A in fields that don't apply; a blank field is null.
 const NA = z.literal("N/A");
 const Scale = z.union([z.number().int(), NA]).nullable()
-  .describe('Circled roman numeral as 1-5; "N/A" if written; null if none circled');
+  .describe('Circled roman numeral as 1-5 (I is 1), as circled, without converting by any key; "N/A" if written; null if none circled');
 
 export const PageReading = z.object({
   kind: z.enum(PAGE_KINDS).describe("The page's category"),
