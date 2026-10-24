@@ -3,19 +3,13 @@ name: Docs
 # On each pull request that changes code, Claude reads the change and updates
 # README.md and CLAUDE.md where they no longer match it. The fix is
 # committed to the pull request's branch, and a comment on the pull request
-# says what changed and links the commit. Import pull requests (data and
-# scans only) are skipped.
+# says what changed and links the commit. It starts on every pull request so
+# the `docs` check always reports and can be required before merging; with
+# no code to check (docs-only, import and remove pull requests, forks) the
+# job is skipped, which counts as passing.
 on:
   pull_request:
     types: [opened, reopened, synchronize]
-    paths:
-      - "scripts/**"
-      - "site/**"
-      - "schema/**"
-      - "data/categories.json"
-      - ".github/workflows/**"
-      - "package.json"
-      - "requirements.txt"
 
 permissions:
   contents: write
@@ -26,10 +20,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Whether the pull request changes code the docs describe.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          if git diff --name-only "origin/$BASE...HEAD" |
+            grep -qE '^(scripts/|site/|schema/|data/categories\.json$|\.github/workflows/|package\.json$|requirements\.txt$)'; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No code changes; the docs check is skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   docs:
+    needs: changes
     # Only branches in this repo can be pushed to; import and remove pull
     # requests only change data, so their docs don't need checking.
     if: >-
+      needs.changes.outputs.code == 'true' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       !startsWith(github.head_ref, 'import/') && !startsWith(github.head_ref, 'remove/')
     runs-on: ubuntu-latest
