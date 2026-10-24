@@ -22,8 +22,9 @@ needs to change things safely.
   theirs (privacy, layout, workflow).
 - Test site changes in headless Chromium (Playwright with
   `executablePath: '/opt/pw-browsers/chromium'` in cloud sessions) at
-  390px and desktop width, light and dark. Serve `dist/` under
-  `/astronomy/` to match production paths.
+  390px and desktop width. The site is dark only (`site/style.css`
+  `:root`); there is no light theme. Serve `dist/` under `/astronomy/` to
+  match production paths.
 - `npm run validate` and `npm run build` must pass. Every PR runs them and
   gets a preview at `kacyluker.com/astronomy/pr-preview/pr-<n>/`.
 - Keep README.md and CLAUDE.md in step with the code in the same PR. The
