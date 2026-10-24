@@ -57,6 +57,17 @@ const ROMAN = ["I", "II", "III", "IV", "V"];
 const SEEING = ["Excellent", "Good", "Average", "Poor", "Bad"];
 const TRANSPARENCY = ["Poor", "Below average", "Average", "Above average", "Transparent"];
 
+// An object's name: as written on the sheet (AKA), else the catalog's.
+export const objectName = (o) => o.aka || o.catalog?.name || null;
+
+// "Planetary nebula in Vulpecula · mag 7.4 · 6.7′", from the build's
+// catalog info (data/objects.json, OpenNGC).
+export function catalogText(c) {
+  if (!c) return null;
+  const what = c.constellation ? `${c.type} in ${c.constellation}` : c.type;
+  return [what, c.magnitude != null && `mag ${c.magnitude}`, c.size].filter(Boolean).join(" · ");
+}
+
 export const seeingText = (n) => n && `${ROMAN[n - 1]} · ${SEEING[n - 1]}`;
 export const transparencyText = (n) => n && `${ROMAN[n - 1]} · ${TRANSPARENCY[n - 1]}`;
 
