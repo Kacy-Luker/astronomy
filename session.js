@@ -3,6 +3,7 @@ import {
   el, formatDate, link, loadNotebooks, loadSessions, notebookHref, pageFigure, pageName,
   scanToggle, seeingText, transparencyText,
 } from "./lib.js";
+import { isBlank, isNA, todoCount } from "./todos.js";
 
 const main = document.getElementById("session");
 
@@ -11,6 +12,16 @@ function field(dl, label, value) {
   if (value == null || value === "") return;
   const dd = el("dd");
   dd.append(value instanceof Node ? value : String(value));
+  dl.append(el("dt", null, label), dd);
+}
+
+// A field from the log sheet: N/A shows muted, and a blank field (one to
+// come back to) shows a To do marker. display formats a filled-in value.
+function sheetField(dl, label, value, display = value) {
+  const dd = el("dd");
+  if (isNA(value)) dd.append(el("span", "muted", "N/A"));
+  else if (isBlank(value)) dd.append(el("span", "todo", "To do"));
+  else dd.append(display instanceof Node ? display : String(display));
   dl.append(el("dt", null, label), dd);
 }
 
@@ -31,16 +42,20 @@ function renderHeader(s, notebook) {
   const title = el("h2", "session-title");
   title.append(el("time", null, formatDate(s.date)));
   head.append(title);
-  if (s.program) head.append(el("span", "tag", s.program));
+  if (s.program && !isNA(s.program)) head.append(el("span", "tag", s.program));
+  const todos = todoCount(s);
+  if (todos) head.append(el("span", "tag todo", `${todos} to do`));
   header.append(head);
 
   const dl = el("dl", "facts");
-  const coords = s.site.lat != null && s.site.lon != null ? ` (${s.site.lat}, ${s.site.lon})` : "";
-  field(dl, "Site", s.site.name + coords);
-  field(dl, "Sky (SQM)", s.sky?.sqm);
+  if (isBlank(s.program) || isNA(s.program)) sheetField(dl, "Program", s.program);
+  sheetField(dl, "Site", s.site.name);
+  const { lat, lon } = s.site;
+  sheetField(dl, "Lat/long", isNA(lat) || isNA(lon) ? "N/A" : isBlank(lat) || isBlank(lon) ? null : `${lat}, ${lon}`);
+  sheetField(dl, "Sky (SQM)", s.sky?.sqm);
   field(dl, "Sky notes", s.sky?.notes);
-  field(dl, "Scope", scopeText(s.scope));
-  field(dl, s.observers.length > 1 ? "Observers" : "Observer", s.observers.join(", "));
+  sheetField(dl, "Scope", s.scope?.name, scopeText(s.scope));
+  sheetField(dl, s.observers.length > 1 ? "Observers" : "Observer", s.observers.join(", "));
   if (notebook) {
     const pages = s.pages?.length ? `, ${s.pages.length > 1 ? "pages" : "page"} ${s.pages.join("–")}` : "";
     field(dl, "Notebook", link(notebookHref(notebook.id, pageOf(notebook, s.pages?.[0])),
@@ -85,19 +100,21 @@ function renderObservation(o, notebook) {
   }
 
   const dl = el("dl", "facts");
-  field(dl, "Local time", o.local_time);
-  field(dl, "UT", o.ut);
-  field(dl, "Seeing", seeingText(o.seeing));
-  field(dl, "Transparency", transparencyText(o.transparency));
+  sheetField(dl, "Local time", o.local_time);
+  sheetField(dl, "UT", o.ut);
+  sheetField(dl, "Seeing", o.seeing, seeingText(o.seeing));
+  sheetField(dl, "Transparency", o.transparency, transparencyText(o.transparency));
   if (o.scope) field(dl, "Scope", scopeText(o.scope));
-  field(dl, "Eyepiece", o.eyepiece);
+  sheetField(dl, "Eyepiece", o.eyepiece);
   field(dl, "Magnification", o.magnification && `${o.magnification}×`);
-  field(dl, "Filter", o.filter);
+  sheetField(dl, "Filter", o.filter);
   const page = pageOf(notebook, o.page);
   if (page) field(dl, "Notebook", link(notebookHref(notebook.id, page), pageName(page)));
   card.append(dl);
 
-  if (o.description) card.append(el("p", "description", o.description));
+  if (isBlank(o.description)) card.append(el("p", "description todo", "Description: to do"));
+  else if (isNA(o.description)) card.append(el("p", "description muted", "Description: N/A"));
+  else card.append(el("p", "description", o.description));
   return card;
 }
 

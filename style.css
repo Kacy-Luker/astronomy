@@ -6,6 +6,8 @@
   --border: #e3e1db;
   --accent: #8a3b12;
   --tag-bg: #f3e6dc;
+  --todo: #8a5a00;
+  --todo-bg: #fbefd2;
   color-scheme: light dark;
 }
 
@@ -18,6 +20,8 @@
     --border: #262a35;
     --accent: #f08a5d;
     --tag-bg: #2c211c;
+    --todo: #f2c14e;
+    --todo-bg: #2e2612;
   }
 }
 
@@ -69,6 +73,10 @@ a { color: var(--accent); }
 /* A notebook's status, next to its title. */
 .tag.status { font-size: .95rem; font-weight: 600; padding: .1rem .75rem; }
 .tag.status.completed { background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+
+/* A field left blank on the log sheet, to come back to. */
+.todo { color: var(--todo); font-weight: 600; }
+.tag.todo { background: var(--todo-bg); }
 
 .objects { margin: 0; padding-left: 1.25rem; }
 
