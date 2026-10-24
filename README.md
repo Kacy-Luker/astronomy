@@ -253,9 +253,9 @@ this change". It then comments on the pull request with what changed, a
 link to that commit, and the diff. Review it with the rest. It uses the
 `ANTHROPIC_API_KEY` secret, about the cost of reading a page or two per
 run, and pushes with `SCANS_TOKEN` so the pull request's checks run on its
-commit. That token needs **Contents: Read and write** on this repo as well
-as on astronomy-scans; if the push is refused, the check fails and the
-diff is posted on the pull request with what to fix.
+commit. That token needs **Contents: Read and write** on this repo (see
+the one-time setup above); if the push is refused, the check fails and
+the diff is posted on the pull request with what to fix.
 
 The `docs` check reports on every pull request: without code changes it
 passes in a few seconds without running Claude, and on imports and
