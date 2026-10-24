@@ -133,7 +133,13 @@
           "$ref": "#/$defs/scope"
         },
         "eyepiece": { "type": ["string", "null"] },
-        "magnification": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "magnification": {
+          "description": "The MAG half of EP/MAG, e.g. 92 for 92x.",
+          "anyOf": [
+            { "type": ["number", "null"], "exclusiveMinimum": 0 },
+            { "$ref": "#/$defs/na" }
+          ]
+        },
         "filter": { "type": ["string", "null"] },
         "description": { "type": ["string", "null"] }
       }
