@@ -56,6 +56,12 @@ needs to change things safely.
 | `scripts/` | Build, validation, import, splitting, cleaning |
 | `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`) |
 
+On the sheet Kacy writes N/A where a field doesn't apply; that's stored
+as `"N/A"` (the schema allows it for numbers and times too). A blank field
+is `null` or missing and is a to-do. Every field but AKA counts; the list
+is `site/todos.js`, used by the site and the import summary. Keep the two
+apart in the reader prompt and importer.
+
 JSON files are hand-edited by Kacy; write them with
 `scripts/lib/format-json.mjs` so diffs stay small. Seeing and transparency
 are stored 1–5 for the sheet's I–V; the notebook's own key reads seeing I

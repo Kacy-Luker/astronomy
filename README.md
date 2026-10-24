@@ -205,6 +205,12 @@ the session is written, and `page` on each observation. Seeing and
 transparency use the log sheet's I–V scale, stored as 1–5; the notebook's
 key reads seeing I as excellent and transparency I as magnitude 1.
 
+**To-dos.** A field written as N/A is stored as `"N/A"`: it doesn't
+apply. A field left blank is `null` (or left out) and counts as a to-do,
+to come back to. Every field counts except AKA. The site marks to-dos with
+**To do** and shows a count on each session; an import's pull request
+lists the new ones. Which fields count is set in `site/todos.js`.
+
 ## Hosting
 
 Pushes to `main` build the site and publish it to the `gh-pages` branch,
