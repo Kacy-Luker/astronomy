@@ -51,10 +51,11 @@ export function pageName(page) {
   return page.number != null ? `Page ${page.number}` : page.label ?? KIND_NAMES[page.kind] ?? page.kind;
 }
 
-// The notebook's own key. Seeing I is best; transparency I is worst.
+// Kacy circles I–V using the Clear Sky Chart's words, with seeing I as the
+// best (as on the Antoniadi scale) and transparency V as the best.
 const ROMAN = ["I", "II", "III", "IV", "V"];
-const SEEING = ["Excellent", "Very good", "Good", "Fair", "Poor"];
-const TRANSPARENCY = ["Mag 1", "Mag 2–3", "Mag 4", "Mag 5", "Mag 6–7"];
+const SEEING = ["Excellent", "Good", "Average", "Poor", "Bad"];
+const TRANSPARENCY = ["Poor", "Below average", "Average", "Above average", "Transparent"];
 
 export const seeingText = (n) => n && `${ROMAN[n - 1]} · ${SEEING[n - 1]}`;
 export const transparencyText = (n) => n && `${ROMAN[n - 1]} · ${TRANSPARENCY[n - 1]}`;
