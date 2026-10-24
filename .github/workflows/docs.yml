@@ -36,7 +36,7 @@ jobs:
       # SCANS_TOKEN (a personal token, as for imports) pushes the docs commit,
       # so the pull request's checks run on it. Pushes with the built-in
       # token wait for someone to approve their runs.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
