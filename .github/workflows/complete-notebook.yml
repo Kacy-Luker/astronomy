@@ -1,0 +1,58 @@
+name: Complete notebook
+
+# Run once with no scan to mark a notebook completed; its pull request lists
+# what to rescan. Then upload the rescan and run it again with that file.
+on:
+  workflow_dispatch:
+    inputs:
+      notebook:
+        description: "Notebook to complete"
+        type: choice
+        options:
+          # Written by scripts/sync-workflow.mjs from data/notebooks/.
+          # existing-notebooks:start
+          - astronomy-001
+          # existing-notebooks:end
+      scan:
+        description: "Empty = just mark it completed and get the rescan checklist. Second run: the rescan, e.g. astronomy-001/2027-03-01.pdf"
+        required: false
+      category:
+        description: "Optional: put every non-blank page in the rescan in this category, when Claude gets it wrong"
+        type: choice
+        default: Detect automatically
+        options:
+          # Written by scripts/sync-workflow.mjs from data/categories.json.
+          # categories:start
+          - Detect automatically
+          - Front cover
+          - Inside front cover
+          - Volume label
+          - Title page
+          - Table of contents
+          - Scales
+          - Session pages
+          - Index
+          - Notebook info
+          - Inside back cover
+          # categories:end
+      start_page:
+        description: "Optional: the page number of the first session page in the scan, used only when no printed page number could be read"
+        required: false
+
+permissions:
+  contents: read
+
+# One import at a time, across all three forms.
+concurrency:
+  group: import
+
+jobs:
+  run:
+    uses: ./.github/workflows/notebook-job.yml
+    secrets: inherit
+    with:
+      action: Complete notebook
+      notebook: ${{ inputs.notebook }}
+      scan: ${{ inputs.scan }}
+      category: ${{ inputs.category }}
+      start_page: ${{ inputs.start_page }}

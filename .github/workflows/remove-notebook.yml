@@ -1,0 +1,34 @@
+name: Remove notebook
+
+# Opens a pull request that deletes a notebook, its page images and its
+# sessions from the site. The scans in astronomy-scans are kept.
+on:
+  workflow_dispatch:
+    inputs:
+      notebook:
+        description: "Notebook to remove"
+        type: choice
+        options:
+          # Written by scripts/sync-workflow.mjs from data/notebooks/.
+          # existing-notebooks:start
+          - astronomy-001
+          # existing-notebooks:end
+      confirm:
+        description: "Type the notebook's id to confirm"
+        required: true
+
+permissions:
+  contents: read
+
+# One import at a time, across all three forms.
+concurrency:
+  group: import
+
+jobs:
+  run:
+    uses: ./.github/workflows/notebook-job.yml
+    secrets: inherit
+    with:
+      action: Remove notebook
+      notebook: ${{ inputs.notebook }}
+      confirm: ${{ inputs.confirm }}
