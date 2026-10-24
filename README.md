@@ -12,7 +12,7 @@ Astronomy observations transcribed from paper notes, published at
 | `schema/` | The shape every notebook and session file must match |
 | `scans/<notebook>/` | One image per notebook page, in order (`01.jpg`, `02.jpg`, …) |
 | `site/` | Static site source (HTML, CSS, JS) |
-| `site/icons/` | Site icons from Kacy's telescope photos: a wide crop at 16 and 32 px, a close-up at 180 and 192 px |
+| `site/icons/` | Site icons from Kacy's telescope photos: a wide crop at 16 and 32 px, a close-up at 180, 192 and 512 px (the larger ones also listed in `site/manifest.webmanifest`) |
 | `scripts/` | Build and validation scripts |
 | `docs/PROJECT_BRIEF.md` | The plan this site is built from |
 | `CLAUDE.md` | Context for AI agents working on the repo |

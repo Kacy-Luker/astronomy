@@ -76,6 +76,8 @@ const icons = [
   `<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">`,
   `<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">`,
   `<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">`,
+  // Chrome on Android takes bookmark and home-screen icons from the manifest.
+  `<link rel="manifest" href="manifest.webmanifest">`,
 ].map((tag) => `  ${tag}\n`).join("");
 
 // A PR preview build also gets a banner on every page so it isn't mistaken
