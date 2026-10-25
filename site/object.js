@@ -35,7 +35,7 @@ function renderHeader(obj, info) {
   return header;
 }
 
-// The sketch from one session at a time: the session's header above the
+// The sketch from one session at a time: the session's header, then the
 // entry, cut from the page. A toggle switches sessions when there are
 // several, and the scan toggle switches Inverted / Cleaned / Original.
 function renderSketches(obj) {
@@ -47,8 +47,11 @@ function renderSketches(obj) {
   const label = ({ s }) => `${formatDate(s.date)} · ${s.site.name}`;
   const show = (i) => {
     const { o, s } = seen[i];
-    frame.replaceChildren(imageFigure(o.sketch, `${o.catalog_id}, ${label(seen[i])}`,
-      link(sessionHref(s.id), label(seen[i]))));
+    // The session's header and the entry, as two images with a gap.
+    frame.replaceChildren(
+      imageFigure(o.sketch.header, `Session header, ${label(seen[i])}`),
+      imageFigure(o.sketch, `${o.catalog_id}, ${label(seen[i])}`, link(sessionHref(s.id), label(seen[i]))),
+    );
     for (const [j, b] of buttons.entries()) b.setAttribute("aria-pressed", String(j === i));
   };
   const group = el("div", "toggle");

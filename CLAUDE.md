@@ -184,13 +184,15 @@ must match `PageReading` in `read-page.mjs`).
   one sketch at a time (a toggle picks the session) and every observation,
   newest first. Both use `site/objects.js` for the grouping; the session
   and object pages share the entry fields (`site/observation.js`).
-- Sketch images: the build cuts each observation's `box` from its page and
-  stacks it under the session's `header_box` (NEW SESSION block), from the
-  cleaned and original page images in `scans/` only (already redacted),
-  into `sketches/<session>/<n>.jpg` and `.clean.jpg`. Boxes are `[x, y,
-  width, height]` fractions; the reader returns them at import and Kacy
-  can fix them by hand. `view.html` accepts `scans/` and `sketches/`
-  images.
+- Sketch images: the build cuts each session's `header_box` (NEW SESSION
+  block) and each observation's `box` from their pages, from the cleaned
+  and original page images in `scans/` only (already redacted), into
+  `sketches/<session>/header.jpg` and `<n>.jpg`, each with a `.clean.jpg`.
+  The object page shows the header and the entry as two images with a gap
+  (Kacy didn't want them merged into one); thumbnails show the entry only.
+  Boxes are `[x, y, width, height]` fractions; the reader returns them at
+  import and Kacy can fix them by hand. `view.html` accepts `scans/` and
+  `sketches/` images.
 - `scripts/build.mjs` adds the icon and manifest links (`site/icons/`,
   `site/manifest.webmanifest`) to every page's `<head>`, so new pages
   don't need them; without them browsers show kacyluker.com's favicon.
