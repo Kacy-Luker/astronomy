@@ -31,9 +31,12 @@ needs to change things safely.
   **Docs** workflow also checks code PRs, commits fixes ("Update docs for
   this change") to the branch and comments what changed; pull before
   pushing again. If its push (with `ASTRONOMY_TOKEN`) is refused, the job
-  fails and comments the diff on the PR instead. It runs on every PR as
-  one `docs` job (it skips Claude when no code changed, and times out
-  after 8 minutes), so `preview` and `docs` can be required checks.
+  fails and comments the diff on the PR instead. If Claude's own run
+  fails, the job prints the tool calls it was refused and its last message
+  (its output is otherwise hidden); Claude may only use Read, Glob, Grep,
+  Edit, Write and `git diff/log/show`. It runs on every PR as one `docs`
+  job (it skips Claude when no code changed, and times out after 8
+  minutes), so `preview` and `docs` can be required checks.
 
 ## Privacy
 
