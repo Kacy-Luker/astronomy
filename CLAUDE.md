@@ -52,7 +52,7 @@ needs to change things safely.
 | --- | --- |
 | `data/notebooks/<id>.json` | Every scanned page in order: `kind`, `number`, `label`, `open`, `redact` (schema: `schema/notebook.schema.json`) |
 | `data/categories.json` | Page categories for every notebook, in book order, with `in_progress`, `rescan` and `single` (read by `scripts/lib/categories.mjs`) |
-| `data/sessions/<id>.json` | One observing night; `notebook`, `pages`, and `page` on each observation (schema: `schema/session.schema.json`) |
+| `data/sessions/<id>.json` | One observing night; `notebook`, `pages`, `header_box`, and `page` and `box` on each observation (schema: `schema/session.schema.json`) |
 | `data/objects.json` | Generated catalog info for observed objects, keyed by first designation (`scripts/lib/catalog.mjs`, OpenNGC pinned and cached in `.catalog-cache/`; schema: `schema/objects.schema.json`) |
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
@@ -175,15 +175,22 @@ must match `PageReading` in `read-page.mjs`).
   cleaned image) is the default. Inversion is a CSS filter, so pages link
   to `view.html` (which applies the same view), not to the bare JPEG.
 - The contents table on each notebook page is generated from sessions.
-- The home page's Sketches tab (objects; sketch images come with #61)
-  groups observations by catalog object (M31 and NGC 224 are one) and
-  shows one catalog at a time, picked with a toggle (`#sketches/ngc`); an
-  object is listed under every catalog it's in, in catalog order
-  (`site/catalog.js`, shared with the import: Messier, NGC, IC, Caldwell,
-  then others, by number). Each row links to the object page, which lists
-  every observation of it, newest first. Both use `site/objects.js` for
-  the grouping; the session and object pages share the entry fields
-  (`site/observation.js`).
+- The home page's Sketches tab groups observations by catalog object (M31
+  and NGC 224 are one) and shows one catalog at a time, picked with a
+  toggle (`#sketches/ngc`); an object is listed under every catalog it's
+  in, in catalog order (`site/catalog.js`, shared with the import:
+  Messier, NGC, IC, Caldwell, then others, by number). Each row has a
+  thumbnail of the latest sketch and links to the object page, which shows
+  one sketch at a time (a toggle picks the session) and every observation,
+  newest first. Both use `site/objects.js` for the grouping; the session
+  and object pages share the entry fields (`site/observation.js`).
+- Sketch images: the build cuts each observation's `box` from its page and
+  stacks it under the session's `header_box` (NEW SESSION block), from the
+  cleaned and original page images in `scans/` only (already redacted),
+  into `sketches/<session>/<n>.jpg` and `.clean.jpg`. Boxes are `[x, y,
+  width, height]` fractions; the reader returns them at import and Kacy
+  can fix them by hand. `view.html` accepts `scans/` and `sketches/`
+  images.
 - `scripts/build.mjs` adds the icon and manifest links (`site/icons/`,
   `site/manifest.webmanifest`) to every page's `<head>`, so new pages
   don't need them; without them browsers show kacyluker.com's favicon.

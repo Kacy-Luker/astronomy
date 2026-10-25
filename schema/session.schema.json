@@ -69,12 +69,29 @@
       "items": { "type": "integer", "minimum": 1 }
     },
     "notes": { "type": ["string", "null"] },
+    "header_box": {
+      "description": "Where the NEW SESSION block is: its notebook page and box. Each observation's sketch image is cut from this and its own box.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["page", "box"],
+      "properties": {
+        "page": { "type": "integer", "minimum": 1 },
+        "box": { "$ref": "#/$defs/box" }
+      }
+    },
     "observations": {
       "type": "array",
       "items": { "$ref": "#/$defs/observation" }
     }
   },
   "$defs": {
+    "box": {
+      "description": "[x, y, width, height] as fractions of the page image.",
+      "type": "array",
+      "items": { "type": "number", "minimum": 0, "maximum": 1 },
+      "minItems": 4,
+      "maxItems": 4
+    },
     "scope": {
       "type": "object",
       "additionalProperties": false,
@@ -141,7 +158,11 @@
           ]
         },
         "filter": { "type": ["string", "null"] },
-        "description": { "type": ["string", "null"] }
+        "description": { "type": ["string", "null"] },
+        "box": {
+          "description": "Where the entry (fields, sketch circle and description) is on its page.",
+          "$ref": "#/$defs/box"
+        }
       }
     },
     "na": {

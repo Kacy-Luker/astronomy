@@ -77,9 +77,16 @@ for (const { path, data: s } of sessions.values()) {
       }
     }
   }
+  if (s.header_box && !(s.pages ?? []).includes(s.header_box.page)) {
+    errors.push(`/header_box/page ${s.header_box.page} is not in the session's pages`);
+  }
   s.observations.forEach((o, i) => {
     if (o.page != null && !(s.pages ?? []).includes(o.page)) {
       errors.push(`/observations/${i}/page ${o.page} is not in the session's pages`);
+    }
+    if (o.box && o.page == null) errors.push(`/observations/${i}/box needs the entry's page`);
+    if (o.box && (o.box[0] + o.box[2] > 1.001 || o.box[1] + o.box[3] > 1.001)) {
+      errors.push(`/observations/${i}/box runs off the page`);
     }
   });
   report(path, errors);

@@ -10,7 +10,7 @@ const view = params.get("view");
 const name = params.get("name");
 
 // Only the site's own page images, so the link can't show anything else.
-if (/^scans\/[a-z0-9-]+\/[\w.-]+\.jpg$/.test(src)) {
+if (/^(scans|sketches)\/[a-z0-9-]+\/[\w.-]+\.jpg$/.test(src)) {
   if (name) document.title = `${name} · Observing Log`;
   const figure = el("figure", "page");
   const img = el("img");

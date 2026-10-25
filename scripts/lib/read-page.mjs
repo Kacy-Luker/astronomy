@@ -51,6 +51,7 @@ export const PageReading = z.object({
     sky_notes: z.string().nullable(),
     scope: Scope.nullable(),
     observers: z.array(z.string()),
+    box: Box.nullable().describe("The whole NEW SESSION block, from the wavy line to OBSERVER"),
   }).nullable().describe("The NEW SESSION block, if this page starts a session"),
   entries: z.array(z.object({
     catalog_id: z.string(),
@@ -63,6 +64,7 @@ export const PageReading = z.object({
     magnification: z.union([z.number(), NA]).nullable().describe("The MAG half of EP/MAG, e.g. 92 for 92x"),
     filter: z.string().nullable(),
     description: z.string().nullable(),
+    box: Box.nullable().describe("The whole entry: from its top dotted line to its bottom one, wide enough for description lines that run past the stamp"),
   })).describe("Object entries in page order, skipping crossed-out entries"),
   uncertain: z.array(z.string())
     .describe("Readings you are unsure of, e.g. 'M110 description: last word may be dim'"),
@@ -102,6 +104,8 @@ Rules:
   space below its last entry where another entry could still go. Otherwise
   false.
 - personal_info boxes must fully cover each item with a little margin.
+- The header and entry boxes are used to cut out each sketch: include the
+  whole block with a little margin, and never cut through writing.
 - List anything you had to guess in "uncertain".`;
 
 const client = new Anthropic();

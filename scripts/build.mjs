@@ -76,6 +76,45 @@ const notebooks = await Promise.all((await readAll("data/notebooks")).map(async 
 }));
 notebooks.sort((a, b) => (b.started ?? "").localeCompare(a.started ?? ""));
 
+// Sketch images: each observation's entry, cut from its page, under its
+// session's NEW SESSION block, so the sketch keeps its date, site and sky.
+// Cut from the redacted page images in scans/ only; written as
+// sketches/<session>/<n>.jpg and .clean.jpg, like the page images.
+async function crop(file, [x, y, w, h]) {
+  const { width, height } = await sharp(file).metadata();
+  const rect = { left: Math.round(x * width), top: Math.round(y * height), width: Math.round(w * width), height: Math.round(h * height) };
+  rect.width = Math.min(rect.width, width - rect.left);
+  rect.height = Math.min(rect.height, height - rect.top);
+  return sharp(file).extract(rect).toBuffer({ resolveWithObject: true });
+}
+async function stack(parts, out) {
+  const width = Math.max(...parts.map((p) => p.info.width));
+  const height = parts.reduce((n, p) => n + p.info.height, 0);
+  let top = 0;
+  const layers = parts.map((p) => ({ input: p.data, left: 0, top: (top += p.info.height) - p.info.height }));
+  await sharp({ create: { width, height, channels: 3, background: "#ffffff" } })
+    .composite(layers).jpeg({ quality: 85 }).toFile(out);
+  return { width, height };
+}
+for (const s of sessions) {
+  const nb = notebooks.find((n) => n.id === s.notebook);
+  const pageAt = (number) => nb?.pages.find((p) => p.number === number);
+  const header = s.header_box && pageAt(s.header_box.page);
+  if (!header?.image) continue;
+  for (const [i, o] of (s.observations ?? []).entries()) {
+    const page = o.box && pageAt(o.page);
+    if (!page?.image) continue;
+    const dir = join(OUT, "sketches", s.id);
+    await mkdir(dir, { recursive: true });
+    const image = `sketches/${s.id}/${i + 1}.jpg`;
+    const size = await stack([await crop(header.image, s.header_box.box), await crop(page.image, o.box)], join(OUT, image));
+    // The cleaned copy, from each page's show-through-cleaned image when there is one.
+    const clean = image.replace(/\.jpg$/, ".clean.jpg");
+    await stack([await crop(header.clean ?? header.image, s.header_box.box), await crop(page.clean ?? page.image, o.box)], join(OUT, clean));
+    o.sketch = { image, clean, ...size };
+  }
+}
+
 await mkdir(join(OUT, "data"), { recursive: true });
 await writeFile(join(OUT, "data", "sessions.json"), JSON.stringify(sessions));
 await writeFile(join(OUT, "data", "notebooks.json"), JSON.stringify(notebooks));
