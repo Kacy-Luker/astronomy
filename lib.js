@@ -37,6 +37,7 @@ export const loadNotebooks = () => loadJSON("data/notebooks.json");
 export const loadObjects = () => loadJSON("data/objects.json").then((d) => d.objects, () => ({}));
 
 export const sessionHref = (id) => `session.html?id=${encodeURIComponent(id)}`;
+export const objectHref = (id) => `object.html?id=${encodeURIComponent(id)}`;
 export const notebookHref = (id, page) =>
   `notebook.html?id=${encodeURIComponent(id)}${page ? `#${pageAnchor(page)}` : ""}`;
 
