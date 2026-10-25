@@ -55,13 +55,13 @@ function renderSession(s) {
 // more).
 function renderObjectRow(id, obj) {
   const item = el("li", "object-row");
-  // The latest sketch, small, in the viewer's chosen view (see applyView).
+  // The latest sketch's circle, small, in the viewer's chosen view (see applyView).
   const sketch = obj.seen.find(({ o }) => o.sketch)?.o.sketch;
   if (sketch) {
     const thumb = link(objectHref(id), null, "sketch-thumb");
     const img = el("img");
-    img.dataset.original = sketch.image;
-    img.dataset.clean = sketch.clean;
+    img.dataset.original = sketch.thumb.image;
+    img.dataset.clean = sketch.thumb.clean;
     img.alt = "";
     img.loading = "lazy";
     thumb.append(img);
