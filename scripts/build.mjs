@@ -111,7 +111,7 @@ async function thumbnail(sketch) {
         width: Math.round(circle.width * width), height: Math.round(circle.height * height),
       });
     }
-    await img.resize(160, 160, { fit: circle ? "fill" : "contain", background: "#ffffff" }).jpeg({ quality: 80 }).toFile(join(OUT, out[key]));
+    await img.resize(240, 240, { fit: circle ? "fill" : "contain", background: "#ffffff" }).jpeg({ quality: 80 }).toFile(join(OUT, out[key]));
   }
   return out;
 }

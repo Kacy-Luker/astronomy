@@ -190,12 +190,12 @@ must match `PageReading` in `read-page.mjs`).
   `sketches/<session>/header.jpg` and `<n>.jpg`, each with a `.clean.jpg`.
   The object page shows the header and the entry as two images with a gap
   (Kacy didn't want them merged into one); the Sketches tab's thumbnails
-  (`<n>.thumb.jpg`, `.thumb.clean.jpg`, 160 px) show just the sketch
-  circle, which `scripts/lib/circle.mjs` finds with a Hough search over
-  the entry's ink (the whole entry if none is found). Boxes are `[x, y,
-  width, height]` fractions; the reader returns them at import and Kacy
-  can fix them by hand. `view.html` accepts `scans/` and `sketches/`
-  images.
+  (`<n>.thumb.jpg`, `.thumb.clean.jpg`, 240 px, shown at 96 px) show just
+  the sketch circle, which `scripts/lib/circle.mjs` finds with a Hough
+  search over the entry's ink (the whole entry if none is found). Boxes
+  are `[x, y, width, height]` fractions; the reader returns them at import
+  and Kacy can fix them by hand. `view.html` accepts `scans/` and
+  `sketches/` images.
 - `scripts/build.mjs` adds the icon and manifest links (`site/icons/`,
   `site/manifest.webmanifest`) to every page's `<head>`, so new pages
   don't need them; without them browsers show kacyluker.com's favicon.
