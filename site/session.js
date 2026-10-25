@@ -1,40 +1,12 @@
 // Session page: one night's header, notebook pages, and observations.
 import {
-  el, formatDate, link, loadNotebooks, loadSessions, notebookHref, pageFigure, pageName,
-  catalogText, objectName, scanToggle, seeingText, transparencyText,
+  el, formatDate, link, loadNotebooks, loadSessions, notebookHref, objectHref, pageFigure, pageName,
+  catalogText, objectName, scanToggle,
 } from "./lib.js";
+import { field, observationDescription, observationFacts, pageOf, scopeText, sheetField } from "./observation.js";
 import { isBlank, isNA, todoCount } from "./todos.js";
 
 const main = document.getElementById("session");
-
-// Append a <dt>/<dd> pair, skipping empty values. value may be a node.
-function field(dl, label, value) {
-  if (value == null || value === "") return;
-  const dd = el("dd");
-  dd.append(value instanceof Node ? value : String(value));
-  dl.append(el("dt", null, label), dd);
-}
-
-// A field from the log sheet: N/A shows muted, and a blank field (one to
-// come back to) shows a To do marker. display formats a filled-in value.
-function sheetField(dl, label, value, display = value) {
-  const dd = el("dd");
-  if (isNA(value)) dd.append(el("span", "muted", "N/A"));
-  else if (isBlank(value)) dd.append(el("span", "todo", "To do"));
-  else dd.append(display instanceof Node ? display : String(display));
-  dl.append(el("dt", null, label), dd);
-}
-
-function scopeText(scope) {
-  if (!scope) return null;
-  const specs = [
-    scope.type,
-    scope.aperture_mm && `${scope.aperture_mm} mm`,
-    scope.focal_length_mm && `${scope.focal_length_mm} mm FL`,
-    scope.f_ratio && `f/${scope.f_ratio}`,
-  ].filter(Boolean);
-  return specs.length ? `${scope.name} (${specs.join(", ")})` : scope.name;
-}
 
 function renderHeader(s, notebook) {
   const header = el("section", "session-header");
@@ -66,8 +38,6 @@ function renderHeader(s, notebook) {
   return header;
 }
 
-const pageOf = (notebook, number) => notebook?.pages.find((p) => p.number === number);
-
 function renderPages(s, notebook) {
   const section = el("section", "scans");
   section.append(el("h3", null, "Original notes"));
@@ -88,7 +58,9 @@ function renderPages(s, notebook) {
 function renderObservation(o, notebook) {
   const card = el("article", "observation");
   const head = el("div", "session-head");
-  head.append(el("h3", "object-id", o.catalog_id));
+  const h = el("h3", "object-id");
+  h.append(link(objectHref(o.catalog?.key ?? o.catalog_id), o.catalog_id));
+  head.append(h);
   const name = objectName(o);
   if (name) head.append(el("span", "muted", name));
   card.append(head);
@@ -102,22 +74,7 @@ function renderObservation(o, notebook) {
     card.append(ids);
   }
 
-  const dl = el("dl", "facts");
-  sheetField(dl, "Local time", o.local_time);
-  sheetField(dl, "UT", o.ut);
-  sheetField(dl, "Seeing", o.seeing, seeingText(o.seeing));
-  sheetField(dl, "Transparency", o.transparency, transparencyText(o.transparency));
-  if (o.scope) field(dl, "Scope", scopeText(o.scope));
-  sheetField(dl, "Eyepiece", o.eyepiece);
-  sheetField(dl, "Magnification", o.magnification, `${o.magnification}×`);
-  sheetField(dl, "Filter", o.filter);
-  const page = pageOf(notebook, o.page);
-  if (page) field(dl, "Notebook", link(notebookHref(notebook.id, page), pageName(page)));
-  card.append(dl);
-
-  if (isBlank(o.description)) card.append(el("p", "description todo", "Description: to do"));
-  else if (isNA(o.description)) card.append(el("p", "description muted", "Description: N/A"));
-  else card.append(el("p", "description", o.description));
+  card.append(observationFacts(o, notebook), observationDescription(o));
   return card;
 }
 
