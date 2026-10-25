@@ -33,6 +33,8 @@ async function loadJSON(path) {
 
 export const loadSessions = () => loadJSON("data/sessions.json");
 export const loadNotebooks = () => loadJSON("data/notebooks.json");
+// Catalog info by object (data/objects.json); empty when there is none.
+export const loadObjects = () => loadJSON("data/objects.json").then((d) => d.objects, () => ({}));
 
 export const sessionHref = (id) => `session.html?id=${encodeURIComponent(id)}`;
 export const notebookHref = (id, page) =>

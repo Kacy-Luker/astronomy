@@ -8,6 +8,7 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { compareIds } from "../../site/catalog.js";
 
 export const OPENNGC = {
   version: "v20260501",
@@ -126,19 +127,6 @@ export async function loadCatalog() {
   // Other catalog numbers find an object but never take over a designation.
   for (const [a, e] of aliases) if (!byId.has(a)) byId.set(a, e);
   return (id) => byId.get(keyOf(id)) ?? null;
-}
-
-// Catalog order: Messier, NGC, IC, then other catalogs, each by number.
-const ORDER = ["M", "NGC", "IC", "C"];
-export function compareIds(a, b) {
-  const parse = (id) => {
-    const m = id.match(/^([A-Za-z]+)\s?(\d+)(.*)$/);
-    if (!m) return [ORDER.length + 1, id, 0, ""];
-    const rank = ORDER.indexOf(m[1]);
-    return [rank < 0 ? ORDER.length : rank, m[1], Number(m[2]), m[3]];
-  };
-  const [x, y] = [parse(a), parse(b)];
-  return x[0] - y[0] || x[1].localeCompare(y[1]) || x[2] - y[2] || x[3].localeCompare(y[3]);
 }
 
 // Adds every known designation to each observation's ids (keeping what's

@@ -231,7 +231,10 @@ duplicate of M101. IDs already there stay, and `aka` stays as written; the
 site shows the catalog's common name when the sheet has none. Don't edit
 `data/objects.json` by hand. To fill in existing sessions, run `node
 scripts/enrich-ids.mjs`; it only adds. Objects OpenNGC doesn't cover
-(stars, planets, most Barnard and Abell objects) are left as written.
+(stars, planets, most Barnard and Abell objects) are left as written. The
+home page's Objects tab lists every observed object under each catalog
+it's in (M31 under Messier and NGC), in catalog order, with its latest
+observation and a count when there are more.
 
 ## Hosting
 
