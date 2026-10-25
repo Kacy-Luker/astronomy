@@ -1,5 +1,5 @@
-// Home page: Notebooks, Sessions and Objects tabs. The tab is in the URL
-// (#notebooks, #sessions, #objects, and #objects/ngc for a catalog) so
+// Home page: Notebooks, Sessions and Sketches tabs. The tab is in the URL
+// (#notebooks, #sessions, #sketches, and #sketches/ngc for a catalog) so
 // links and the back button keep it.
 import {
   el, formatDate, link, loadNotebooks, loadObjects, loadSessions, notebookHref, objectName, plural,
@@ -9,7 +9,7 @@ import { CATALOGS, catalogOf, compareIds } from "./catalog.js";
 import { todoCount } from "./todos.js";
 
 const summary = document.getElementById("summary");
-const TABS = ["notebooks", "sessions", "objects"];
+const TABS = ["notebooks", "sessions", "sketches"];
 const DEFAULT_TAB = "sessions";
 
 function renderNotebook(nb, sessions) {
@@ -92,7 +92,7 @@ function renderObjectRow(id, obj) {
 }
 
 // Objects in catalog order, one catalog at a time, picked with a toggle
-// (#objects/ngc). An object is listed under every catalog it's in (M31
+// (#sketches/ngc). An object is listed under every catalog it's in (M31
 // under Messier and NGC).
 const slug = (name) => name.toLowerCase();
 function renderObjects(panel, objects) {
@@ -114,7 +114,7 @@ function renderObjects(panel, objects) {
     b.type = "button";
     b.dataset.catalog = slug(name);
     b.addEventListener("click", () => {
-      history.replaceState(null, "", `#objects/${slug(name)}`);
+      history.replaceState(null, "", `#sketches/${slug(name)}`);
       show(name);
     });
     return b;
@@ -140,7 +140,7 @@ function renderObjects(panel, objects) {
   fromURL();
 }
 
-// Tabs: links to #notebooks, #sessions and #objects; arrow keys move along.
+// Tabs: links to #notebooks, #sessions and #sketches; arrow keys move along.
 const tabs = TABS.map((t) => document.getElementById(`tab-${t}`));
 function showTab() {
   const hash = location.hash.slice(1).split("/")[0];
@@ -175,7 +175,7 @@ try {
   document.querySelector("#notebooks ul").append(...notebooks.map((nb) => renderNotebook(nb, sessions)));
   document.querySelector("#sessions ol").append(...sessions.map(renderSession));
   const objects = observedObjects(sessions, catalog);
-  renderObjects(document.getElementById("objects"), objects);
+  renderObjects(document.getElementById("sketches"), objects);
   const count = sessions.reduce((n, s) => n + s.observations.length, 0);
   summary.textContent = `${plural(sessions.length, "session")} · ${plural(count, "observation")} · ${plural(objects.length, "object")}`;
 } catch (err) {
