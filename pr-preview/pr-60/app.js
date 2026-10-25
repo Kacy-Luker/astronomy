@@ -1,5 +1,6 @@
 // Home page: Notebooks, Sessions and Objects tabs. The tab is in the URL
-// (#notebooks, #sessions, #objects) so links and the back button keep it.
+// (#notebooks, #sessions, #objects, and #objects/ngc for a catalog) so
+// links and the back button keep it.
 import {
   el, formatDate, link, loadNotebooks, loadObjects, loadSessions, notebookHref, objectName, plural,
   sessionHref,
@@ -90,30 +91,60 @@ function renderObjectRow(id, obj) {
   return item;
 }
 
-// Objects in catalog order, listed under every catalog they're in (M31 is
+// Objects in catalog order, one catalog at a time, picked with a toggle
+// (#objects/ngc). An object is listed under every catalog it's in (M31
 // under Messier and NGC).
+const slug = (name) => name.toLowerCase();
 function renderObjects(panel, objects) {
   const sections = new Map([...CATALOGS.map((c) => c.name), "Other"].map((name) => [name, []]));
   for (const obj of objects) {
     for (const id of obj.ids) sections.get(catalogOf(id)).push([id, obj]);
   }
-  for (const [name, rows] of sections) {
-    if (!rows.length) continue;
-    rows.sort(([a], [b]) => compareIds(a, b));
-    const section = el("section", "session catalog-section");
-    section.append(el("h2", "section-title", `${name} · ${rows.length}`));
-    const list = el("ul", "object-rows");
-    list.append(...rows.map(([id, obj]) => renderObjectRow(id, obj)));
-    section.append(list);
-    panel.append(section);
+  const present = [...sections].filter(([, rows]) => rows.length);
+  if (!present.length) {
+    panel.append(el("p", "muted", "No objects yet."));
+    return;
   }
-  if (!objects.length) panel.append(el("p", "muted", "No objects yet."));
+  const group = el("div", "toggle");
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "Catalog");
+  const list = el("ul", "object-rows");
+  const buttons = present.map(([name, rows]) => {
+    const b = el("button", null, `${name} · ${rows.length}`);
+    b.type = "button";
+    b.dataset.catalog = slug(name);
+    b.addEventListener("click", () => {
+      history.replaceState(null, "", `#objects/${slug(name)}`);
+      show(name);
+    });
+    return b;
+  });
+  function show(name) {
+    const rows = sections.get(name).sort(([a], [b]) => compareIds(a, b));
+    list.replaceChildren(...rows.map(([id, obj]) => renderObjectRow(id, obj)));
+    for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.catalog === slug(name)));
+  }
+  group.append(...buttons);
+  const card = el("section", "session");
+  card.append(list);
+  panel.append(group, card);
+  // The catalog named in the URL, else the first one with objects; a link
+  // or the back button can change it without reloading the page.
+  const fromURL = () => {
+    const wanted = location.hash.split("/")[1];
+    const match = present.find(([name]) => slug(name) === wanted);
+    if (match || !buttons.some((b) => b.getAttribute("aria-pressed") === "true")) show((match ?? present[0])[0]);
+  };
+  addEventListener("hashchange", fromURL);
+  addEventListener("popstate", fromURL);
+  fromURL();
 }
 
 // Tabs: links to #notebooks, #sessions and #objects; arrow keys move along.
 const tabs = TABS.map((t) => document.getElementById(`tab-${t}`));
 function showTab() {
-  const current = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : DEFAULT_TAB;
+  const hash = location.hash.slice(1).split("/")[0];
+  const current = TABS.includes(hash) ? hash : DEFAULT_TAB;
   TABS.forEach((t, i) => {
     const on = t === current;
     tabs[i].setAttribute("aria-selected", String(on));

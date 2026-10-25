@@ -155,7 +155,11 @@ a { color: var(--accent); }
   border-radius: 999px;
   overflow: hidden;
   margin-bottom: .75rem;
+  max-width: 100%;
 }
+/* Many choices (the Objects tab's catalogs) scroll sideways on a phone. */
+.toggle { overflow-x: auto; }
+.toggle button { white-space: nowrap; }
 .toggle button {
   font: inherit;
   font-size: .9rem;
