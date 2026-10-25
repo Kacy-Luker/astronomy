@@ -238,11 +238,12 @@ scripts/enrich-ids.mjs`; it only adds. Objects OpenNGC doesn't cover
 home page's Sketches tab shows one catalog at a time, picked with a
 toggle, and lists every observed object under each catalog it's in (M31
 under Messier and NGC), in catalog order, with a thumbnail of its latest
-sketch (the entry only), its latest observation and a count when there are
-more. Tapping an object opens its page (`object.html?id=M31`): the catalog
-info, its sketch, shown as the session's NEW SESSION block and the entry,
-two images with a gap (a toggle picks the session when there are several),
-and every observation of it, newest first.
+sketch (just the sketch circle, found automatically), its latest
+observation and a count when there are more. Tapping an object opens its
+page (`object.html?id=M31`): the catalog info, its sketch, shown as the
+session's NEW SESSION block and the entry, two images with a gap (a toggle
+picks the session when there are several), and every observation of it,
+newest first.
 
 ## Hosting
 
