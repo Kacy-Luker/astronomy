@@ -56,7 +56,7 @@ needs to change things safely.
 | `data/objects.json` | Generated catalog info for observed objects, keyed by first designation (`scripts/lib/catalog.mjs`, OpenNGC pinned and cached in `.catalog-cache/`; schema: `schema/objects.schema.json`) |
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
-| `site/` | Static pages: home (Notebooks, Sessions and Sketches tabs, `#notebooks`, `#sketches/ngc` etc.), `notebook.html?id=`, `session.html?id=`, `view.html?img=&view=` (one page full size) |
+| `site/` | Static pages: home (Notebooks, Sessions and Sketches tabs, `#notebooks`, `#sketches/ngc` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
 | `scripts/` | Build, validation, import, splitting, cleaning |
 | `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`) |
 
@@ -180,7 +180,10 @@ must match `PageReading` in `read-page.mjs`).
   shows one catalog at a time, picked with a toggle (`#sketches/ngc`); an
   object is listed under every catalog it's in, in catalog order
   (`site/catalog.js`, shared with the import: Messier, NGC, IC, Caldwell,
-  then others, by number).
+  then others, by number). Each row links to the object page, which lists
+  every observation of it, newest first. Both use `site/objects.js` for
+  the grouping; the session and object pages share the entry fields
+  (`site/observation.js`).
 - `scripts/build.mjs` adds the icon and manifest links (`site/icons/`,
   `site/manifest.webmanifest`) to every page's `<head>`, so new pages
   don't need them; without them browsers show kacyluker.com's favicon.

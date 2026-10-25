@@ -2,10 +2,11 @@
 // (#notebooks, #sessions, #sketches, and #sketches/ngc for a catalog) so
 // links and the back button keep it.
 import {
-  el, formatDate, link, loadNotebooks, loadObjects, loadSessions, notebookHref, objectName, plural,
-  sessionHref,
+  el, formatDate, link, loadNotebooks, loadObjects, loadSessions, notebookHref, objectHref, objectName,
+  plural, sessionHref,
 } from "./lib.js";
 import { CATALOGS, catalogOf, compareIds } from "./catalog.js";
+import { observedObjects } from "./objects.js";
 import { todoCount } from "./todos.js";
 
 const summary = document.getElementById("summary");
@@ -49,35 +50,13 @@ function renderSession(s) {
   return item;
 }
 
-// Every observed object with its designations and observations, newest
-// first. Catalog objects group by their key in data/objects.json, so M31
-// and NGC 224 are one object; others by the designation as written.
-function observedObjects(sessions, catalog) {
-  const byKey = new Map();
-  for (const s of sessions) {
-    for (const o of s.observations) {
-      const key = o.catalog?.key ?? o.catalog_id;
-      if (!byKey.has(key)) byKey.set(key, { ids: [...(catalog[key]?.ids ?? [])], seen: [] });
-      const obj = byKey.get(key);
-      // Designations written or added by hand count too (M51's NGC 5195).
-      for (const id of o.ids ?? [o.catalog_id]) if (!obj.ids.includes(id)) obj.ids.push(id);
-      obj.seen.push({ o, s });
-    }
-  }
-  for (const obj of byKey.values()) {
-    obj.seen.sort((a, b) => b.s.date.localeCompare(a.s.date));
-    obj.name = obj.seen.map(({ o }) => objectName(o)).find(Boolean) ?? null;
-  }
-  return [...byKey.values()];
-}
-
 // One row: the designation it's listed under, its name and other
 // designations, and the latest observation (with a count when there are
 // more).
 function renderObjectRow(id, obj) {
   const item = el("li", "object-row");
   const head = el("div", "session-head");
-  head.append(el("span", "object-id", id));
+  head.append(link(objectHref(id), id, "object-id"));
   if (obj.name) head.append(el("span", null, obj.name));
   for (const other of obj.ids.filter((x) => x !== id)) head.append(el("span", "tag", other));
   item.append(head);
@@ -85,7 +64,7 @@ function renderObjectRow(id, obj) {
   const latest = link(sessionHref(s.id), formatDate(s.date));
   const meta = el("p", "session-meta");
   meta.append(latest, ` · ${s.site.name}`);
-  if (obj.seen.length > 1) meta.append(` · ${plural(obj.seen.length, "observation")}`);
+  if (obj.seen.length > 1) meta.append(" · ", link(objectHref(id), plural(obj.seen.length, "observation")));
   else if (o.catalog?.type) meta.append(` · ${o.catalog.type}`);
   item.append(meta);
   return item;
