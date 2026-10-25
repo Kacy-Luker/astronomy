@@ -57,6 +57,7 @@ jobs:
             echo "No code changes; nothing to check." >> "$GITHUB_STEP_SUMMARY"
           fi
       - uses: anthropics/claude-code-action@v1
+        id: claude
         if: steps.check.outputs.skip != 'true'
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -77,6 +78,9 @@ jobs:
               tables. Rewrap any paragraph you edit so no line is longer than the lines
               around it (about 74 characters).
             - Edit only README.md and CLAUDE.md. Don't commit; that's done after you.
+            - Use only the tools you have: Read, Glob, Grep, Edit, Write, and
+              `git diff`, `git log` and `git show`. Don't run other commands (no ls,
+              cat, npm or node); read files with Read and search with Grep.
             - If nothing needs changing, change nothing.
 
             If you changed anything, write a short summary for the pull request to
@@ -87,6 +91,25 @@ jobs:
           claude_args: |
             --model claude-opus-5-5
             --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
+      # Claude's output is hidden, so when its run fails say why: the tool
+      # calls it was refused and its last message, not the whole transcript.
+      - name: Explain a failed Claude run
+        if: failure() && steps.claude.outcome == 'failure'
+        run: |
+          out="$RUNNER_TEMP/claude-execution-output.json"
+          [ -f "$out" ] || { echo "No Claude output was saved."; exit 0; }
+          {
+            echo "### Claude's run failed"
+            echo
+            echo "Denied tool calls:"
+            echo '```'
+            jq -r '[.[] | select(.type == "result")] | last | .permission_denials // [] | .[] | "\(.tool_name): \(.tool_input | tostring | .[0:200])"' "$out"
+            echo '```'
+            echo "Last message:"
+            echo '```'
+            jq -r '[.[] | select(.type == "result")] | last | .result // "(none)" | .[0:2000]' "$out"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Commit the doc updates
         if: steps.check.outputs.skip != 'true'
         id: commit
