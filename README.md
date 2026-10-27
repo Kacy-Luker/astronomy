@@ -218,8 +218,9 @@ session or an object seen once has no bar). Tap **Filters** for a
 dropdown per field (program, catalog, site, telescope, eyepiece, filter,
 observer, notebook, seeing, transparency) with the values on that page; a
 field with only one value there isn't shown. There's also a date range
-(with more than one night) and **Has to-dos** (when only some have them). Active filters show as
-chips: tap one to remove it, or **Clear all**. They're in the address too
+(with more than one night) and **Has to-dos** (when only some have
+them). Active filters show as chips: tap one to remove it, or **Clear
+all**. They're in the address too
 (`?site=Okie-Tex+2026&eyepiece=13mm+Ethos`), and links between pages keep
 them. The home page narrows its tabs; a session page dims the observations
 outside them; an object page shows only the matching observations and
