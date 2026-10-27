@@ -231,7 +231,9 @@ must match `PageReading` in `read-page.mjs`).
   `sketches/` images.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in
   localStorage (`?admin=off` clears it), adds an admin bar to the footer
-  with an Edit links toggle (also remembered; switching reloads the page).
+  with a link to `help.html` (Kacy's phone how-to; keep it in step with
+  the forms and the README's Importing section) and an Edit links toggle
+  (also remembered; switching reloads the page).
   With it on, `editLink()` in `site/lib.js` (which also holds the repo URL)
   links to GitHub's web editor for the session, each observation, the
   notebook and the mappings file. On PR previews they open the PR branch
