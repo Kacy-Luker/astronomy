@@ -50,13 +50,16 @@ function renderContents(nb, sessions) {
   return section;
 }
 
+// Session pages are captioned with their number and sessions; other pages
+// (covers, title page, scales, index...) have no caption.
 function caption(page, sessionsById) {
+  if (page.number == null && !page.sessions.length) return null;
   const parts = [el("span", "page-name", pageName(page))];
   for (const id of page.sessions) {
     const s = sessionsById.get(id);
     parts.push(" · ", link(sessionHref(id), `${formatDate(s.date)}, ${s.site.name}`));
   }
-  // Numbered pages without a session say what they are; front matter is named already.
+  // Numbered pages without a session say what they are.
   if (!page.sessions.length && page.number != null) {
     parts.push(" · ", el("span", "muted", [KIND_NAMES[page.kind], page.note].filter(Boolean).join(": ")));
   }
