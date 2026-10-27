@@ -1,10 +1,12 @@
 // Session page: one night's header, notebook pages, and observations.
 import {
   el, editLink, formatDate, link, loadNotebooks, loadSessions, notebookHref, objectHref, pageFigure, pageName,
-  catalogText, objectName, scanToggle, sessionFile,
+  catalogText, objectName, plural, scanToggle, sessionFile,
 } from "./lib.js";
 import { objectCard, sessionCard } from "./cards.js";
+import { filterBar } from "./filterbar.js";
 import { field, observationDescription, observationFacts, pageOf, scopeText, sheetField } from "./observation.js";
+import { activeFilters, keepFilters, matchesAll, searchDocuments } from "./search.js";
 import { isBlank, isNA, todoCount } from "./todos.js";
 
 const main = document.getElementById("session");
@@ -94,12 +96,28 @@ try {
   const notebook = notebooks.find((n) => n.id === s.notebook);
 
   document.title = `${formatDate(s.date)} · ${s.site.name} · Observing Log`;
+  const cards = s.observations.map((o) => renderObservation(o, notebook, s));
+  const note = el("p", "muted filter-note");
+  // The search and filters dim the observations outside them; all stay.
+  const docs = searchDocuments(sessions, notebooks);
+  const mine = docs.filter((d) => d.s === s);
+  const draw = (state) => {
+    const on = activeFilters(state).length || state.q.trim();
+    const hits = mine.map((d) => matchesAll(d, state));
+    cards.forEach((card, i) => card.classList.toggle("dim", Boolean(on) && !hits[i]));
+    note.textContent = on ? `${hits.filter(Boolean).length} of ${plural(hits.length, "observation")} match.` : "";
+  };
+  const bar = filterBar(mine, draw);
   main.replaceChildren(
+    bar.element,
     renderHeader(s, notebook),
     renderPages(s, notebook),
     el("h3", "section-title", "Observations"),
-    ...s.observations.map((o) => renderObservation(o, notebook, s)),
+    note,
+    ...cards,
   );
+  draw(bar.state());
+  keepFilters();
 } catch (err) {
   main.replaceChildren(el("p", "summary", `Couldn't load this session (${err.message}).`));
 }
