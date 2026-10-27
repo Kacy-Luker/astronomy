@@ -57,7 +57,7 @@ needs to change things safely.
 | `data/categories.json` | Page categories for every notebook, in book order, with `in_progress`, `rescan` and `single` (read by `scripts/lib/categories.mjs`) |
 | `data/sessions/<id>.json` | One observing night; `notebook`, `pages`, `header_box`, and `page` and `box` on each observation (schema: `schema/session.schema.json`) |
 | `data/objects.json` | Generated catalog info for observed objects, keyed by first designation, with the `sources` they came from (`scripts/lib/catalog.mjs`; schema: `schema/objects.schema.json`) |
-| `data/personalObjectMappings.json` | Kacy's catalog mappings: `from` and `to` (each `{ catalog, object }`), `why`, `credit` (schema: `schema/personal-object-mappings.schema.json`) |
+| `data/personalObjectMappings.json` | Kacy's catalog mappings: `from` and `to` (each `{ catalog, object }`) and `why` (schema: `schema/personal-object-mappings.schema.json`) |
 | `scripts/lib/catalogs/` | Catalog sources behind one interface (`scripts/lib/catalog.mjs`): `openngc.mjs` (pinned, cached in `.catalog-cache/`) |
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
@@ -83,9 +83,10 @@ designation is looked up as its target, so info and other IDs come from
 the target, never the original, and the mapped designation is added to the
 target's `ids` however it's looked up (M102 is NGC 5866, not OpenNGC's
 duplicate of M101). Validation checks the file: each side is a catalog
-designation, nothing maps to itself, and each object is mapped once. The build adds a footer to every page crediting the
-sources in `data/objects.json` and linking the mappings file with each
-mapping's `credit`.
+designation, nothing maps to itself, and each object is mapped once. The
+build adds a footer to every page crediting the databases in
+`data/objects.json` (only databases are credited) and linking the
+mappings file.
 
 Catalog lookups (import and `scripts/enrich-ids.mjs`) only add: they
 append designations to `ids` and regenerate `data/objects.json`, but never

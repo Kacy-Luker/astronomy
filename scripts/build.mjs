@@ -148,22 +148,19 @@ const icons = [
 ].map((tag) => `  ${tag}\n`).join("");
 
 // Every page's footer credits the catalog sources the objects came from
-// (data/objects.json) and links Kacy's own mappings, with the lists they
-// follow.
+// (data/objects.json) and links Kacy's own mappings.
 const escape = (text) => String(text).replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 const anchor = (url, text) => (url ? `<a href="${escape(url)}">${escape(text)}</a>` : escape(text));
 const andList = (items) => (items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`);
 const sources = existsSync("data/objects.json") ? JSON.parse(await readFile("data/objects.json", "utf8")).sources : [];
 const mappingsFile = "data/personalObjectMappings.json";
 const mappings = existsSync(mappingsFile) ? JSON.parse(await readFile(mappingsFile, "utf8")).mappings : [];
-const credits = [...new Map(mappings.filter((m) => m.credit).map((m) => [m.credit.name, m.credit])).values()];
 const footerParts = [];
 if (sources.length) {
   footerParts.push(`Object data from ${andList(sources.map((s) => anchor(s.url, s.name) + (s.license ? ` (${escape(s.license)})` : "")))}.`);
 }
 if (mappings.length) {
-  footerParts.push(`${anchor(`https://github.com/Kacy-Luker/astronomy/blob/main/${mappingsFile}`, "Kacy's object mappings")}` +
-    (credits.length ? ` (sources: ${andList(credits.map((c) => anchor(c.url, c.name)))})` : "") + ".");
+  footerParts.push(`${anchor(`https://github.com/Kacy-Luker/astronomy/blob/main/${mappingsFile}`, "Kacy's object mappings")}.`);
 }
 const footer = footerParts.length ? `  <footer class="site-footer muted">\n    ${footerParts.join("\n    ")}\n  </footer>\n` : "";
 

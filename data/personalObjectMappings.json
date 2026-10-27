@@ -1,11 +1,10 @@
 {
-  "description": "Kacy's own catalog mappings. An object written as `from` is looked up as `to`: its info and other designations come from the `to` object, and `from` is added to its designations. `credit` (optional) is the list or program a mapping follows, credited in the site's footer; leave it out for your own call. Edit by hand; catalogs are Messier, NGC, IC, Caldwell, or another catalog's prefix (e.g. Sh2).",
+  "description": "Kacy's own catalog mappings. An object written as `from` is looked up as `to`: its info and other designations come from the `to` object, and `from` is added to its designations. `why` says why. Edit by hand; catalogs are Messier, NGC, IC, Caldwell, or another catalog's prefix (e.g. Sh2).",
   "mappings": [
     {
       "from": { "catalog": "Messier", "object": "102" },
       "to": { "catalog": "NGC", "object": "5866" },
-      "why": "OpenNGC lists M102 as a duplicate of M101; the Astronomical League's Messier program and most lists take it as NGC 5866, the Spindle Galaxy.",
-      "credit": { "name": "Astronomical League Messier Program", "url": "https://www.astroleague.org/" }
+      "why": "OpenNGC lists M102 as a duplicate of M101; the Astronomical League's Messier program and most lists take it as NGC 5866, the Spindle Galaxy."
     }
   ]
 }
