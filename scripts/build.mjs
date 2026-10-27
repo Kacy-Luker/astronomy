@@ -173,7 +173,8 @@ const footer = footerParts.length ? `  <footer class="site-footer muted">\n    $
 let banner = "";
 if (process.env.PREVIEW_OF) {
   const link = process.env.PREVIEW_LINK ? ` <a href="${escape(process.env.PREVIEW_LINK)}">View the pull request</a>` : "";
-  banner = `\n  <div class="preview-banner">Preview of ${escape(process.env.PREVIEW_OF)}.${link}</div>`;
+  const branch = process.env.PREVIEW_BRANCH ? ` data-branch="${escape(process.env.PREVIEW_BRANCH)}"` : "";
+  banner = `\n  <div class="preview-banner"${branch}>Preview of ${escape(process.env.PREVIEW_OF)}.${link}</div>`;
 }
 for (const file of (await readdir(OUT)).filter((f) => f.endsWith(".html"))) {
   const html = (await readFile(join(OUT, file), "utf8")).replace("</head>", `${icons}</head>`).replace("</body>", `${footer}</body>`);
