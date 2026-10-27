@@ -38,6 +38,8 @@ import { numberPages } from "./lib/import/numbering.mjs";
 import { present, recordSessions } from "./lib/import/sessions.mjs";
 import { nameOf, summarize } from "./lib/import/summary.mjs";
 import { matchPosition } from "./lib/match.mjs";
+import { loadReader } from "./lib/reader.mjs";
+import { PageReading, RedactionCheck } from "./lib/reading.mjs";
 import { cleanShowThrough, listSpreads, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
 
 const MODES = ["add", "new", "replace", "complete"];
@@ -109,15 +111,21 @@ if (source) {
   console.log(`${uploaded.length} pages in ${basename(source)}`);
 }
 
-// 2. Reading pages with Claude, cached per upload.
+// 2. Reading pages with the page reader (scripts/lib/reader.mjs; Claude
+// unless PAGE_READER says otherwise), cached per upload. Cached answers are
+// held to the same format as fresh ones.
 const cacheDir = join(".import-cache", id, source ? basename(source) : "none");
 await mkdir(cacheDir, { recursive: true });
-let claude; // loaded only when a page isn't cached, so cached runs need no API key
-async function cached(name, compute) {
+let reader; // loaded only when a page isn't cached, so cached runs need no API key
+async function cached(name, format, compute) {
   const path = join(cacheDir, `${name}.json`);
-  if (existsSync(path)) return JSON.parse(await readFile(path, "utf8"));
-  claude ??= await import("./lib/read-page.mjs");
-  const value = await compute(claude);
+  if (existsSync(path)) {
+    const answer = format.safeParse(JSON.parse(await readFile(path, "utf8")));
+    if (!answer.success) throw new Error(`${path} isn't in the reading format: ${answer.error.message}`);
+    return answer.data;
+  }
+  reader ??= await loadReader();
+  const value = await compute(reader);
   await writeFile(path, JSON.stringify(value, null, 2));
   return value;
 }
@@ -132,7 +140,7 @@ const readings = new Map(); // upload index -> reading
 async function read(us) {
   const missing = us.filter((u) => !readings.has(u));
   await inBatches(missing, async (u) => {
-    const r = await cached(nn(u), async (c) => c.readPage(await webImage(uploaded[u], READ_HEIGHT)));
+    const r = await cached(nn(u), PageReading, async (c) => c.readPage(await webImage(uploaded[u], READ_HEIGHT)));
     console.log(`  read uploaded page ${nn(u)}: ${r.kind}${r.printed_number ? ` #${r.printed_number}` : ""}`);
     readings.set(u, r);
   });
@@ -264,7 +272,7 @@ async function recordPage(u, before) {
       const x = clamp(box.x - PAD), y = clamp(box.y - PAD);
       return [round(x), round(y), round(clamp(box.x + box.width + PAD) - x), round(clamp(box.y + box.height + PAD) - y)];
     });
-    const check = await cached(`${nn(u)}.check`, async (c) =>
+    const check = await cached(`${nn(u)}.check`, RedactionCheck, async (c) =>
       c.checkRedaction(await webImage(await redact(uploaded[u], page.redact), READ_HEIGHT)));
     const name = nameOf(page);
     if (check.legible) {
