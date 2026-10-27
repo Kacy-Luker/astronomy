@@ -160,7 +160,8 @@ const mappingsFile = "data/personalObjectMappings.json";
 const mappings = existsSync(mappingsFile) ? JSON.parse(await readFile(mappingsFile, "utf8")).mappings : [];
 const footerParts = [];
 if (sources.length) {
-  footerParts.push(`Object data from ${andList(sources.map((s) => anchor(s.url, s.name) + (s.license ? ` (${escape(s.license)})` : "")))}.`);
+  const about = (s) => [s.by, s.license].filter(Boolean).map(escape).join(", ");
+  footerParts.push(`Object data from ${andList(sources.map((s) => anchor(s.url, s.name) + (about(s) ? ` (${about(s)})` : "")))}.`);
 }
 if (mappings.length) {
   footerParts.push(`${anchor(`https://github.com/Kacy-Luker/astronomy/blob/main/${mappingsFile}`, "Kacy's object mappings")}.`);
