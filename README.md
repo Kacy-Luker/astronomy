@@ -130,9 +130,10 @@ There are two:
 
 The notebook keeps the type it was made with (its `type`; one without is
 the first type), so the field only matters for **new-notebook**. A kind
-the import can't read yet (single sheets) isn't offered in the form. Page images are 1600 px tall
-whatever the paper size. All three forms share their steps through
-`.github/workflows/notebook-job.yml`, and run one at a time.
+the import can't read yet (single sheets) isn't offered in the form.
+Page images are 1600 px tall whatever the paper size. All three forms
+share their steps through `.github/workflows/notebook-job.yml`, and run
+one at a time.
 
 **Start page.** Session pages are placed by the page numbers printed on
 odd pages, and a printed number always wins: if any page in the scan shows
