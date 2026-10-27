@@ -118,12 +118,19 @@ import is merged.
 
 **Notebook type.** A new notebook's kind, from `data/notebook-types.json`:
 how it's scanned (spreads or single sheets, which way up, where the fold
-usually is), how its pages are numbered, and what they're written on. Today
-there's one, **Stamped log, spreads** (this notebook: any page size, the
-rubber-stamped form). The notebook keeps the type it was made with (its
-`type`; one without is the first type), so the field only matters for
-**new-notebook**. A kind the import can't read yet (single sheets, free
-text, #109) isn't offered in the form. Page images are 1600 px tall
+usually is), how its pages are numbered, and what they're written on.
+There are two:
+- **Stamped log, spreads**: this notebook, at any page size, with the
+  rubber-stamped form.
+- **Free-text log, spreads** (#109): no stamp. Each session starts at a
+  date heading, and Claude picks the same fields out of what's written
+  about each object; anything not written is a to-do, as on the stamp.
+  Its pages aren't show-through-cleaned (the cleaner works from the
+  stamp's ink), so the Cleaned view shows them as scanned.
+
+The notebook keeps the type it was made with (its `type`; one without is
+the first type), so the field only matters for **new-notebook**. A kind
+the import can't read yet (single sheets) isn't offered in the form. Page images are 1600 px tall
 whatever the paper size. All three forms share their steps through
 `.github/workflows/notebook-job.yml`, and run one at a time.
 
@@ -450,7 +457,8 @@ yours.
   the test data (no API key, no catalog lookups). A new import of the
   first four spreads, then an add with a rescan and a new spread, must
   give back the test data's notebook and sessions, skip the rescanned
-  pages and blur the title page.
+  pages and blur the title page. Test Notebook 3, written without the
+  stamp, goes through a new import as a free-text notebook the same way.
 - **Site tests** (`tests/site.spec.mjs`, Playwright in Chromium) against
   the test site's build, at phone and desktop width: every page loads with
   no errors, failed requests or sideways scroll; the real/test switch;
