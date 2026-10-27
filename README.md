@@ -282,7 +282,9 @@ link to that commit, and the diff. Review it with the rest. It uses the
 run, and pushes with `ASTRONOMY_TOKEN` so the pull request's checks run
 on its commit. That token needs **Contents: Read and write** on this
 repo (see the one-time setup above); if the push is refused, the check
-fails and the diff is posted on the pull request with what to fix.
+fails and the diff is posted on the pull request with what to fix. If
+Claude's own run fails, the run's summary in the Actions tab lists the
+tool calls it was refused and its last message.
 
 The `docs` check reports on every pull request: without code changes it
 passes in a few seconds without running Claude, and on imports and
