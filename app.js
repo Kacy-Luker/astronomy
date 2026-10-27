@@ -1,12 +1,14 @@
-// Home page: Notebooks, Sessions and Sketches tabs. The tab is in the URL
-// (#notebooks, #sessions, #sketches, and #sketches/ngc for a catalog) so
-// links and the back button keep it.
+// Home page: Notebooks, Sessions and Sketches tabs, under a search box that
+// narrows them all. The tab is in the URL (#notebooks, #sessions,
+// #sketches, and #sketches/ngc for a catalog) and so is the search (?q=),
+// so links and the back button keep them.
 import {
   applyView, el, formatDate, link, loadNotebooks, loadObjects, loadSessions, notebookHref, objectHref,
   objectName, plural, sessionHref,
 } from "./lib.js";
 import { CATALOGS, catalogOf, compareIds } from "./catalog.js";
 import { observedObjects, sameName } from "./objects.js";
+import { matches, searchDocuments, searchQuery, setSearchQuery } from "./search.js";
 import { todoCount } from "./todos.js";
 
 const summary = document.getElementById("summary");
@@ -44,7 +46,8 @@ function renderSession(s) {
   a.append(el("time", "session-date", formatDate(s.date)));
   head.append(a);
   if (s.program && s.program !== "N/A") head.append(el("span", "tag", s.program));
-  const todos = todoCount(s);
+  // The whole session's to-dos, even when a search lists only some objects.
+  const todos = todoCount(s.whole ?? s);
   if (todos) head.append(el("span", "tag todo", `${todos} to do`));
   item.append(head);
 
@@ -97,52 +100,79 @@ function renderObjectRow(id, obj) {
 
 // Objects in catalog order, one catalog at a time, picked with a toggle
 // (#sketches/ngc). An object is listed under every catalog it's in (M31
-// under Messier and NGC).
+// under Messier and NGC). Returns update(objects), called again as the
+// search changes.
 const slug = (name) => name.toLowerCase();
-function renderObjects(panel, objects) {
-  const sections = new Map([...CATALOGS.map((c) => c.name), "Other"].map((name) => [name, []]));
-  for (const obj of objects) {
-    for (const id of obj.ids) sections.get(catalogOf(id)).push([id, obj]);
-  }
-  const present = [...sections].filter(([, rows]) => rows.length);
-  if (!present.length) {
-    panel.append(el("p", "muted", "No objects yet."));
-    return;
-  }
+function objectsPanel(panel) {
   const group = el("div", "toggle");
   group.setAttribute("role", "group");
   group.setAttribute("aria-label", "Catalog");
   const list = el("ul", "object-rows");
-  const buttons = present.map(([name, rows]) => {
-    const b = el("button", null, `${name} · ${rows.length}`);
-    b.type = "button";
-    b.dataset.catalog = slug(name);
-    b.addEventListener("click", () => {
-      history.replaceState(null, "", `#sketches/${slug(name)}`);
-      show(name);
-    });
-    return b;
-  });
+  const card = el("section", "session");
+  card.append(list);
+  const empty = el("p", "muted");
+  panel.append(group, card, empty);
+  let sections = new Map();
+  let present = [];
+  let buttons = [];
+  let current = null;
   function show(name) {
+    current = name;
     const rows = sections.get(name).sort(([a], [b]) => compareIds(a, b));
     list.replaceChildren(...rows.map(([id, obj]) => renderObjectRow(id, obj)));
     applyView(list);
     for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.catalog === slug(name)));
   }
-  group.append(...buttons);
-  const card = el("section", "session");
-  card.append(list);
-  panel.append(group, card);
-  // The catalog named in the URL, else the first one with objects; a link
-  // or the back button can change it without reloading the page.
+  // The catalog named in the URL, else the one shown (if it still has
+  // objects), else the first with objects; a link or the back button can
+  // change it without reloading the page.
   const fromURL = () => {
+    if (!present.length) return;
     const wanted = location.hash.split("/")[1];
-    const match = present.find(([name]) => slug(name) === wanted);
-    if (match || !buttons.some((b) => b.getAttribute("aria-pressed") === "true")) show((match ?? present[0])[0]);
+    const pick = present.find(([name]) => slug(name) === wanted) ?? present.find(([name]) => name === current) ?? present[0];
+    show(pick[0]);
   };
   addEventListener("hashchange", fromURL);
   addEventListener("popstate", fromURL);
-  fromURL();
+  return (objects, emptyText) => {
+    sections = new Map([...CATALOGS.map((c) => c.name), "Other"].map((name) => [name, []]));
+    for (const obj of objects) {
+      for (const id of obj.ids) sections.get(catalogOf(id)).push([id, obj]);
+    }
+    present = [...sections].filter(([, rows]) => rows.length);
+    group.hidden = card.hidden = !present.length;
+    empty.hidden = Boolean(present.length);
+    empty.textContent = emptyText;
+    buttons = present.map(([name, rows]) => {
+      const b = el("button", null, `${name} · ${rows.length}`);
+      b.type = "button";
+      b.dataset.catalog = slug(name);
+      b.addEventListener("click", () => {
+        history.replaceState(null, "", `${location.search}#sketches/${slug(name)}`);
+        show(name);
+      });
+      return b;
+    });
+    group.replaceChildren(...buttons);
+    fromURL();
+  };
+}
+
+// The search box above the tabs (site/search.js): it narrows every tab to
+// the observations that match, and stays in the URL (?q=) across tabs.
+function searchBox(onChange) {
+  const box = el("div", "search");
+  const input = el("input");
+  input.type = "search";
+  input.placeholder = "Search objects, sites, eyepieces, notes…";
+  input.setAttribute("aria-label", "Search observations");
+  input.value = searchQuery();
+  input.addEventListener("input", () => {
+    setSearchQuery(input.value);
+    onChange(input.value);
+  });
+  box.append(input);
+  return box;
 }
 
 // Tabs: links to #notebooks, #sessions and #sketches; arrow keys move along.
@@ -177,14 +207,32 @@ showTab();
 
 try {
   const [sessions, notebooks, catalog] = await Promise.all([loadSessions(), loadNotebooks(), loadObjects()]);
+  const docs = searchDocuments(sessions, notebooks);
   const notebookList = document.querySelector("#notebooks ul");
-  notebookList.append(...notebooks.map((nb) => renderNotebook(nb, sessions)));
-  applyView(notebookList);
-  document.querySelector("#sessions ol").append(...sessions.map(renderSession));
-  const objects = observedObjects(sessions, catalog);
-  renderObjects(document.getElementById("sketches"), objects);
-  const count = sessions.reduce((n, s) => n + s.observations.length, 0);
-  summary.textContent = `${plural(sessions.length, "session")} · ${plural(count, "observation")} · ${plural(objects.length, "object")}`;
+  const sessionList = document.querySelector("#sessions ol");
+  const updateObjects = objectsPanel(document.getElementById("sketches"));
+  const noMatch = (list, text) => list.replaceChildren(el("li", "muted no-match", text));
+  // Every tab from the observations that match: a session lists only its
+  // matching objects, a notebook shows when any of its sessions match.
+  function render(q) {
+    const found = new Set(docs.filter((d) => matches(d, q)).map((d) => d.o));
+    const shown = sessions
+      .map((s) => ({ ...s, whole: s, observations: s.observations.filter((o) => found.has(o)) }))
+      .filter((s) => s.observations.length);
+    const books = q.trim() ? notebooks.filter((nb) => shown.some((s) => s.notebook === nb.id)) : notebooks;
+    notebookList.replaceChildren(...books.map((nb) => renderNotebook(nb, shown)));
+    if (!books.length) noMatch(notebookList, "No notebooks match.");
+    applyView(notebookList);
+    sessionList.replaceChildren(...shown.map(renderSession));
+    if (!shown.length) noMatch(sessionList, "No sessions match.");
+    const objects = observedObjects(shown, catalog);
+    updateObjects(objects, "No objects match.");
+    summary.textContent = q.trim()
+      ? `${plural(found.size, "matching observation")} · ${plural(shown.length, "session")} · ${plural(objects.length, "object")}`
+      : `${plural(sessions.length, "session")} · ${plural(found.size, "observation")} · ${plural(objects.length, "object")}`;
+  }
+  summary.after(searchBox(render));
+  render(searchQuery());
 } catch (err) {
   summary.textContent = `Couldn't load sessions (${err.message}).`;
 }
