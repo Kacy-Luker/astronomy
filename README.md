@@ -227,6 +227,17 @@ outside them; an object page shows only the matching observations and
 sketches; a notebook page dims the sessions in its contents with nothing
 matching.
 
+## Equipment
+
+The home page's **Equipment** tab lists every telescope (with its type,
+aperture, focal length and f-ratio), eyepiece (with the magnifications
+used, when written) and filter used, each with how many observations it
+was used for, most used first. Filters written N/A are counted as **No
+filter**. Names written slightly differently (`13mm Ethos`, `13 mm ethos`)
+count as one, shown in the spelling used most; the filters treat them as
+one too. Tap a name to see those observations on the Sessions tab. The
+counts follow the search and filters.
+
 ## Session files
 
 **Admin mode.** Open any page of the site with `?admin=on` at the end of

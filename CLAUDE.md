@@ -249,6 +249,13 @@ must match `PageReading` in `read-page.mjs`).
   so dropdowns offer only that page's values (one value: hidden), and a
   page listing fewer than two things gets no bar at all. Add a filter in
   `FILTERS`, not in a page.
+- Equipment tab (`site/equipment.js`): telescopes, eyepieces and filters
+  from the search documents, so counts follow the search and filters.
+  Spellings merge by `nameKey()` (`site/search.js`, also used by the
+  filters) and show the most used (`mostUsed()` in `site/filterbar.js`);
+  N/A filters count as "No filter". Rows link to `?eyepiece=…#sessions`
+  etc.; `keepFilters()` keeps a link's own filter value. The tab row
+  scrolls sideways on phones, with the open tab kept in view.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in
   localStorage (`?admin=off` clears it), adds an admin bar to the footer
   with a link to `help.html` (Kacy's phone how-to; keep it in step with
