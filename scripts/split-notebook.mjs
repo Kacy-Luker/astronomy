@@ -10,7 +10,8 @@ import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { cleanShowThrough, listSpreads, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
+import { cleanShowThrough, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
+import { listSpreads } from "./lib/scans.mjs";
 
 const [id, source] = process.argv.slice(2);
 if (!id || !source) {

@@ -2,9 +2,9 @@
 // page image in, its reading out, in the format of scripts/lib/reading.mjs.
 // The model, effort and refusal fallback are set here and nowhere else.
 import Anthropic from "@anthropic-ai/sdk";
-import { z } from "zod";
 import { CATEGORIES } from "../categories.mjs";
 import { PageReading, RedactionCheck } from "../reading.mjs";
+import { asJSONSchema, check } from "../schema.mjs";
 
 export const name = "claude";
 const MODEL = "claude-opus-5-5";
@@ -65,7 +65,7 @@ export function extractJSON(text) {
 // (Enforcing it in the API instead fails: the schema is too large to compile.)
 // A reply that doesn't fit goes back once with what was wrong.
 async function ask(image, prompt, schema, maxTokens) {
-  const format = JSON.stringify(z.toJSONSchema(schema));
+  const format = JSON.stringify(asJSONSchema(schema));
   const messages = [{
     role: "user",
     content: [
@@ -89,9 +89,9 @@ async function ask(image, prompt, schema, maxTokens) {
     }
     const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("");
     const json = extractJSON(text);
-    const result = json ? schema.safeParse(json) : null;
-    if (result?.success) return result.data;
-    const problem = result ? z.prettifyError(result.error) : "the reply had no valid JSON object";
+    const result = json ? check(schema, json) : null;
+    if (result?.ok) return result.data;
+    const problem = result ? result.problem : "the reply had no valid JSON object";
     if (attempt === 2) throw new Error(`Claude's reply didn't match the page format: ${problem}`);
     messages.push(
       { role: "assistant", content: response.content },

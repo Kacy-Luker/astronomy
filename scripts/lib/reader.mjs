@@ -5,8 +5,8 @@
 // checked against it here, so a replacement can't slip in another shape.
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { z } from "zod";
 import { PageReading, RedactionCheck } from "./reading.mjs";
+import { check } from "./schema.mjs";
 
 const BUILT_IN = { claude: "./readers/claude.mjs" };
 
@@ -16,8 +16,8 @@ export async function loadReader(choice = process.env.PAGE_READER || "claude") {
     if (typeof reader[fn] !== "function") throw new Error(`the page reader "${choice}" has no ${fn}()`);
   }
   const held = (fn, format) => async (image) => {
-    const answer = format.safeParse(await reader[fn](image));
-    if (!answer.success) throw new Error(`the page reader "${choice}" answered ${fn}() in the wrong format: ${z.prettifyError(answer.error)}`);
+    const answer = check(format, await reader[fn](image));
+    if (!answer.ok) throw new Error(`the page reader "${choice}" answered ${fn}() in the wrong format: ${answer.problem}`);
     return answer.data;
   };
   return {

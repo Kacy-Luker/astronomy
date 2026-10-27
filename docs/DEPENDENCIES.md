@@ -3,19 +3,21 @@
 Every tool or service the log depends on, what it's used for, and the
 contract a replacement has to meet (#49). "Wrapped" means the rest of the
 code only reaches it through one named module, so swapping it means
-writing one new module that meets the contract.
+writing one new module that meets the contract. `tests/unit/wrapped.test.mjs`
+fails if another file starts using a wrapped library or tool directly.
 
 | Dependency | Used for | Wrapped by | Status |
 | --- | --- | --- | --- |
 | Claude (Anthropic API) | Reading each page; checking blurred pages | `scripts/lib/reader.mjs` | Wrapped |
 | OpenNGC, SIMBAD | Catalog info and designations | `scripts/lib/catalog.mjs` | Wrapped |
 | sharp (libvips) | Rotating, cropping, resizing, blurring, encoding images | `scripts/lib/image.mjs` | Wrapped |
-| poppler `pdfimages` | Pulling the scanned JPEGs out of a PDF | `scripts/lib/pages.mjs` (`listSpreads`) | Partly |
+| poppler `pdfimages` | Pulling the scanned JPEGs out of a PDF | `scripts/lib/scans.mjs` | Wrapped |
 | numpy, scipy, Pillow | Show-through cleaning | `scripts/showthrough.py` | Wrapped (a script) |
-| zod, ajv | Checking readings and the JSON files | — | Not yet |
+| zod | Data formats: page readings | `scripts/lib/schema.mjs` | Wrapped |
+| ajv | Checking the JSON files against `schema/` | `scripts/validate.mjs` | One file (standard JSON Schema) |
 | GitHub Pages and PR previews | Hosting the site and a preview per PR | `pages.yml`, `preview.yml` | Workflows only |
 | GitHub Actions forms and PRs | Import, Complete and Remove; a PR per change | `notebook-job.yml`, `scripts/sync-workflow.mjs` | Workflows only |
-| Private scans repo | Raw scans, kept out of this public repo | `notebook-job.yml` | Workflows only |
+| Private scans repo | Raw scans, kept out of this public repo | `scripts/lib/scans.mjs`; fetched by `notebook-job.yml` | Wrapped, except the fetch |
 | claude-code-action | The Docs check on PRs | `docs.yml` | Optional |
 | OpenStreetMap tiles | The Map tab's background | `TILES` in `site/map.js` | Wrapped (a constant) |
 | Leaflet | The Map tab | `site/map.js` | One file |
@@ -110,6 +112,44 @@ fold finder, the blur of personal details, the circle finder and the
 rescan matcher all read these pixels. The import, circle and redaction
 tests cover them.
 
+## Scan source
+
+**Module:** `scripts/lib/scans.mjs`.
+
+**Where uploads live:**
+- A folder per notebook in the private `astronomy-scans` repo,
+  `<notebook>/<date>[-HHMM].<ext>`.
+- The Notebook job workflow fetches the repo into `.scans/` (one
+  `actions/checkout` step). Moving the scans elsewhere means replacing
+  that step with one that fills `.scans/` the same way.
+
+**The contract:**
+- `pickScan({ store, mode, picked, scan, hasNotebook })` decides which
+  notebook and upload a form run is for:
+  - the scan given, or else the notebook's newest (`newestScan`)
+  - a new notebook named for its folder
+  - otherwise the problem, in words meant for Kacy
+  - `scripts/pick-scan.mjs` runs it for the workflow.
+- `listSpreads(source, workDir)` turns a scan into spread image files: a
+  PDF's embedded images (via poppler's `pdfimages`), one image, or a
+  folder of images.
+- `sniff(file)` tells what a file really is from its first bytes, so an
+  iPhone HEIC photo or a Git LFS pointer is caught with a clear message.
+
+`tests/unit/scans.test.mjs` covers each case.
+
+## Data formats
+
+**Module:** `scripts/lib/schema.mjs`, using zod.
+- Formats are built with its `z`, as in `scripts/lib/reading.mjs`.
+- `check(format, value)` gives `{ ok, data }` or `{ ok: false, problem }`.
+- `asJSONSchema(format)` gives the JSON Schema the Claude reader puts in
+  its prompt.
+
+The JSON files in `data/` are checked separately by `scripts/validate.mjs`
+against the standard JSON Schemas in `schema/` (with ajv). Any JSON Schema
+validator could take its place.
+
 ## Show-through cleaning
 
 **Module:** `scripts/showthrough.py <notebook> [positions…]`. It reads
@@ -124,9 +164,6 @@ tests cover them.
 
 These are still called directly. Moving each one behind a module like the
 ones above is the rest of #49:
-- **Scan source:** listing an upload's spreads and pulling images out of a
-  PDF (`listSpreads` and `pdfimages`), and fetching from the private scans
-  repo (`notebook-job.yml`).
 - **Publishing and forms:** the build writes a plain static folder with
   relative paths, so any static host works; the GitHub-specific parts are
   the workflows and `scripts/sync-workflow.mjs`.

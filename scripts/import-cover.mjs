@@ -13,7 +13,8 @@ import { basename, join } from "node:path";
 import { parseArgs } from "node:util";
 import { coverImage } from "./lib/cover.mjs";
 import { formatJSON } from "./lib/format-json.mjs";
-import { listSpreads, webImage } from "./lib/pages.mjs";
+import { webImage } from "./lib/pages.mjs";
+import { listSpreads } from "./lib/scans.mjs";
 
 const { positionals: [id, source], values: opts } = parseArgs({
   allowPositionals: true,

@@ -90,47 +90,13 @@ jobs:
           repository: ${{ github.repository_owner }}/astronomy-scans
           token: ${{ secrets.ASTRONOMY_TOKEN }}
           path: .scans
-      - name: Pick the notebook and scan
-        if: env.MODE != 'remove'
-        run: |
-          if [ "$MODE" = new ]; then
-            # A new notebook is named for its folder in astronomy-scans: the
-            # scan's folder, or else the one folder with no notebook yet.
-            if [ -n "$SCAN" ]; then
-              NOTEBOOK=${SCAN%%/*}
-              [ "$NOTEBOOK" != "$SCAN" ] || { echo "::error::Put the scan in a folder named for the new notebook, e.g. astronomy-002/$SCAN"; exit 1; }
-            else
-              NEW=$(cd .scans && for d in */; do d=${d%/}; [ -e "../data/notebooks/$d.json" ] || echo "$d"; done)
-              [ -n "$NEW" ] || { echo "::error::Every folder in astronomy-scans already has a notebook; upload the new one's scan to a new folder, e.g. astronomy-002/"; exit 1; }
-              [ "$(echo "$NEW" | wc -l)" = 1 ] || { echo "::error::More than one folder has no notebook yet ($(echo $NEW)); type the scan's path"; exit 1; }
-              NOTEBOOK=$NEW
-            fi
-            [[ "$NOTEBOOK" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "::error::A notebook's folder must be lowercase letters, digits and dashes, e.g. astronomy-002 (got '$NOTEBOOK')"; exit 1; }
-            [ ! -e "data/notebooks/$NOTEBOOK.json" ] || { echo "::error::$NOTEBOOK already exists; pick it in the notebook dropdown"; exit 1; }
-          elif [ -n "$SCAN" ] && [ "${SCAN%%/*}" != "$NOTEBOOK" ]; then
-            echo "::error::$SCAN isn't in $NOTEBOOK's folder; pick the notebook it belongs to"; exit 1
-          fi
-          if [ -z "$SCAN" ] && [ "$MODE" != complete ]; then
-            # Names are dates (optionally -HHMM), so the newest upload sorts
-            # last. Compare without the extension so 2026-10-23.pdf comes
-            # before 2026-10-23-1350.pdf.
-            SCAN=$(cd .scans && for f in "$NOTEBOOK"/*; do
-              [ -f "$f" ] && printf '%s\t%s\n' "${f%.*}" "$f"
-            done | LC_ALL=C sort | tail -n 1 | cut -f2)
-            [ -n "$SCAN" ] || { echo "::error::No files in astronomy-scans/$NOTEBOOK/"; exit 1; }
-          fi
-          if [ -n "$SCAN" ]; then
-            [ -e ".scans/$SCAN" ] || { echo "::error::astronomy-scans has no $SCAN"; exit 1; }
-            echo "Importing $SCAN: $(file -b ".scans/$SCAN"), $(stat -c %s ".scans/$SCAN") bytes"
-          fi
-          NAME=$(basename "${SCAN:-completed}")
-          echo "NOTEBOOK=$NOTEBOOK" >> "$GITHUB_ENV"
-          echo "SCAN=$SCAN" >> "$GITHUB_ENV"
-          echo "BRANCH=import/$NOTEBOOK-$MODE-$(echo "${NAME%.*}" | tr -c 'A-Za-z0-9.\n-' '-')" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
+      - name: Pick the notebook and scan
+        if: env.MODE != 'remove'
+        run: node scripts/pick-scan.mjs
       - if: env.MODE != 'remove'
         run: command -v pdfimages || (sudo apt-get update && sudo apt-get install -y poppler-utils)
       - run: npm ci

@@ -1,8 +1,6 @@
 // The image operations contract (scripts/lib/image.mjs, docs/DEPENDENCIES.md):
 // what a replacement image library has to do.
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
 import { test } from "node:test";
 import { blank, image, size } from "../../scripts/lib/image.mjs";
 
@@ -50,12 +48,4 @@ test("jpeg encodes a JPEG", async () => {
   const jpg = await image(await sample()).jpeg({ quality: 80 }).buffer();
   assert.deepEqual([...jpg.subarray(0, 2)], [0xff, 0xd8]);
   assert.deepEqual(await size(jpg), { width: 40, height: 20 });
-});
-
-test("only scripts/lib/image.mjs uses the image library", () => {
-  const files = (dir) => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? files(join(dir, f)) : [join(dir, f)]));
-  const users = [...files("scripts"), ...files("site")]
-    .filter((f) => /\.m?js$/.test(f) && /from "sharp"/.test(readFileSync(f, "utf8")));
-  // The test pages' drawing script renders SVG; it isn't part of the import or the site.
-  assert.deepEqual(users.sort(), ["scripts/lib/image.mjs", "scripts/make-test-pages.mjs"]);
 });

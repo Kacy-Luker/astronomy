@@ -40,7 +40,9 @@ import { nameOf, summarize } from "./lib/import/summary.mjs";
 import { matchPosition } from "./lib/match.mjs";
 import { loadReader } from "./lib/reader.mjs";
 import { PageReading, RedactionCheck } from "./lib/reading.mjs";
-import { cleanShowThrough, listSpreads, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
+import { check } from "./lib/schema.mjs";
+import { cleanShowThrough, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
+import { listSpreads } from "./lib/scans.mjs";
 
 const MODES = ["add", "new", "replace", "complete"];
 const { positionals: [id, source], values: opts } = parseArgs({
@@ -120,8 +122,8 @@ let reader; // loaded only when a page isn't cached, so cached runs need no API 
 async function cached(name, format, compute) {
   const path = join(cacheDir, `${name}.json`);
   if (existsSync(path)) {
-    const answer = format.safeParse(JSON.parse(await readFile(path, "utf8")));
-    if (!answer.success) throw new Error(`${path} isn't in the reading format: ${answer.error.message}`);
+    const answer = check(format, JSON.parse(await readFile(path, "utf8")));
+    if (!answer.ok) throw new Error(`${path} isn't in the reading format: ${answer.problem}`);
     return answer.data;
   }
   reader ??= await loadReader();
