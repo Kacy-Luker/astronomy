@@ -207,8 +207,10 @@ with `?edit=on` at the end of the address (for example
 then show **Edit** links that open the file in GitHub's editor: **Edit
 session** and an **Edit** on each observation (the session's file),
 **Edit notebook**, and **Edit mappings** on object pages. The footer says
-edit mode is on, with a link to turn it off (`?edit=off`). Visitors never
-see the links, and PR previews don't show them.
+edit mode is on, with links to a short phone how-to (`help.html`: adding
+a session, other imports, finishing and removing a notebook) and to turn
+it off (`?edit=off`). Visitors never see the links, and PR previews don't
+show them.
 
 Name each file `<date>-<site>.json` and set its `id` to the same slug, for
 example `data/sessions/2026-10-11-okie-tex-2026.json` with `"id":
