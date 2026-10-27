@@ -56,7 +56,7 @@ export const dataFile = (path) => `${dataset === "test" ? "test-data" : "data"}/
 
 if (testBanner) {
   const toggle = el("span", "data-toggle");
-  toggle.append(" · Showing ");
+  toggle.append("Showing ");
   for (const [value, text] of [["real", "real data"], ["test", "test data"]]) {
     const url = new URL(location.href);
     url.searchParams.set("data", value);
