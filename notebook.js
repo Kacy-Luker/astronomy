@@ -50,13 +50,16 @@ function renderContents(nb, sessions) {
   return section;
 }
 
+// Session pages are captioned with their number and sessions; other pages
+// (covers, title page, scales, index...) have no caption.
 function caption(page, sessionsById) {
+  if (page.number == null && !page.sessions.length) return null;
   const parts = [el("span", "page-name", pageName(page))];
   for (const id of page.sessions) {
     const s = sessionsById.get(id);
     parts.push(" · ", link(sessionHref(id), `${formatDate(s.date)}, ${s.site.name}`));
   }
-  // Numbered pages without a session say what they are; front matter is named already.
+  // Numbered pages without a session say what they are.
   if (!page.sessions.length && page.number != null) {
     parts.push(" · ", el("span", "muted", [KIND_NAMES[page.kind], page.note].filter(Boolean).join(": ")));
   }
@@ -64,7 +67,9 @@ function caption(page, sessionsById) {
 }
 
 // Pages come in scan order, two to a spread like the open book. The outside
-// front cover comes first on its own, as a right-hand page. Back matter
+// front cover comes first, on the left of the title page (or whatever page
+// faces it), since the inside front cover is never shown; on its own when
+// the first spread has nothing for it to face. Back matter
 // (index, info page) is paired from the end of the book, since the blank
 // pages before it aren't scanned: the info page is the last left-hand page.
 // Pages that aren't shown leave their side of the spread empty, so facing
@@ -72,8 +77,13 @@ function caption(page, sessionsById) {
 function spreadsOf(nb) {
   let split = nb.pages.findIndex((p) => p.back);
   if (split < 0) split = nb.pages.length;
-  const spreads = nb.front_cover ? [[null, nb.front_cover]] : [];
-  for (let i = 0; i < split; i += 2) spreads.push([nb.pages[i], i + 1 < split ? nb.pages[i + 1] : null]);
+  const spreads = [];
+  let start = 0;
+  if (nb.front_cover && split > 1 && nb.pages[0].hidden && !nb.pages[1].hidden) {
+    spreads.push([nb.front_cover, nb.pages[1]]);
+    start = 2;
+  } else if (nb.front_cover) spreads.push([null, nb.front_cover]);
+  for (let i = start; i < split; i += 2) spreads.push([nb.pages[i], i + 1 < split ? nb.pages[i + 1] : null]);
   const tail = [];
   let end = nb.pages.length;
   // The inside back cover, if scanned, faces the info page.
