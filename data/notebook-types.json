@@ -1,0 +1,13 @@
+{
+  "description": "Kinds of notebook (#48). A new notebook picks one in the Import form; it says how its scans become pages and how pages are read. scan: pages per scan and, for spreads, the clockwise turn that makes one upright and where the fold usually is (it's found in each spread). numbering: how page numbers are printed. form: what the pages are written on. Page images are 1600 px tall whatever the paper size.",
+  "types": [
+    {
+      "id": "stamped-spreads",
+      "label": "Stamped log, spreads",
+      "describe": "A bound notebook scanned open, two pages at a time and sideways, with the rubber-stamped log form (NEW SESSION block and object entries) filled in by hand. Any page size.",
+      "scan": { "pages": 2, "rotate": 90, "split": 0.47 },
+      "numbering": "odd-printed-right",
+      "form": "stamped"
+    }
+  ]
+}

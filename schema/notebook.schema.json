@@ -14,6 +14,11 @@
     },
     "title": { "type": "string" },
     "owner": { "type": ["string", "null"] },
+    "type": {
+      "description": "The notebook's kind, from data/notebook-types.json; the first type there when absent.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
     "status": {
       "description": "Whether the notebook is still being written in.",
       "enum": ["in_progress", "completed"]

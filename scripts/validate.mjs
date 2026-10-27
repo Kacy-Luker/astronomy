@@ -54,6 +54,28 @@ async function load(dir, validate) {
   return byId;
 }
 
+// The kinds of notebook (#48): schema, and each id once. Notebooks name one.
+const typesPath = join("data", "notebook-types.json");
+const typeIds = new Set();
+{
+  const validate = await compile("notebook-types");
+  let doc;
+  try {
+    doc = JSON.parse(await readFile(typesPath, "utf8"));
+  } catch (err) {
+    report(typesPath, [`invalid JSON: ${err.message}`]);
+  }
+  if (doc && !validate(doc)) report(typesPath, validate.errors.map((e) => `${e.instancePath || "/"} ${e.message}`));
+  else if (doc) {
+    const errors = [];
+    doc.types.forEach((t, i) => {
+      if (typeIds.has(t.id)) errors.push(`/types/${i}: ${t.id} is listed more than once`);
+      typeIds.add(t.id);
+    });
+    report(typesPath, errors);
+  }
+}
+
 // The real data, and the test site's made-up data (test-data/, #64), which
 // is checked the same way.
 const DATASETS = [{ data: "data", scans: "scans" }, { data: "test-data", scans: "test-data/scans" }]
@@ -66,6 +88,7 @@ for (const { data: DATA, scans: SCANS } of DATASETS) {
 
   for (const { path, data: nb } of notebooks.values()) {
     const errors = orderErrors(nb.pages);
+    if (nb.type && !typeIds.has(nb.type)) errors.push(`/type ${nb.type} isn't in ${typesPath}`);
     if (nb.front_cover && !existsSync(join(SCANS, nb.id, "cover-front.jpg"))) {
       errors.push(`/front_cover has no image at ${SCANS}/${nb.id}/cover-front.jpg`);
     }
