@@ -98,14 +98,17 @@ try {
   if (!obj) throw new Error(id ? `no observations of "${id}"` : "no object in the link");
   document.title = `${obj.ids[0]}${obj.name && !sameName(obj.name, obj.ids[0]) ? ` · ${obj.name}` : ""} · Observing Log`;
   // Only the observations in the search and filters, sketches included.
+  // An object seen once has nothing to narrow, so it gets no bar and shows
+  // its one observation; links still carry the filters on.
   const docs = searchDocuments(sessions, notebooks);
   const header = renderHeader(obj, catalog[obj.key]);
   const draw = (state) => {
+    if (obj.seen.length < 2) state = Object.fromEntries(Object.keys(state).map((k) => [k, ""]));
     const hit = new Set(docs.filter((d) => matchesAll(d, state)).map((d) => d.o));
     const shown = { ...obj, seen: obj.seen.filter(({ o }) => hit.has(o)) };
     const on = activeFilters(state).length || state.q.trim();
     main.replaceChildren(
-      bar.element,
+      ...(obj.seen.length > 1 ? [bar.element] : []),
       header,
       ...renderSketches(shown),
       el("h3", "section-title", "Observations"),

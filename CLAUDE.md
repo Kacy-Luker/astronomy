@@ -244,7 +244,8 @@ must match `PageReading` in `read-page.mjs`).
   (`site/filterbar.js`: search box, Filters panel, chips, Clear all) are
   on every page and in the URL; `keepFilters()` adds them to links between
   pages. Home narrows its tabs, the session page dims non-matching
-  observations, the object page shows only matching ones, the notebook
+  observations, the object page shows only matching ones (no bar when
+  it has a single observation), the notebook
   page dims contents rows. Add a filter in `FILTERS`, not in a page.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in
   localStorage (`?admin=off` clears it), adds an admin bar to the footer

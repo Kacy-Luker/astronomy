@@ -219,9 +219,9 @@ far isn't shown), a date range, and **Has to-dos**. Active filters show as
 chips: tap one to remove it, or **Clear all**. They're in the address too
 (`?site=Okie-Tex+2026&eyepiece=13mm+Ethos`), and links between pages keep
 them. The home page narrows its tabs; a session page dims the observations
-outside them; an object page shows only the matching observations and
-sketches; a notebook page dims the sessions in its contents with nothing
-matching.
+outside them; an object page seen more than once shows only the matching
+observations and sketches (one seen once has no bar); a notebook page dims
+the sessions in its contents with nothing matching.
 
 ## Session files
 
