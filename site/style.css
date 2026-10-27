@@ -211,7 +211,9 @@ a { color: var(--accent); }
   color: var(--text);
   border-bottom: 1px solid var(--border);
 }
-/* The real/test data choice on the test site and previews (site/lib.js). */
+/* The real/test data choice on the test site and previews (site/lib.js),
+   on its own line under the banner's text. */
+.data-toggle { display: block; margin-top: .15rem; }
 .data-toggle a[aria-current] { color: var(--text); font-weight: 700; text-decoration: none; }
 
 /* The search box above the home page's tabs (site/search.js). */
