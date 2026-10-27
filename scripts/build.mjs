@@ -41,17 +41,20 @@ const notebooks = await Promise.all((await readAll("data/notebooks")).map(async 
   // The outside front cover, scanned on its own.
   const cover = `scans/${nb.id}/cover-front.jpg`;
   const front = nb.front_cover && existsSync(cover) ? await sharp(cover).metadata() : null;
+  // A small copy for the notebook's card on the home page.
+  const thumb = cover.replace(/\.jpg$/, ".thumb.jpg");
+  if (front) await sharp(cover).resize({ height: 240 }).jpeg({ quality: 80 }).toFile(join(OUT, thumb));
   return {
     ...nb,
-    front_cover: front && { label: "Front cover", slot: 0, sessions: [], image: cover, width: front.width, height: front.height },
+    front_cover: front && { label: "Front cover", slot: 0, sessions: [], image: cover, thumb, width: front.width, height: front.height },
     pages: await Promise.all(nb.pages.map(async ({ redact, ...page }, i) => {
       const image = `scans/${nb.id}/${String(i + 1).padStart(2, "0")}.jpg`;
       const { width, height } = await sharp(image).metadata();
       // Pages that will still change aren't published until they're final. An
       // unfinished notebook also leaves out its blank pages and the categories
-      // not shown in progress.
+      // not shown in progress. Hidden categories are never shown.
       const kind = page.kind === "unused" ? "session" : page.kind;
-      const hidden = Boolean(page.open && page.kind !== "session") || (nb.status !== "completed" &&
+      const hidden = Boolean(page.open && page.kind !== "session") || Boolean(category(kind)?.hidden) || (nb.status !== "completed" &&
         (page.kind === "blank" || !category(kind)?.in_progress));
       // The show-through-cleaned copy, when scripts/showthrough.py made one.
       const clean = image.replace(/\.jpg$/, ".clean.jpg");

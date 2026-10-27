@@ -1,0 +1,51 @@
+// The outside front cover from a scan of the closed notebook. The notebook
+// lies in the scanner's corner and the lid (or bed) fills the rest, so the
+// lid's shade is taken near the far (bottom right) corner, and the cover is
+// the rows and columns mostly unlike it. Sharp's trim doesn't do here: the
+// scanner's edges leave dark and light strips along the border. The cover
+// is then turned upright (portrait).
+import sharp from "sharp";
+
+const W = 200; // measure at this width
+const DIFF = 40; // grey levels from the lid that count as cover
+
+export async function coverImage(file, rotate = 90) {
+  const scan = await sharp(file).rotate().toBuffer();
+  const { width, height } = await sharp(scan).metadata();
+  const { data, info } = await sharp(scan).greyscale().resize({ width: W }).raw().toBuffer({ resolveWithObject: true });
+  const w = info.width, h = info.height;
+  // The lid's shade: the median of a patch inset from the corner, clear of
+  // the edge strips.
+  const patch = [];
+  for (let y = Math.round(h * 0.88); y < Math.round(h * 0.95); y++) {
+    for (let x = Math.round(w * 0.88); x < Math.round(w * 0.95); x++) patch.push(data[y * w + x]);
+  }
+  const lid = patch.sort((a, b) => a - b)[patch.length >> 1];
+  const cover = (x, y) => Math.abs(data[y * w + x] - lid) > DIFF;
+  const rows = [], cols = [];
+  for (let y = 0; y < h; y++) {
+    let n = 0;
+    for (let x = 0; x < w; x++) n += cover(x, y);
+    rows.push(n / w);
+  }
+  for (let x = 0; x < w; x++) {
+    let n = 0;
+    for (let y = 0; y < h; y++) n += cover(x, y);
+    cols.push(n / h);
+  }
+  // Rows and columns at least a third cover, trimmed in from each side.
+  const first = (a) => a.findIndex((f) => f > 1 / 3), last = (a) => a.findLastIndex((f) => f > 1 / 3);
+  let out = scan;
+  if (first(rows) >= 0 && first(cols) >= 0) {
+    const sx = width / w, sy = height / h;
+    const left = Math.round(first(cols) * sx), top = Math.round(first(rows) * sy);
+    const right = Math.min(width, Math.round((last(cols) + 1) * sx)), bottom = Math.min(height, Math.round((last(rows) + 1) * sy));
+    // Keep the whole scan when what's left is too small to be the cover.
+    if ((right - left) * (bottom - top) > width * height * 0.15) {
+      out = await sharp(scan).extract({ left, top, width: right - left, height: bottom - top }).toBuffer();
+    }
+  }
+  const size = await sharp(out).metadata();
+  if (size.width > size.height) out = await sharp(out).rotate(rotate).toBuffer();
+  return out;
+}

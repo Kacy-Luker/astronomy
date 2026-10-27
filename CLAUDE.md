@@ -54,7 +54,7 @@ needs to change things safely.
 | Path | What |
 | --- | --- |
 | `data/notebooks/<id>.json` | Every scanned page in order: `kind`, `number`, `label`, `open`, `redact` (schema: `schema/notebook.schema.json`) |
-| `data/categories.json` | Page categories for every notebook, in book order, with `in_progress`, `rescan` and `single` (read by `scripts/lib/categories.mjs`) |
+| `data/categories.json` | Page categories for every notebook, in book order, with `in_progress`, `hidden`, `rescan` and `single` (read by `scripts/lib/categories.mjs`) |
 | `data/sessions/<id>.json` | One observing night; `notebook`, `pages`, `header_box`, and `page` and `box` on each observation (schema: `schema/session.schema.json`) |
 | `data/objects.json` | Generated catalog info for observed objects, keyed by first designation (`scripts/lib/catalog.mjs`, OpenNGC pinned and cached in `.catalog-cache/`; schema: `schema/objects.schema.json`) |
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
@@ -100,20 +100,27 @@ Transparent (`site/lib.js`). The key printed in the notebook isn't used.
   shown (front cover, title page, scales, session pages, info page), and
   blank pages are left off; no placeholders. Completing checks the `rescan`
   categories (front cover, table of contents, index) and lists blank pages.
-- The outside front cover is scanned on its own (`scripts/import-cover.mjs`;
-  Import with Front cover as the category) to
-  `scans/<id>/cover-front.jpg`, not a page position, so page images never
-  shift for it.
+- The outside front cover (with the volume label: title, start and finish
+  dates, owner) is saved to `scans/<id>/cover-front.jpg`, not a page
+  position, so page images never shift for it, and shown on the home
+  page's notebook card. The notebook view shows it beside the title page:
+  the inside front cover is recorded (so spreads stay physical) but never
+  shown (`hidden` in `data/categories.json`). It's scanned closed, so the scanner's lid fills the
+  rest of the scan; `scripts/lib/cover.mjs` trims to the cover. The import
+  finds a closed-notebook scan among the spreads (Claude reads one half as
+  `front_cover`, the lid as blank) and keeps it apart from the pages; a
+  cover scanned on its own goes through `scripts/import-cover.mjs` (Import
+  with Front cover as the category).
 - Back matter (categories after the session pages) stays at the end of
   `pages`: the info page is scanned early and new session pages are
   inserted before it. Page images are named by position, so the import
   rewrites every image after an inserted page. Back matter isn't
   show-through-cleaned, since its other sides aren't scanned, and is paired
   into spreads from the end of the book.
-- Pages that will still change (table of contents, volume label without a
-  finish date, blank pages after the last written one, session pages with
-  room) are `open`: re-read on the next import and, except session pages,
-  left off the site until the notebook is completed.
+- Pages that will still change (table of contents, blank pages after the
+  last written one, session pages with room) are `open`: re-read on the
+  next import and, except session pages, left off the site until the
+  notebook is completed.
 
 ## Import pipeline (`scripts/import-notebook.mjs`)
 
