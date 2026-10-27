@@ -3,6 +3,8 @@ import {
   KIND_NAMES, editLink, el, formatDate, link, loadNotebooks, loadSessions, pageFigure, pageName,
   plural, scanToggle, sessionHref,
 } from "./lib.js";
+import { filterBar } from "./filterbar.js";
+import { activeFilters, keepFilters, matchesAll, searchDocuments } from "./search.js";
 
 const main = document.getElementById("notebook");
 
@@ -36,6 +38,7 @@ function renderContents(nb, sessions) {
   table.tHead.append(head);
   for (const s of [...sessions].sort((a, b) => a.date.localeCompare(b.date))) {
     const row = el("tr");
+    row.dataset.session = s.id;
     const date = el("td");
     date.append(link(sessionHref(s.id), formatDate(s.date)));
     const pages = el("td");
@@ -121,11 +124,28 @@ try {
   const sessions = allSessions.filter((s) => s.notebook === nb.id);
 
   document.title = `${nb.title} · Observing Log`;
+  const contents = renderContents(nb, sessions);
+  const note = el("p", "muted filter-note");
+  contents.querySelector("h3").after(note);
+  // The search and filters dim the sessions in the contents with nothing
+  // matching.
+  const docs = searchDocuments(allSessions, notebooks);
+  const draw = (state) => {
+    const on = activeFilters(state).length || state.q.trim();
+    const hit = new Set(docs.filter((d) => matchesAll(d, state)).map((d) => d.s.id));
+    for (const row of contents.querySelectorAll("tr[data-session]")) row.classList.toggle("dim", Boolean(on) && !hit.has(row.dataset.session));
+    const n = sessions.filter((s) => hit.has(s.id)).length;
+    note.textContent = on ? `${n} of ${plural(sessions.length, "session")} match.` : "";
+  };
+  const bar = filterBar(docs, draw);
   main.replaceChildren(
+    bar.element,
     renderHeader(nb, sessions),
-    renderContents(nb, sessions),
+    contents,
     renderPages(nb, new Map(sessions.map((s) => [s.id, s]))),
   );
+  draw(bar.state());
+  keepFilters();
   // The page anchors exist only now, so honor a #p4 link after rendering.
   if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
 } catch (err) {
