@@ -40,11 +40,7 @@ jobs:
           echo "NUMBER=$NUMBER" >> "$GITHUB_ENV"
           echo "OFF=$OFF" >> "$GITHUB_ENV"
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/setup
       - name: Set the favorite
         run: |
           node scripts/favorite.mjs "$SESSION" "$NUMBER" $OFF --summary "$RUNNER_TEMP/summary.md"
@@ -55,7 +51,7 @@ jobs:
           OTHER=$(git status --porcelain | grep -v ' data/sessions/[a-z0-9-]*\.json$' || true)
           [ -z "$OTHER" ] || { echo "::error::Unexpected changes:"; echo "$OTHER"; exit 1; }
       - id: pr
-        uses: peter-evans/create-pull-request@v8
+        uses: ./.github/actions/open-pr
         with:
           token: ${{ secrets.ASTRONOMY_TOKEN }}
           branch: favorite/${{ env.SESSION }}-${{ env.NUMBER }}
