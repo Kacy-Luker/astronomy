@@ -160,7 +160,8 @@ export function imageFigure(page, alt, caption) {
 // Edit links open a data file in GitHub's web editor. They're for Kacy
 // only: hidden until edit mode is turned on by opening any page with
 // ?edit=on (?edit=off turns it off), which this browser remembers, and never
-// shown on PR previews. The footer says when edit mode is on.
+// shown on PR previews. The footer says when edit mode is on, and links the
+// how-to page (help.html).
 const REPO = "https://github.com/Kacy-Luker/astronomy";
 const EDIT_KEY = "observing-log-edit";
 const editParam = new URLSearchParams(location.search).get("edit");
@@ -189,6 +190,6 @@ if (editMode) {
   const off = new URL(location.href);
   off.searchParams.set("edit", "off");
   const note = el("p", "edit-mode", "Edit mode is on. ");
-  note.append(link(off.href, "Turn it off"));
+  note.append(link("help.html", "How to add a session"), " · ", link(off.href, "Turn it off"));
   footer.append(note);
 }
