@@ -138,3 +138,22 @@ test("the map groups sites by spot, and its Near link lists every session there"
   await page.goto("#map");
   await expect(page.locator(".map-note").last()).toContainText("Library star party");
 });
+
+test("the map opens on the USA, and fits other sites when only they match", async ({ page }) => {
+  const away = new Set(sessions.filter((s) => s.site.lat != null && (s.site.lat < 24 || s.site.lon > -66)).map((s) => s.site.name));
+  await page.goto("#map");
+  await expect(page.locator(".map-note").first()).toContainText(`Zoom out for ${away.size} site${away.size === 1 ? "" : "s"} outside the USA`);
+  // Okie-Tex is in view, Siding Spring isn't.
+  const inView = (text) => page.locator(".map-marker", { hasText: text }).evaluate((m) => {
+    const r = m.getBoundingClientRect(), f = m.closest(".map-frame").getBoundingClientRect();
+    return r.right > f.left && r.left < f.right && r.bottom > f.top && r.top < f.bottom;
+  });
+  const okieTex = String(sessions.filter((s) => Math.round(s.site.lat * 10) === 369).reduce((n, s) => n + s.observations.length, 0));
+  const sidingSpring = String(session("2026-10-24-siding-spring").observations.length);
+  expect(await inView(okieTex)).toBe(true);
+  expect(await inView(sidingSpring)).toBe(false);
+  // With only the Australia session matching, the map fits it.
+  await page.goto("?site=Siding%20Spring#map");
+  await expect(page.locator(".map-note").first()).not.toContainText("outside the USA");
+  expect(await inView(sidingSpring)).toBe(true);
+});
