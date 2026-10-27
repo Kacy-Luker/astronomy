@@ -1,6 +1,12 @@
 {
-  "source": "OpenNGC v20260501, https://github.com/mattiaverga/OpenNGC",
-  "license": "CC-BY-SA-4.0",
+  "sources": [
+    {
+      "name": "OpenNGC",
+      "version": "v20260501",
+      "url": "https://github.com/mattiaverga/OpenNGC",
+      "license": "CC BY-SA 4.0"
+    }
+  ],
   "objects": {
     "M13": {
       "ids": ["M13", "NGC 6205"],
@@ -10,7 +16,8 @@
       "magnitude": 5.8,
       "size": "17′",
       "ra": "16:41:41.63",
-      "dec": "+36:27:40.7"
+      "dec": "+36:27:40.7",
+      "source": "OpenNGC"
     },
     "M27": {
       "ids": ["M27", "NGC 6853"],
@@ -20,7 +27,8 @@
       "magnitude": 7.4,
       "size": "6.7′",
       "ra": "19:59:36.38",
-      "dec": "+22:43:15.7"
+      "dec": "+22:43:15.7",
+      "source": "OpenNGC"
     },
     "M28": {
       "ids": ["M28", "NGC 6626"],
@@ -30,7 +38,8 @@
       "magnitude": 6.9,
       "size": "5.1′",
       "ra": "18:24:32.89",
-      "dec": "-24:52:11.4"
+      "dec": "-24:52:11.4",
+      "source": "OpenNGC"
     },
     "M31": {
       "ids": ["M31", "NGC 224"],
@@ -40,7 +49,8 @@
       "magnitude": 3.4,
       "size": "178′ × 70′",
       "ra": "00:42:44.35",
-      "dec": "+41:16:08.6"
+      "dec": "+41:16:08.6",
+      "source": "OpenNGC"
     },
     "M32": {
       "ids": ["M32", "NGC 221"],
@@ -50,7 +60,8 @@
       "magnitude": 8.1,
       "size": "7.7′ × 4.9′",
       "ra": "00:42:41.83",
-      "dec": "+40:51:55.0"
+      "dec": "+40:51:55.0",
+      "source": "OpenNGC"
     },
     "M51": {
       "ids": ["M51", "NGC 5194"],
@@ -60,7 +71,8 @@
       "magnitude": 8.4,
       "size": "14′ × 12′",
       "ra": "13:29:52.71",
-      "dec": "+47:11:42.6"
+      "dec": "+47:11:42.6",
+      "source": "OpenNGC"
     },
     "M57": {
       "ids": ["M57", "NGC 6720"],
@@ -70,7 +82,8 @@
       "magnitude": 8.8,
       "size": "1.3′",
       "ra": "18:53:35.01",
-      "dec": "+33:01:42.9"
+      "dec": "+33:01:42.9",
+      "source": "OpenNGC"
     },
     "M110": {
       "ids": ["M110", "NGC 205"],
@@ -80,7 +93,8 @@
       "magnitude": 8.2,
       "size": "16′ × 9.6′",
       "ra": "00:40:22.08",
-      "dec": "+41:41:07.1"
+      "dec": "+41:41:07.1",
+      "source": "OpenNGC"
     }
   }
 }
