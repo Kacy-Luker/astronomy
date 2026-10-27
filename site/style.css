@@ -148,7 +148,12 @@ a { color: var(--accent); }
 /* Admin mode (Kacy only): the footer's admin bar, and Edit links to
    GitHub's editor at the end of a heading row. */
 .edit-link { margin-left: auto; font-size: .9rem; }
-.admin-bar { margin: .5rem 0 0; }
+/* Like the preview banner, in the accent color so the two aren't mixed up. */
+.admin-bar {
+  padding: .5rem 16px; text-align: center; font-size: .9rem; line-height: 1.8;
+  background: var(--surface); color: var(--text); border-bottom: 2px solid var(--accent);
+}
+.admin-bar strong { color: var(--accent); }
 .admin-toggle { font: inherit; color: var(--accent); background: none; border: 1px solid var(--border); border-radius: 999px; padding: .1rem .6rem; cursor: pointer; }
 .admin-toggle[aria-pressed="true"] { border-color: var(--accent); }
 .help li { margin-bottom: .5rem; }

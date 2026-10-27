@@ -159,8 +159,8 @@ export function imageFigure(page, alt, caption) {
 
 // Admin mode is for Kacy: turned on by opening any page with ?admin=on
 // (?admin=off turns it off), which this browser remembers (previews share
-// the setting, being on the same site). It adds an admin bar to the footer
-// with the how-to page (help.html) and a toggle for the Edit links, which
+// the setting, being on the same site). It adds an admin bar at the top
+// of the page with the how-to page (help.html) and a toggle for the Edit links, which
 // open a data file in GitHub's web editor.
 const REPO = "https://github.com/Kacy-Luker/astronomy";
 const ADMIN_KEY = "observing-log-admin";
@@ -191,9 +191,11 @@ export function editLink(path, text = "Edit") {
   return a;
 }
 
+// The admin bar runs across the top of the page, under the preview banner
+// on a PR preview, and scrolls away with the page.
 if (adminMode) {
-  const footer = document.querySelector(".site-footer") ?? document.body.appendChild(el("footer", "site-footer muted"));
-  const bar = el("p", "admin-bar", "Admin · ");
+  const bar = el("div", "admin-bar");
+  bar.append(el("strong", null, "Admin"), " · ");
   // The Edit links are drawn as the page loads, so switching reloads it.
   const toggle = el("button", "admin-toggle", `Edit links: ${editMode ? "on" : "off"}`);
   toggle.type = "button";
@@ -202,5 +204,7 @@ if (adminMode) {
   const off = new URL(location.href);
   off.searchParams.set("admin", "off");
   bar.append(link("help.html", "How to add a session"), " · ", toggle, " · ", link(off.href, "Leave admin mode"));
-  footer.append(bar);
+  const banner = document.querySelector(".preview-banner");
+  if (banner) banner.after(bar);
+  else document.body.prepend(bar);
 }

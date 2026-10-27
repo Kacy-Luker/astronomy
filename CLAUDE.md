@@ -250,8 +250,8 @@ must match `PageReading` in `read-page.mjs`).
   page listing fewer than two things gets no bar at all. Add a filter in
   `FILTERS`, not in a page.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in
-  localStorage (`?admin=off` clears it), adds an admin bar to the footer
-  with a link to `help.html` (Kacy's phone how-to; keep it in step with
+  localStorage (`?admin=off` clears it), adds an admin bar across the top
+  of the page (after `.preview-banner` when there is one) with a link to `help.html` (Kacy's phone how-to; keep it in step with
   the forms and the README's Importing section) and an Edit links toggle
   (also remembered; switching reloads the page).
   With it on, `editLink()` in `site/lib.js` (which also holds the repo URL)
