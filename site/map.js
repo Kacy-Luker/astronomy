@@ -37,7 +37,8 @@ function loadLeaflet() {
 
 // [{ lat, lon, events, sessions: [{ s, count }], count }] for the matching
 // observations, one per rounded spot, most observations first. events are
-// the site names without their years (eventName()), newest first.
+// the site names without their years (eventName()), newest first, as the
+// Site filter has them.
 function spots(docs) {
   const bySpot = new Map();
   for (const { s } of docs) {
@@ -61,7 +62,7 @@ function spots(docs) {
 
 // A summary, so the popup stays small however many sessions a site has: the
 // site without its year, its observations, sessions and date range, and a
-// link to the Sessions tab filtered to the event. When events share a spot,
+// link to the Sessions tab filtered to it. When several sites share a spot,
 // the newest two get a link each and the rest are counted.
 const SHOWN_EVENTS = 2;
 function popup(spot) {
@@ -79,10 +80,10 @@ function popup(spot) {
     const sessions = spot.sessions.filter(({ s }) => eventName(s.site.name) === event).length;
     const text = spot.events.length > 1 ? `See ${plural(sessions, "session")} at ${event}` : `See ${sessions === 1 ? "the session" : `all ${sessions} sessions`}`;
     const row = el("div", "map-popup-link");
-    row.append(link(`./?${new URLSearchParams({ event })}#sessions`, text));
+    row.append(link(`./?${new URLSearchParams({ site: event })}#sessions`, text));
     box.append(row);
   }
-  if (more) box.append(el("div", "muted map-popup-link", `+ ${plural(more, "more event")} here`));
+  if (more) box.append(el("div", "muted map-popup-link", `+ ${plural(more, "more site")} here`));
   keepFilters(box);
   return box;
 }
