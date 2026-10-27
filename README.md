@@ -276,7 +276,10 @@ at that spot (a **Near** chip, named for the newest site there).
 It uses each session's lat/long, rounded to 0.1° (about 10 km) so the map
 never shows exactly where you observe from; session pages still show the
 coordinates as written. Sessions without coordinates are listed under the
-map. The counts follow the search and filters. The map is
+map. The map opens on your sites in the USA (the lower 48 states); sites
+elsewhere stay on it, and the note under it says how many to zoom out
+for. When only sites abroad match the search, it fits those. The counts
+follow the search and filters. The map is
 [Leaflet](https://leafletjs.com/) (installed from npm and served with the
 site) on [OpenStreetMap](https://www.openstreetmap.org/) tiles, credited
 on the map.
