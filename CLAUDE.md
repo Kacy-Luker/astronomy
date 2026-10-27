@@ -239,8 +239,16 @@ must match `PageReading` in `read-page.mjs`).
   field of it and its session (designations also without spaces), and a
   query that matches when every word appears; case and accents are
   folded. The home page's search box sits above the tabs and narrows all
-  three (`?q=` in the URL, kept by the tab links). Filters (#26) build on
-  the same documents; don't make pages filter their own way.
+  three (`?q=` in the URL, kept by the tab links). Filters (`FILTERS` in
+  `site/search.js`; values per observation on each document) and the bar
+  (`site/filterbar.js`: search box, Filters panel, chips, Clear all) are
+  on every page and in the URL; `keepFilters()` adds them to links between
+  pages. Home narrows its tabs, the session page dims non-matching
+  observations, the object page shows only matching ones, the notebook
+  page dims contents rows. Each page passes the bar its own observations,
+  so dropdowns offer only that page's values (one value: hidden), and a
+  page listing fewer than two things gets no bar at all. Add a filter in
+  `FILTERS`, not in a page.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in
   localStorage (`?admin=off` clears it), adds an admin bar to the footer
   with a link to `help.html` (Kacy's phone how-to; keep it in step with

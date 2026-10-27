@@ -1,14 +1,16 @@
-// Home page: Notebooks, Sessions and Sketches tabs, under a search box that
-// narrows them all. The tab is in the URL (#notebooks, #sessions,
-// #sketches, and #sketches/ngc for a catalog) and so is the search (?q=),
-// so links and the back button keep them.
+// Home page: Notebooks, Sessions and Sketches tabs, under the search and
+// filter bar (site/filterbar.js) that narrows them all. The tab is in the
+// URL (#notebooks, #sessions, #sketches, and #sketches/ngc for a catalog)
+// and so are the search and filters (?q=&site=...), so links and the back
+// button keep them.
 import {
   applyView, el, formatDate, link, loadNotebooks, loadObjects, loadSessions, notebookHref, objectHref,
   objectName, plural, sessionHref,
 } from "./lib.js";
 import { CATALOGS, catalogOf, compareIds } from "./catalog.js";
 import { observedObjects, sameName } from "./objects.js";
-import { matches, searchDocuments, searchQuery, setSearchQuery } from "./search.js";
+import { filterBar } from "./filterbar.js";
+import { activeFilters, keepFilters, matchesAll, searchDocuments } from "./search.js";
 import { todoCount } from "./todos.js";
 
 const summary = document.getElementById("summary");
@@ -121,6 +123,7 @@ function objectsPanel(panel) {
     const rows = sections.get(name).sort(([a], [b]) => compareIds(a, b));
     list.replaceChildren(...rows.map(([id, obj]) => renderObjectRow(id, obj)));
     applyView(list);
+    keepFilters(list);
     for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.catalog === slug(name)));
   }
   // The catalog named in the URL, else the one shown (if it still has
@@ -156,23 +159,6 @@ function objectsPanel(panel) {
     group.replaceChildren(...buttons);
     fromURL();
   };
-}
-
-// The search box above the tabs (site/search.js): it narrows every tab to
-// the observations that match, and stays in the URL (?q=) across tabs.
-function searchBox(onChange) {
-  const box = el("div", "search");
-  const input = el("input");
-  input.type = "search";
-  input.placeholder = "Search objects, sites, eyepieces, notes…";
-  input.setAttribute("aria-label", "Search observations");
-  input.value = searchQuery();
-  input.addEventListener("input", () => {
-    setSearchQuery(input.value);
-    onChange(input.value);
-  });
-  box.append(input);
-  return box;
 }
 
 // Tabs: links to #notebooks, #sessions and #sketches; arrow keys move along.
@@ -212,14 +198,16 @@ try {
   const sessionList = document.querySelector("#sessions ol");
   const updateObjects = objectsPanel(document.getElementById("sketches"));
   const noMatch = (list, text) => list.replaceChildren(el("li", "muted no-match", text));
-  // Every tab from the observations that match: a session lists only its
-  // matching objects, a notebook shows when any of its sessions match.
-  function render(q) {
-    const found = new Set(docs.filter((d) => matches(d, q)).map((d) => d.o));
+  // Every tab from the observations that match the search and filters: a
+  // session lists only its matching objects, a notebook shows when any of
+  // its sessions match.
+  function render(state) {
+    const narrowed = Boolean(state.q.trim() || activeFilters(state).length);
+    const found = new Set(docs.filter((d) => matchesAll(d, state)).map((d) => d.o));
     const shown = sessions
       .map((s) => ({ ...s, whole: s, observations: s.observations.filter((o) => found.has(o)) }))
       .filter((s) => s.observations.length);
-    const books = q.trim() ? notebooks.filter((nb) => shown.some((s) => s.notebook === nb.id)) : notebooks;
+    const books = narrowed ? notebooks.filter((nb) => shown.some((s) => s.notebook === nb.id)) : notebooks;
     notebookList.replaceChildren(...books.map((nb) => renderNotebook(nb, shown)));
     if (!books.length) noMatch(notebookList, "No notebooks match.");
     applyView(notebookList);
@@ -227,12 +215,14 @@ try {
     if (!shown.length) noMatch(sessionList, "No sessions match.");
     const objects = observedObjects(shown, catalog);
     updateObjects(objects, "No objects match.");
-    summary.textContent = q.trim()
+    summary.textContent = narrowed
       ? `${plural(found.size, "matching observation")} · ${plural(shown.length, "session")} · ${plural(objects.length, "object")}`
       : `${plural(sessions.length, "session")} · ${plural(found.size, "observation")} · ${plural(objects.length, "object")}`;
   }
-  summary.after(searchBox(render));
-  render(searchQuery());
+  const bar = filterBar(docs, render);
+  summary.after(bar.element);
+  render(bar.state());
+  keepFilters();
 } catch (err) {
   summary.textContent = `Couldn't load sessions (${err.message}).`;
 }

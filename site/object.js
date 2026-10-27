@@ -5,8 +5,10 @@ import {
   sessionFile, sessionHref,
 } from "./lib.js";
 import { jointCard } from "./cards.js";
+import { filterBar } from "./filterbar.js";
 import { field, observationDescription, observationFacts } from "./observation.js";
 import { findObject, observedObjects, sameName } from "./objects.js";
+import { activeFilters, keepFilters, matchesAll, searchDocuments } from "./search.js";
 
 const main = document.getElementById("object");
 
@@ -95,12 +97,29 @@ try {
   const obj = id && findObject(observedObjects(sessions, catalog), id);
   if (!obj) throw new Error(id ? `no observations of "${id}"` : "no object in the link");
   document.title = `${obj.ids[0]}${obj.name && !sameName(obj.name, obj.ids[0]) ? ` · ${obj.name}` : ""} · Observing Log`;
-  main.replaceChildren(
-    renderHeader(obj, catalog[obj.key]),
-    ...renderSketches(obj),
-    el("h3", "section-title", "Observations"),
-    ...obj.seen.map((x) => renderSighting(x, obj, notebooks)),
-  );
+  // Only the observations in the search and filters, sketches included.
+  // (An object seen once gets no bar: site/filterbar.js.)
+  const docs = searchDocuments(sessions, notebooks);
+  const header = renderHeader(obj, catalog[obj.key]);
+  const draw = (state) => {
+    const hit = new Set(docs.filter((d) => matchesAll(d, state)).map((d) => d.o));
+    const shown = { ...obj, seen: obj.seen.filter(({ o }) => hit.has(o)) };
+    const on = activeFilters(state).length || state.q.trim();
+    main.replaceChildren(
+      bar.element,
+      header,
+      ...renderSketches(shown),
+      el("h3", "section-title", "Observations"),
+      ...(on ? [el("p", "muted filter-note", shown.seen.length
+        ? `${shown.seen.length} of ${plural(obj.seen.length, "observation")} match.`
+        : "No observations of it match the search and filters.")] : []),
+      ...shown.seen.map((x) => renderSighting(x, obj, notebooks)),
+    );
+    keepFilters(main);
+  };
+  const bar = filterBar(docs.filter((d) => obj.seen.some(({ o }) => o === d.o)), draw);
+  draw(bar.state());
+  keepFilters();
 } catch (err) {
   main.replaceChildren(el("p", "summary", `Couldn't load this object (${err.message}).`));
 }
