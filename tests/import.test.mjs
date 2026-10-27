@@ -15,19 +15,27 @@ import sharp from "sharp";
 import { BLURRED, sharpness } from "./sharpness.mjs";
 
 const REPO = resolve(".");
-const ID = "test-002";
 const read = (path) => JSON.parse(readFileSync(path, "utf8"));
-const notebook = read(`test-data/notebooks/${ID}.json`);
-const sessions = readdirSync("test-data/sessions").map((f) => read(`test-data/sessions/${f}`)).filter((s) => s.notebook === ID);
-const image = (i) => {
-  const unblurred = `test-data/unblurred/${ID}-${String(i + 1).padStart(2, "0")}.jpg`;
-  return existsSync(unblurred) ? unblurred : `test-data/scans/${ID}/${String(i + 1).padStart(2, "0")}.jpg`;
-};
+// A test notebook: its pages and sessions, and its page images (the title
+// page unblurred).
+function book(id) {
+  const notebook = read(`test-data/notebooks/${id}.json`);
+  const sessions = readdirSync("test-data/sessions").map((f) => read(`test-data/sessions/${f}`)).filter((s) => s.notebook === id);
+  const image = (i) => {
+    const unblurred = `test-data/unblurred/${id}-${String(i + 1).padStart(2, "0")}.jpg`;
+    return existsSync(unblurred) ? unblurred : `test-data/scans/${id}/${String(i + 1).padStart(2, "0")}.jpg`;
+  };
+  return { id, notebook, sessions, image };
+}
+const ID = "test-002";
+const { notebook, sessions, image } = book(ID);
+// A notebook written without the stamp (#109).
+const FREE = book("test-003");
 const asBox = ([x, y, width, height]) => ({ x, y, width, height });
 const PAD = 0.02; // the import pads personal-info boxes by this much
 
 // What Claude would read on the notebook's page i.
-function reading(i) {
+function reading(i, { notebook, sessions } = book(ID)) {
   const page = notebook.pages[i];
   const n = page.number;
   const starts = sessions.find((s) => s.header_box?.page === n && page.kind === "session");
@@ -41,7 +49,7 @@ function reading(i) {
       : null,
     personal_info: (page.redact ?? []).map(([x, y, w, h]) => ({ what: "phone number and email", box: asBox([x + PAD, y + PAD, w - 2 * PAD, h - 2 * PAD]) })),
     header: starts ? {
-      program: starts.program, date: starts.date, site: starts.site.name,
+      program: starts.program ?? null, date: starts.date, site: starts.site.name,
       lat: starts.site.lat ?? null, lon: starts.site.lon ?? null,
       sqm: starts.sky?.sqm ?? null, sky_notes: starts.sky?.notes ?? null,
       scope: starts.scope, observers: starts.observers, box: asBox(starts.header_box.box),
@@ -58,10 +66,10 @@ function reading(i) {
 // A scan: pages [a, b], [c, d], ... side by side with a faint fold between
 // them, turned sideways as the scanner gives them (the notebook's scan.rotate
 // turns them back), with the readings cached under the scan's name.
-async function scan(work, name, pairs) {
+async function scan(work, name, pairs, { id, notebook, image, ...rest } = book(ID)) {
   const dir = join(work, "uploads", name);
   mkdirSync(dir, { recursive: true });
-  const cache = join(work, ".import-cache", ID, name);
+  const cache = join(work, ".import-cache", id, name);
   mkdirSync(cache, { recursive: true });
   for (const [k, pair] of pairs.entries()) {
     const [left, right] = await Promise.all(pair.map((i) => sharp(image(i)).toBuffer({ resolveWithObject: true })));
@@ -73,7 +81,7 @@ async function scan(work, name, pairs) {
     await sharp(spread).rotate(-90).jpeg({ quality: 90 }).toFile(join(dir, `${String(k + 1).padStart(2, "0")}.jpg`));
     pair.forEach((i, side) => {
       const u = String(2 * k + side + 1).padStart(2, "0");
-      writeFileSync(join(cache, `${u}.json`), JSON.stringify(reading(i)));
+      writeFileSync(join(cache, `${u}.json`), JSON.stringify(reading(i, { notebook, ...rest })));
       // The blur check: nothing readable is left.
       if (notebook.pages[i].redact) writeFileSync(join(cache, `${u}.check.json`), JSON.stringify({ legible: false, what: [] }));
     });
@@ -82,9 +90,10 @@ async function scan(work, name, pairs) {
 }
 
 let work;
-const run = (...args) => execFileSync("node", ["scripts/import-notebook.mjs", ID, ...args], {
+const runFor = (id, ...args) => execFileSync("node", ["scripts/import-notebook.mjs", id, ...args], {
   cwd: work, encoding: "utf8", env: { ...process.env, CATALOG_SOURCES: "", ANTHROPIC_API_KEY: "" },
 });
+const run = (...args) => runFor(ID, ...args);
 const out = (path) => read(join(work, path));
 const session = (s) => {
   const { id, program, date, site, sky, scope, observers, pages, header_box } = s;
@@ -150,4 +159,18 @@ test("an add import skips recorded pages and adds the new ones", async () => {
   // they're left out).
   const written = readdirSync(join(work, "data", "sessions")).map((f) => session(out(`data/sessions/${f}`)));
   assert.deepEqual(written.sort((a, b) => a.id.localeCompare(b.id)), sessions.map(session).sort((a, b) => a.id.localeCompare(b.id)));
+});
+
+test("a free-text notebook (#109) is read the same way, and kept as scanned", async () => {
+  const { id, notebook: nb3, sessions: s3 } = FREE;
+  runFor(id, await scan(work, "free", [[0, 1], [2, 3], [4, 5]], FREE), "--mode", "new", "--type", "Free-text log, spreads");
+  const nb = out(`data/notebooks/${id}.json`);
+  assert.equal(nb.type, "free-spreads");
+  assert.deepEqual(nb.pages, nb3.pages.slice(0, 6));
+  // A session that starts partway down page 2 still takes the entry above
+  // its heading's box as the session before's.
+  const written = s3.map((s) => session(out(`data/sessions/${s.id}.json`)));
+  assert.deepEqual(written, s3.map(session));
+  // Show-through cleaning fits the stamp, so there's nothing to clean.
+  assert.deepEqual(readdirSync(join(work, "scans", id)).filter((f) => f.includes(".clean.")), []);
 });

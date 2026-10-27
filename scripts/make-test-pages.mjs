@@ -13,6 +13,7 @@ import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
 import { formatJSON } from "./lib/format-json.mjs";
+import { typeOf } from "./lib/notebook-types.mjs";
 import { redact } from "./lib/pages.mjs";
 
 const DIR = "test-data";
@@ -87,6 +88,36 @@ function entry(o, top, h, crossed = false) {
     lines.map((l, i) => text(50, at(6) + i * 30, l, { size: 22 })).join("") +
     (crossed ? `<path d="M40 ${top + 10} L${W - 40} ${top + h - 10} M${W - 40} ${top + 10} L40 ${top + h - 10}" stroke="${PENCIL}" stroke-width="5"/>` : "");
 }
+// A notebook without the stamp (#109): a date heading and lines about the
+// night, then a paragraph per object with a sketch beside it, in pencil only.
+// Only the fields given are written, so the rest are to-dos.
+function freeHeader(s, top) {
+  const where = [s.site.name, s.site.lat != null ? `(${s.site.lat}, ${s.site.lon})` : null, s.sky?.sqm != null ? `SQM ${s.sky.sqm}` : null];
+  return text(50, top + 50, s.date, { size: 38, weight: "bold" }) +
+    `<path d="M50 ${top + 62} q120 8 260 0" stroke="${PENCIL}" stroke-width="3" fill="none"/>` +
+    text(50, top + 105, where.filter(Boolean).join("  "), { size: 26 }) +
+    text(50, top + 145, [s.scope?.name, s.sky?.notes].filter(Boolean).join(". "), { size: 24 }) +
+    text(50, top + 185, `With ${s.observers.join(" and ")}`, { size: 24 });
+}
+function freeEntry(o, top, h) {
+  const rand = random(`${o.catalog_id}${o.local_time}`);
+  // The sketch: a loose patch of stars and glow, no printed circle.
+  const cx = W - 200, cy = top + h / 2, r = Math.min(150, h / 2 - 15);
+  const glow = `<ellipse cx="${cx}" cy="${cy}" rx="${Math.round(r * 0.6)}" ry="${Math.round(r * 0.4)}" fill="url(#glow)" transform="rotate(${Math.round(rand() * 180)} ${cx} ${cy})"/>`;
+  const stars = Array.from({ length: 30 }, () => {
+    const a = rand() * 2 * Math.PI, d = Math.sqrt(rand()) * r;
+    return `<circle cx="${(cx + d * Math.cos(a)).toFixed(1)}" cy="${(cy + d * Math.sin(a)).toFixed(1)}" r="${(1 + rand() * 3).toFixed(1)}" fill="${PENCIL}"/>`;
+  }).join("");
+  const scale = (name, v) => (v == null ? null : v === "N/A" ? `${name} N/A` : `${name} ${ROMAN[v - 1]}`);
+  const kit = [o.eyepiece, o.magnification != null ? `${o.magnification}x` : null, o.filter == null ? null : o.filter === "N/A" ? "no filter" : o.filter];
+  const lines = [
+    [o.catalog_id, o.aka].filter(Boolean).join(" ") + (o.local_time ? ` at ${o.local_time}` : ""),
+    [scale("Seeing", o.seeing), scale("transp.", o.transparency)].filter(Boolean).join(", "),
+    kit.filter(Boolean).join(", "),
+    ...wrap(o.description, 44),
+  ].filter(Boolean).slice(0, 7);
+  return lines.map((l, i) => text(50, top + 40 + i * 36, l, { size: i ? 23 : 28, weight: i ? "normal" : "bold" })).join("") + glow + stars;
+}
 const page = (body, { number, fill = PAPER } = {}) => Buffer.from(
   `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">` +
   `<defs><radialGradient id="glow"><stop offset="0" stop-color="${PENCIL}" stop-opacity="1"/><stop offset="1" stop-color="${PENCIL}" stop-opacity="0"/></radialGradient></defs>` +
@@ -96,7 +127,9 @@ const page = (body, { number, fill = PAPER } = {}) => Buffer.from(
 // Session pages: each session's NEW SESSION block on its first page, then
 // its entries on their pages, top to bottom in date order.
 const HEADER_H = 0.27, ENTRY_H = 0.31, GAP = 0.01;
-function layout(nbId) {
+// Free-text notebooks: a shorter heading and paragraph.
+const FREE = { header: 0.14, entry: 0.22 };
+function layout(nbId, sizes = { header: HEADER_H, entry: ENTRY_H }) {
   const byPage = new Map();
   const put = (n, item) => byPage.set(n, [...(byPage.get(n) ?? []), item]);
   for (const { data: s } of sessions.filter((x) => x.data.notebook === nbId)) {
@@ -106,7 +139,7 @@ function layout(nbId) {
   for (const items of byPage.values()) {
     let y = 0.02;
     for (const item of items) {
-      const h = item.o ? ENTRY_H : HEADER_H;
+      const h = item.o ? sizes.entry : sizes.header;
       item.box = [0.03, +y.toFixed(3), 0.94, h];
       if (item.o) item.o.box = item.box;
       else item.s.header_box = { page: item.s.pages[0], box: item.box };
@@ -162,7 +195,9 @@ for (const { file, data: nb } of notebooks) {
   await rm(out, { recursive: true, force: true });
   await mkdir(out, { recursive: true });
   await mkdir(join(DIR, "unblurred"), { recursive: true });
-  const byPage = layout(nb.id);
+  const free = typeOf(nb)?.form === "free";
+  const byPage = free ? layout(nb.id, FREE) : layout(nb.id);
+  const draw = free ? { header: freeHeader, entry: freeEntry } : { header, entry };
   for (const [i, p] of nb.pages.entries()) {
     const name = join(out, `${String(i + 1).padStart(2, "0")}.jpg`);
     let svg;
@@ -170,7 +205,7 @@ for (const { file, data: nb } of notebooks) {
       const items = byPage.get(p.number) ?? [];
       const body = p.kind === "unused"
         ? entry({ catalog_id: "M2", aka: null, description: "Wrong object; crossed out" }, Math.round(0.03 * H), Math.round(ENTRY_H * H), true)
-        : items.map((it) => (it.o ? entry(it.o, Math.round(it.box[1] * H), Math.round(it.box[3] * H)) : header(it.s, Math.round(it.box[1] * H), Math.round(it.box[3] * H)))).join("");
+        : items.map((it) => (it.o ? draw.entry(it.o, Math.round(it.box[1] * H), Math.round(it.box[3] * H)) : draw.header(it.s, Math.round(it.box[1] * H), Math.round(it.box[3] * H)))).join("");
       svg = page(body, { number: p.number });
     } else svg = frontMatter(nb, p, i);
     const drawn = await sharp(svg).png().toBuffer();
