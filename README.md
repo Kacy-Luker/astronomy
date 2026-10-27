@@ -223,7 +223,10 @@ count is set in `site/todos.js`.
 
 **Catalog info.** Each import looks the objects up in
 [OpenNGC](https://github.com/mattiaverga/OpenNGC) (a pinned release, CC
-BY-SA 4.0, credited on the session page). It adds the object's Messier,
+BY-SA 4.0, credited on the session page), through
+`scripts/lib/catalog.mjs`: each catalog source is a module in
+`scripts/lib/catalogs/` with the same small interface, so one can be
+swapped or another added. It adds the object's Messier,
 NGC, IC and Caldwell designations to `ids` (M31 gets NGC 224, NGC 7000
 gets C 20) and writes `data/objects.json` with each object's common name,
 type, constellation, magnitude and size. An object written by another
