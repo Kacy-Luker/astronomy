@@ -27,6 +27,17 @@ needs to change things safely.
   match production paths.
 - `npm run validate` and `npm run build` must pass. Every PR runs them and
   gets a preview at `kacyluker.com/astronomy/pr-preview/pr-<n>/`.
+- Test data (#64): `test-data/` is made-up data shaped like `data/`
+  (notebooks, sessions, `objects.json`; validated the same way), with
+  page images drawn by `scripts/make-test-pages.mjs` (which also writes
+  the sessions' boxes; rerun it and commit the images after editing the
+  test data). Give a new feature a case there. The build adds it under
+  `dist/test-data/` when `TEST_SITE` or `PREVIEW_OF` is set; `pages.yml`
+  deploys a `TEST_SITE=1` build to `gh-pages/test/` (the main deploy
+  leaves `test/` and `pr-preview/` alone). The banner's
+  `data-test-data` (the default dataset) turns on the real/test switch in
+  `site/lib.js` (`dataset`, `dataFile()`, `?data=`, remembered in
+  localStorage); the live site never has it.
 - Keep README.md and CLAUDE.md in step with the code in the same PR. The
   **Docs** workflow also checks code PRs, commits fixes ("Update docs for
   this change") to the branch and comments what changed; pull before
@@ -61,6 +72,7 @@ needs to change things safely.
 | `scripts/lib/catalogs/` | Catalog sources behind one interface (`scripts/lib/catalog.mjs`): `openngc.mjs` (pinned, cached in `.catalog-cache/`), then `simbad.mjs` (network, only for what OpenNGC misses; answers cached in `.catalog-cache/simbad/`, a failed request is a miss) |
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
+| `test-data/` | The test site's made-up data, laid out like `data/`, with drawn page images in `test-data/scans/` |
 | `site/` | Static pages: home (Notebooks, Sessions, Sketches, Equipment and Map tabs, `#notebooks`, `#sketches/ngc`, `#equipment`, `#map` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
 | `scripts/` | Build, validation, import, splitting, cleaning |
 | `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`), `favorite.yml` (favorites from issues) |
@@ -203,7 +215,8 @@ must match `PageReading` in `read-page.mjs`).
 
 - Hosted on GitHub Pages from the `gh-pages` branch as a project site under
   the `kacy-luker.github.io` user site's domain, so all asset paths are
-  relative. The main deploy must leave `gh-pages/pr-preview/` alone.
+  relative. The main deploy must leave `gh-pages/pr-preview/` and
+  `gh-pages/test/` alone.
 - Scans have an Inverted / Cleaned / Original toggle; Inverted (of the
   cleaned image) is the default. Inversion is a CSS filter, so pages link
   to `view.html` (which applies the same view), not to the bare JPEG.
@@ -234,7 +247,7 @@ must match `PageReading` in `read-page.mjs`).
   search over the entry's ink (the whole entry if none is found). Boxes
   are `[x, y, width, height]` fractions; the reader returns them at import
   and Kacy can fix them by hand. `view.html` accepts `scans/` and
-  `sketches/` images.
+  `sketches/` images (also under `test-data/`).
 - Search (`site/search.js`): one document per observation with every
   field of it and its session (designations also without spaces), and a
   query that matches when every word appears; case and accents are

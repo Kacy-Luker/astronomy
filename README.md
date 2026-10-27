@@ -13,6 +13,7 @@ Astronomy observations transcribed from paper notes, published at
 | `data/personalObjectMappings.json` | Objects you take differently from the catalogs (edit by hand) |
 | `schema/` | The shape every notebook and session file must match |
 | `scans/<notebook>/` | One image per notebook page, in order (`01.jpg`, `02.jpg`, …) |
+| `test-data/` | Made-up notebooks and sessions for the test site, laid out like `data/`, with drawn page images in `test-data/scans/` |
 | `site/` | Static site source (HTML, CSS, JS) |
 | `site/icons/` | Site icons from Kacy's telescope photos: a wide crop at 16 and 32 px, a close-up at 180, 192 and 512 px (the larger ones also listed in `site/manifest.webmanifest`, with wider "maskable" crops that fill Android's home-screen tile) |
 | `scripts/` | Build and validation scripts |
@@ -377,6 +378,32 @@ Every pull request, including import PRs, is built and published at
 it's a preview. A comment on the PR links to it and updates on each push.
 The preview is removed when the PR is merged or closed. The main deploy
 leaves `gh-pages/pr-preview/` alone.
+
+### Test site
+
+`kacyluker.com/astronomy/test/` is the site with made-up test data, for
+trying features your own notebooks don't use yet: an object seen four
+times under different designations (M31 / NGC 224), Messier, NGC, IC,
+Caldwell and non-catalog objects (Albireo, Saturn), a completed notebook
+with its contents and index, N/A and blank fields, a crossed-out page, two
+sessions on one page, a session without coordinates, a favorite, and four
+sites at one map spot. Every merge to `main` deploys it alongside the live
+site, so it's never out of date.
+
+Its banner says **Test site** and has a **Showing real data | test data**
+switch. PR previews have the same switch (real data by default there), so
+any PR can be tried on both. The choice goes in the address
+(`?data=test`), links keep it, and your browser remembers it. The live
+site has no test data and no switch. Favorite stars are hidden while
+showing test data, since favorites only change the real data.
+
+The test data lives in `test-data/` (notebooks, sessions and
+`objects.json`, checked by `npm run validate` like `data/`). Its page
+images are drawn by `node scripts/make-test-pages.mjs`, which also writes
+each session's `header_box` and boxes; run it after editing the test
+notebooks or sessions, and commit the images. They're made up, with a
+fake phone and email on the blurred title pages, so nothing in them is
+yours.
 
 ### Docs check
 
