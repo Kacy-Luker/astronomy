@@ -218,11 +218,13 @@ one thing to narrow (a session with one observation, a notebook with one
 session or an object seen once has no bar). Tap **Filters** for a
 dropdown per field (program, catalog, site, telescope, eyepiece, filter,
 observer, notebook, seeing, transparency) with the values on that page; a
-field with only one value there isn't shown. There's also a date range
-(with more than one night), **Has to-dos** and **Favorites only** (each
-when only some have them). Active filters show as chips: tap one to
-remove it, or **Clear all**. They're in the address too
-(`?site=Okie-Tex+2026&eyepiece=13mm+Ethos`), and links between pages keep
+field with only one value there isn't shown. Sites are listed without
+their years (Okie-Tex 2026 and 2027 are both Okie-Tex); use the date range
+for one year. There's also a date range (with more than one night),
+**Has to-dos** and **Favorites only** (each when only some have them).
+Active filters show as chips: tap one to remove it, or **Clear all**.
+They're in the address too
+(`?site=Okie-Tex&eyepiece=13mm+Ethos`), and links between pages keep
 them. The home page narrows its tabs; a session page dims the observations
 outside them; an object page shows only the matching observations and
 sketches; a notebook page dims the sessions in its contents with nothing
@@ -262,7 +264,13 @@ counts follow the search and filters.
 ## Map
 
 The home page's **Map** tab shows a marker for each observing site, with
-how many observations were made there; tap one for the site's sessions.
+how many observations were made there. Tap one for a summary that stays
+small however often you observe there: the site without its year (Okie-Tex
+2026 and 2027 are both Okie-Tex), its observations and sessions, the
+first and last dates, and a link to the Sessions tab filtered to that
+site. When several sites share a spot, the newest two get a link each,
+and **See all N sessions here** opens the Sessions tab with every session
+at that spot (a **Near** chip, named for the newest site there).
 It uses each session's lat/long, rounded to 0.1° (about 10 km) so the map
 never shows exactly where you observe from; session pages still show the
 coordinates as written. Sessions without coordinates are listed under the
