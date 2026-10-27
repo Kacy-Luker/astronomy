@@ -18,6 +18,24 @@ const fold = (text) => String(text).normalize("NFKD").replace(/[̀-ͯ]/g, "").to
 // for the filters and the Equipment tab.
 export const nameKey = (x) => fold(x).replace(/\s+/g, "");
 
+// A site without the year in its name, so "Okie-Tex 2026" and "Okie-Tex
+// 2027" are both "Okie-Tex": the Site filter and the map go by it, and the
+// date range picks the year.
+export function eventName(site) {
+  if (site == null) return site;
+  const event = String(site).replace(/[\s,(–-]*\b(?:19|20)\d\d\b\)?/g, " ").replace(/\s+/g, " ").trim();
+  return event || String(site);
+}
+
+// A session's spot on the map, "lat,lon" to 0.1° (about 10 km), or null
+// without coordinates. Sessions on one spot share a marker, and the Near
+// filter (near=) narrows to one.
+const tenth = (v) => Math.round(v * 10) / 10;
+export function spotOf(s) {
+  const { lat, lon } = s.site ?? {};
+  return Number.isFinite(lat) && Number.isFinite(lon) ? `${tenth(lat)},${tenth(lon)}` : null;
+}
+
 // "NGC 5194" is also found as "ngc5194".
 const squash = (id) => String(id).replace(/\s+/g, "");
 
@@ -58,14 +76,14 @@ export function matches(doc, q) {
 }
 
 // Filters (#26): each narrows to observations whose field equals the value
-// picked. Like the search, they're in the URL (?site=Okie-Tex%202026&...),
+// picked. Like the search, they're in the URL (?site=Okie-Tex&...),
 // so a filtered view can be shared, and links between pages keep them.
 // Options come from the observations themselves.
 const name = (x) => (x == null || x === "" || x === "N/A" ? null : String(x));
 export const FILTERS = [
   { key: "program", label: "Program", values: (o, s) => [name(s.program)] },
   { key: "catalog", label: "Catalog", values: (o) => [...new Set((o.ids ?? [o.catalog_id]).map(catalogOf))] },
-  { key: "site", label: "Site", values: (o, s) => [name(s.site?.name)] },
+  { key: "site", label: "Site", values: (o, s) => [name(eventName(s.site?.name))] },
   { key: "scope", label: "Telescope", values: (o, s) => [name(s.scope?.name)] },
   { key: "eyepiece", label: "Eyepiece", values: (o) => [name(o.eyepiece)] },
   { key: "filter", label: "Filter", values: (o) => [name(o.filter)] },
@@ -74,10 +92,10 @@ export const FILTERS = [
   { key: "seeing", label: "Seeing", values: (o) => [Number.isInteger(o.seeing) ? seeingText(o.seeing) : null] },
   { key: "transparency", label: "Transparency", values: (o) => [Number.isInteger(o.transparency) ? transparencyText(o.transparency) : null] },
 ];
-// Also: a date range (from, to), "has to-dos" (todo=1) and "favorites
-// only" (fav=1).
+// Also: a date range (from, to), "has to-dos" (todo=1), "favorites only"
+// (fav=1) and near (a spot, set from the map's popups).
 const RANGE = ["from", "to"];
-export const FILTER_KEYS = ["q", ...FILTERS.map((f) => f.key), ...RANGE, "todo", "fav"];
+export const FILTER_KEYS = ["q", ...FILTERS.map((f) => f.key), ...RANGE, "todo", "fav", "near"];
 
 // A blank field on the observation or its NEW SESSION block (site/todos.js).
 export const hasTodo = (o, s) => [...entryFields(o), ...headerFields(s)].some(([, v]) => isBlank(v));
@@ -99,6 +117,7 @@ export function matchesAll(doc, state) {
   if (state.to && doc.s.date > state.to) return false;
   if (state.todo && !hasTodo(doc.o, doc.s)) return false;
   if (state.fav && !doc.o.favorite) return false;
+  if (state.near && spotOf(doc.s) !== state.near) return false;
   return true;
 }
 
