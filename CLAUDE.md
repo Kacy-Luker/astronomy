@@ -61,7 +61,7 @@ needs to change things safely.
 | `scripts/lib/catalogs/` | Catalog sources behind one interface (`scripts/lib/catalog.mjs`): `openngc.mjs` (pinned, cached in `.catalog-cache/`), then `simbad.mjs` (network, only for what OpenNGC misses; answers cached in `.catalog-cache/simbad/`, a failed request is a miss) |
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
-| `site/` | Static pages: home (Notebooks, Sessions and Sketches tabs, `#notebooks`, `#sketches/ngc` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
+| `site/` | Static pages: home (Notebooks, Sessions, Sketches and Equipment tabs, `#notebooks`, `#sketches/ngc`, `#equipment` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
 | `scripts/` | Build, validation, import, splitting, cleaning |
 | `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`) |
 
@@ -239,7 +239,7 @@ must match `PageReading` in `read-page.mjs`).
   field of it and its session (designations also without spaces), and a
   query that matches when every word appears; case and accents are
   folded. The home page's search box sits above the tabs and narrows all
-  three (`?q=` in the URL, kept by the tab links). Filters (`FILTERS` in
+  four (`?q=` in the URL, kept by the tab links). Filters (`FILTERS` in
   `site/search.js`; values per observation on each document) and the bar
   (`site/filterbar.js`: search box, Filters panel, chips, Clear all) are
   on every page and in the URL; `keepFilters()` adds them to links between
@@ -249,6 +249,13 @@ must match `PageReading` in `read-page.mjs`).
   so dropdowns offer only that page's values (one value: hidden), and a
   page listing fewer than two things gets no bar at all. Add a filter in
   `FILTERS`, not in a page.
+- Equipment tab (`site/equipment.js`): telescopes, eyepieces and filters
+  from the search documents, so counts follow the search and filters.
+  Spellings merge by `nameKey()` (`site/search.js`, also used by the
+  filters) and show the most used (`mostUsed()` in `site/filterbar.js`);
+  N/A filters count as "No filter". Rows link to `?eyepiece=…#sessions`
+  etc.; `keepFilters()` keeps a link's own filter value. The tab row
+  scrolls sideways on phones, with the open tab kept in view.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in
   localStorage (`?admin=off` clears it), adds an admin bar across the top
   of the page (after `.preview-banner` when there is one) with a link to `help.html` (Kacy's phone how-to; keep it in step with

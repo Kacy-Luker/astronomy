@@ -14,6 +14,10 @@ import { entryFields, headerFields, isBlank } from "./todos.js";
 
 const fold = (text) => String(text).normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
+// Names written slightly differently ("13mm Ethos", "13 mm ethos") are one
+// for the filters and the Equipment tab.
+export const nameKey = (x) => fold(x).replace(/\s+/g, "");
+
 // "NGC 5194" is also found as "ngc5194".
 const squash = (id) => String(id).replace(/\s+/g, "");
 
@@ -88,7 +92,7 @@ export const activeFilters = (state) => FILTER_KEYS.filter((k) => k !== "q" && s
 export function matchesAll(doc, state) {
   if (!matches(doc, state.q ?? "")) return false;
   for (const f of FILTERS) {
-    if (state[f.key] && !doc.values[f.key].includes(state[f.key])) return false;
+    if (state[f.key] && !doc.values[f.key].some((v) => nameKey(v) === nameKey(state[f.key]))) return false;
   }
   if (state.from && doc.s.date < state.from) return false;
   if (state.to && doc.s.date > state.to) return false;
@@ -106,16 +110,19 @@ export function writeFilters(state) {
 }
 
 // Links to the site's own pages keep the search and filters, so they stay
-// applied from page to page. Call after drawing links.
+// applied from page to page. Call after drawing links. A link that sets a
+// filter itself (the Equipment tab's) keeps its own value for that one.
 export function keepFilters(root = document) {
   const state = readFilters();
   for (const a of root.querySelectorAll("a[href]")) {
-    const href = a.getAttribute("href");
+    a.dataset.href ??= a.getAttribute("href");
+    const href = a.dataset.href;
     if (!/^(\.\/|[a-z]+\.html)/.test(href) || href.startsWith("view.html") || href.startsWith("help.html")) continue;
     const url = new URL(href, location.href);
+    const own = new Set(url.searchParams.keys());
     for (const k of FILTER_KEYS) {
+      if (own.has(k)) continue;
       if (state[k]) url.searchParams.set(k, state[k]);
-      else url.searchParams.delete(k);
     }
     a.setAttribute("href", (url.pathname.split("/").pop() || "./") + url.search + url.hash);
   }

@@ -11,9 +11,21 @@
 // while the URL keeps the filters for the pages after it.
 import { CATALOGS } from "./catalog.js";
 import { el } from "./lib.js";
-import { FILTERS, activeFilters, hasTodo, keepFilters, readFilters, writeFilters } from "./search.js";
+import { FILTERS, activeFilters, hasTodo, keepFilters, nameKey, readFilters, writeFilters } from "./search.js";
 
 const CATALOG_ORDER = [...CATALOGS.map((c) => c.name), "Other"];
+
+// The distinct names, merging spellings (nameKey), each in the spelling
+// written most often.
+export function mostUsed(names) {
+  const counts = new Map();
+  for (const n of names) {
+    const k = nameKey(n);
+    if (!counts.has(k)) counts.set(k, new Map());
+    counts.get(k).set(n, (counts.get(k).get(n) ?? 0) + 1);
+  }
+  return [...counts.values()].map((spellings) => [...spellings].sort((a, b) => b[1] - a[1])[0][0]);
+}
 
 export function filterBar(docs, onChange, { placeholder = "Search", count = docs.length } = {}) {
   let state = readFilters();
@@ -49,7 +61,8 @@ export function filterBar(docs, onChange, { placeholder = "Search", count = docs
   };
   const controls = {};
   for (const f of FILTERS) {
-    const values = [...new Set(docs.flatMap((d) => d.values[f.key]))]
+    // One option per name however it's written, in its most used spelling.
+    const values = mostUsed(docs.flatMap((d) => d.values[f.key]))
       .sort((a, b) => (f.key === "catalog" ? CATALOG_ORDER.indexOf(a) - CATALOG_ORDER.indexOf(b) : a.localeCompare(b)));
     // A filter with only one choice wouldn't narrow anything.
     if (values.length < 2 && !state[f.key]) continue;
