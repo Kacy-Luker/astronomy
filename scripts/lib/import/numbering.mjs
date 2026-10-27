@@ -9,7 +9,7 @@
 // uploads: the upload indexes being placed, in scan order; readingOf(u):
 // Claude's reading of upload u (undefined if it wasn't read); kindOf(u): the
 // category it's placed in. Returns numberOf(u), and notes for the PR summary.
-const nn = (i) => String(i + 1).padStart(2, "0");
+import { pageName as nn } from "../files.mjs";
 
 export function numberPages({ uploads, readingOf, kindOf, startPage = null }) {
   const notes = [];

@@ -7,12 +7,12 @@
 // it again replaces the cover, which is how it's rescanned on completion.
 // A closed-notebook scan among the pages is found by the page import too.
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { parseArgs } from "node:util";
 import { coverImage } from "./lib/cover.mjs";
-import { formatJSON } from "./lib/format-json.mjs";
+import { readJSON, writeJSON } from "./lib/files.mjs";
 import { webImage } from "./lib/pages.mjs";
 import { listSpreads } from "./lib/scans.mjs";
 
@@ -27,7 +27,7 @@ if (!id || !source) {
 
 const notebookPath = join("data", "notebooks", `${id}.json`);
 if (!existsSync(notebookPath)) throw new Error(`there is no notebook ${id}; import its pages with new-notebook picked first`);
-const notebook = JSON.parse(await readFile(notebookPath, "utf8"));
+const notebook = await readJSON(notebookPath);
 
 const work = await mkdtemp(join(tmpdir(), "cover-"));
 const files = await listSpreads(source, work);
@@ -40,7 +40,7 @@ await writeFile(join("scans", id, "cover-front.jpg"), await webImage(cover));
 // Recreate the notebook with front_cover just before its pages, keeping the
 // key order of the hand-edited file.
 const { pages, front_cover: _, ...rest } = notebook;
-await writeFile(notebookPath, formatJSON({ ...rest, front_cover: {}, pages }) + "\n");
+await writeJSON(notebookPath, { ...rest, front_cover: {}, pages });
 
 const summary = [
   `${replaced ? "Replaced" : "Added"} the front cover of **${notebook.title}** from \`${basename(source)}\`.`,
