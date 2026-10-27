@@ -1,0 +1,35 @@
+name: Test
+
+# npm test (#89): unit tests for the scripts and the title-page blur
+# (tests/unit/), then the site tests (tests/site.spec.mjs) in Chromium
+# against the test site's build, at phone and desktop width. Runs on every
+# PR (a required check, alongside preview and docs) and on every push to
+# main, which the test site is deployed from.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - name: Keep the failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7

@@ -17,6 +17,7 @@ Astronomy observations transcribed from paper notes, published at
 | `site/` | Static site source (HTML, CSS, JS) |
 | `site/icons/` | Site icons from Kacy's telescope photos: a wide crop at 16 and 32 px, a close-up at 180, 192 and 512 px (the larger ones also listed in `site/manifest.webmanifest`, with wider "maskable" crops that fill Android's home-screen tile) |
 | `scripts/` | Build and validation scripts |
+| `tests/` | `npm test`: unit tests (`tests/unit/`) and the site tests (`site.spec.mjs`, run by `playwright.config.mjs`) |
 | `docs/PROJECT_BRIEF.md` | The plan this site is built from |
 | `CLAUDE.md` | Context for AI agents working on the repo |
 
@@ -27,6 +28,7 @@ npm install
 npm run validate   # check data against the schemas and page order, and the forms' dropdowns
 npm run build      # write the site to dist/
 npm run serve      # build and preview locally
+npm test           # unit tests, then the site tests in Chromium (see Tests)
 ```
 
 ## Notebooks
@@ -414,6 +416,28 @@ each session's `header_box` and boxes; run it after editing the test
 notebooks or sessions, and commit the images. They're made up, with a
 fake phone and email on the blurred title pages, so nothing in them is
 yours.
+
+### Tests
+
+`npm test` (and the **Test** check on every pull request and push to
+`main`) runs:
+
+- **Unit tests** (`tests/unit/`, Node's test runner): catalog designations,
+  lookups and your mappings (with stand-in catalogs, nothing fetched), page
+  order, the JSON layout, to-dos, site names without years, map spots,
+  and a privacy check that every `redact` box on every published page
+  image, yours and the test data's, is still blurred.
+- **Site tests** (`tests/site.spec.mjs`, Playwright in Chromium) against
+  the test site's build, at phone and desktop width: every page loads with
+  no errors, failed requests or sideways scroll; the real/test switch;
+  to-dos, N/A and the seeing and transparency words; one object under two
+  designations; the Sketches toggle and the back button; the scan view
+  being remembered; search and filters; and the map's Near link. Expected
+  values come from the test data where they can.
+
+When a site test fails on GitHub, its screenshots are kept with the run
+(**test-results** under the run's summary) for a week. To make **Test**
+required, add it next to `preview` and `docs` in the branch rules.
 
 ### Docs check
 
