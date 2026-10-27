@@ -148,6 +148,10 @@ a { color: var(--accent); }
 /* Admin mode (Kacy only): the footer's admin bar, and Edit links to
    GitHub's editor at the end of a heading row. */
 .edit-link { margin-left: auto; font-size: .9rem; }
+.favorite-link { text-decoration: none; font-size: 1.2rem; line-height: 1; }
+.favorite-link + .edit-link { margin-left: .5rem; }
+.session-head .favorite-link:first-of-type { margin-left: auto; }
+.tag.favorite { color: #f2c94c; }
 /* Like the preview banner, in the accent color so the two aren't mixed up. */
 .admin-bar {
   padding: .5rem 16px; text-align: center; font-size: .9rem; line-height: 1.8;

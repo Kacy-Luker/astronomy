@@ -81,17 +81,18 @@ export function filterBar(docs, onChange, { placeholder = "Search", count = docs
     controls[key] = date;
     panel.append(labelled(text, date));
   }
-  const todos = new Set(docs.map((d) => hasTodo(d.o, d.s)));
-  if (todos.size > 1 || state.todo) {
-    const todo = el("input");
-    todo.type = "checkbox";
-    controls.todo = todo;
-    const todoLabel = el("label", "filter check");
-    todoLabel.append(todo, " Has to-dos");
-    panel.append(todoLabel);
+  // Checkboxes, each only when some observations have it and some don't.
+  for (const [key, text, has] of [["todo", "Has to-dos", (d) => hasTodo(d.o, d.s)], ["fav", "Favorites only", (d) => Boolean(d.o.favorite)]]) {
+    if (new Set(docs.map(has)).size < 2 && !state[key]) continue;
+    const box = el("input");
+    box.type = "checkbox";
+    controls[key] = box;
+    const label = el("label", "filter check");
+    label.append(box, ` ${text}`);
+    panel.append(label);
   }
 
-  const LABELS = Object.fromEntries([...FILTERS.map((f) => [f.key, f.label]), ["from", "From"], ["to", "To"], ["todo", "Has to-dos"]]);
+  const LABELS = Object.fromEntries([...FILTERS.map((f) => [f.key, f.label]), ["from", "From"], ["to", "To"], ["todo", "Has to-dos"], ["fav", "Favorites only"]]);
   function update(next) {
     state = next;
     writeFilters(state);
@@ -110,7 +111,7 @@ export function filterBar(docs, onChange, { placeholder = "Search", count = docs
     chips.replaceChildren(...active.map((key) => {
       const chip = el("button", "chip");
       chip.type = "button";
-      chip.textContent = key === "todo" ? `${LABELS[key]} ×` : `${LABELS[key]}: ${state[key]} ×`;
+      chip.textContent = key === "todo" || key === "fav" ? `${LABELS[key]} ×` : `${LABELS[key]}: ${state[key]} ×`;
       chip.setAttribute("aria-label", `Remove filter ${LABELS[key]}`);
       chip.addEventListener("click", () => update({ ...state, [key]: "" }));
       return chip;
