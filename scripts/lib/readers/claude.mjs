@@ -40,6 +40,10 @@ ${CATEGORIES.map((c) => `- ${c.kind}: ${c.describe}`).join("\n")}
 - blank: nothing written or printed on it, including the scanner's lid beside
   the closed notebook's front cover.
 Odd pages carry a small printed page number in the top outer corner.
+A page with a printed page number, or a plain page facing a session page,
+is blank when nothing is written on it yet; it is never a cover. The plain page
+facing the title page at the very front is the inside_front_cover, and
+inside_back_cover only comes after the info page, at the very back.
 
 Rules:
 - Transcribe what is written. Do not add facts, cross-catalog IDs, or names that
@@ -57,8 +61,8 @@ Rules:
   the ";" (e.g. "13mm Ethos; 92x" is 92). With nothing after the ";" the
   magnification is blank (null); the writer fills it in later.
 - will_change is true for a table of contents or index with empty rows left,
-  and a session page with unused space below its last entry where another
-  entry could still go. Otherwise false.
+  a session page with unused space below its last entry where another
+  entry could still go, and a blank session page. Otherwise false.
 - personal_info boxes must fully cover each item with a little margin.
 - The header and entry boxes are used to cut out each sketch: include the
   whole block with a little margin, and never cut through writing.
