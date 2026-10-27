@@ -147,16 +147,35 @@ const icons = [
   `<link rel="manifest" href="manifest.webmanifest">`,
 ].map((tag) => `  ${tag}\n`).join("");
 
+// Every page's footer credits the catalog sources the objects came from
+// (data/objects.json) and links Kacy's own mappings, with the lists they
+// follow.
+const escape = (text) => String(text).replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+const anchor = (url, text) => (url ? `<a href="${escape(url)}">${escape(text)}</a>` : escape(text));
+const andList = (items) => (items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`);
+const sources = existsSync("data/objects.json") ? JSON.parse(await readFile("data/objects.json", "utf8")).sources : [];
+const mappingsFile = "data/personalObjectMappings.json";
+const mappings = existsSync(mappingsFile) ? JSON.parse(await readFile(mappingsFile, "utf8")).mappings : [];
+const credits = [...new Map(mappings.filter((m) => m.credit).map((m) => [m.credit.name, m.credit])).values()];
+const footerParts = [];
+if (sources.length) {
+  footerParts.push(`Object data from ${andList(sources.map((s) => anchor(s.url, s.name) + (s.license ? ` (${escape(s.license)})` : "")))}.`);
+}
+if (mappings.length) {
+  footerParts.push(`${anchor(`https://github.com/Kacy-Luker/astronomy/blob/main/${mappingsFile}`, "Kacy's object mappings")}` +
+    (credits.length ? `, following the ${andList(credits.map((c) => anchor(c.url, c.name)))}` : "") + ".");
+}
+const footer = footerParts.length ? `  <footer class="site-footer muted">\n    ${footerParts.join("\n    ")}\n  </footer>\n` : "";
+
 // A PR preview build also gets a banner on every page so it isn't mistaken
 // for the live site.
 let banner = "";
 if (process.env.PREVIEW_OF) {
-  const escape = (text) => text.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
   const link = process.env.PREVIEW_LINK ? ` <a href="${escape(process.env.PREVIEW_LINK)}">View the pull request</a>` : "";
   banner = `\n  <div class="preview-banner">Preview of ${escape(process.env.PREVIEW_OF)}.${link}</div>`;
 }
 for (const file of (await readdir(OUT)).filter((f) => f.endsWith(".html"))) {
-  const html = (await readFile(join(OUT, file), "utf8")).replace("</head>", `${icons}</head>`);
+  const html = (await readFile(join(OUT, file), "utf8")).replace("</head>", `${icons}</head>`).replace("</body>", `${footer}</body>`);
   await writeFile(join(OUT, file), html.replace(/<body( class="[^"]*")?>/, (body) => body + banner));
 }
 
