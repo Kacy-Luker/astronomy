@@ -1,0 +1,230 @@
+:root {
+  --bg: #0d0f14;
+  --surface: #161922;
+  --text: #e6e4df;
+  --muted: #9aa0ac;
+  --border: #262a35;
+  --accent: #f08a5d;
+  --tag-bg: #2c211c;
+  --todo: #f2c14e;
+  --todo-bg: #2e2612;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+a { color: var(--accent); }
+
+.site-header, main, .site-footer {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.site-header { padding-top: 2rem; }
+.site-header h1 { margin: 0; font-size: 1.75rem; }
+.site-header h1 a { color: inherit; text-decoration: none; }
+.tagline, .summary, .session-meta { color: var(--muted); }
+.tagline { margin: .25rem 0 1.5rem; }
+
+.sessions { list-style: none; margin: 0; padding: 0; }
+
+.session {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.session-head { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.session-date { font-weight: 600; font-size: 1.1rem; }
+.session-meta { margin: .25rem 0 .5rem; font-size: .95rem; }
+
+.tag {
+  background: var(--tag-bg);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 0 .6rem;
+  font-size: .8rem;
+}
+
+/* A notebook's status, next to its title. */
+.tag.status { font-size: .95rem; font-weight: 600; padding: .1rem .75rem; }
+.tag.status.completed { background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+
+/* A field left blank on the log sheet, to come back to. */
+.todo { color: var(--todo); font-weight: 600; }
+.tag.todo { background: var(--todo-bg); }
+
+.objects { margin: 0; padding-left: 1.25rem; }
+
+/* Session page */
+.muted { color: var(--muted); }
+.session-header, .scans, .observation { margin-bottom: 1.5rem; }
+.session-title { margin: 0; font-size: 1.4rem; }
+.section-title { margin: 0 0 .75rem; }
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: .25rem 1rem;
+  margin: .75rem 0 0;
+}
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+
+.scans h3, .contents h3 { margin: 0 0 .75rem; }
+
+/* Scanned pages: one column on phones, side by side when there's room. */
+.pages {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+@media (min-width: 40rem) {
+  .pages { grid-template-columns: 1fr 1fr; }
+}
+/* A spread is the open book: its two pages stay side by side on any
+   screen, and each takes a share of the width in proportion to its shape
+   (set in notebook.js), so both come out the same height. A page whose
+   facing page isn't shown keeps its own half. */
+.spread {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+.spread .page { flex: 1 1 0; min-width: 0; }
+.spread .page:only-child { flex: 0 0 50%; }
+.spread .right:only-child { margin-left: auto; }
+.page { margin: 0; scroll-margin-top: 1rem; }
+.page img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.spread .left img { border-radius: 8px 0 0 8px; }
+.spread .right img { border-radius: 0 8px 8px 0; border-left: 0; }
+.spread .right:only-child img { border-radius: 8px; border-left: 1px solid var(--border); }
+.spread .left:only-child img { border-radius: 8px; }
+.page figcaption { margin-top: .35rem; font-size: .9rem; }
+.page-name { font-weight: 600; }
+.page:target img { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* The notebook page is wider so spreads read like an open book. */
+.wide .site-header, .wide main { max-width: 72rem; }
+
+.contents { margin-bottom: 1.5rem; overflow-x: auto; }
+.contents table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+.contents th, .contents td {
+  text-align: left;
+  padding: .35rem .75rem .35rem 0;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.contents th { color: var(--muted); font-weight: 500; }
+.contents .num { text-align: right; }
+@media (max-width: 40rem) {
+  .contents .program { display: none; }
+}
+
+.observation {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.object-id { margin: 0; font-size: 1.2rem; }
+.site-footer { padding-bottom: 2rem; font-size: .85rem; }
+/* Edit mode (Kacy only): links to GitHub's editor, at the end of a heading row. */
+.edit-link { margin-left: auto; font-size: .9rem; }
+.edit-mode { margin: .5rem 0 0; }
+.help li { margin-bottom: .5rem; }
+.help h3 { margin: 1.5rem 0 .5rem; }
+.help code { overflow-wrap: anywhere; }
+.catalog { margin: .25rem 0 0; font-size: .9rem; }
+.ids { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0 0; padding: 0; }
+.description { margin: .75rem 0 0; }
+
+.toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: .75rem;
+  max-width: 100%;
+}
+/* Many choices (the Objects tab's catalogs) scroll sideways on a phone. */
+.toggle { overflow-x: auto; }
+.toggle button { white-space: nowrap; }
+.toggle button {
+  font: inherit;
+  font-size: .9rem;
+  padding: .35rem 1rem;
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.toggle button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
+
+/* Swap light and dark; the hue turn keeps ink colors recognizable. */
+.scans.inverted img, .viewer .inverted img, .object-rows.inverted img, .sessions.inverted .cover-thumb, .sketch-frame.inverted img { filter: invert(1) hue-rotate(180deg); }
+
+/* view.html: one page, as large as the screen allows. */
+.viewer main { max-width: 72rem; }
+.viewer .page img { width: 100%; }
+
+.session-link { color: inherit; text-decoration: none; }
+.session-link:hover { text-decoration: underline; }
+/* Make the whole card clickable via the date link. */
+.session { position: relative; }
+.session-link::after { content: ""; position: absolute; inset: 0; }
+
+/* Shown only on PR preview builds. */
+.preview-banner {
+  padding: .5rem 16px;
+  text-align: center;
+  font-size: .9rem;
+  background: var(--tag-bg);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Home page tabs. */
+.tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+.tabs [role="tab"] {
+  padding: .5rem .9rem;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-weight: 600;
+}
+.tabs [role="tab"][aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+.object-rows { list-style: none; margin: 0; padding: 0; }
+.object-row { padding: .5rem 0; border-top: 1px solid var(--border); }
+.object-row:first-child { border-top: 0; padding-top: 0; }
+.object-row .object-id { font-weight: 600; }
+.object-row .session-meta { margin: .15rem 0 0; }
+
+/* Sketches: a small thumbnail beside each row; the object page shows one
+   sketch at a time. */
+.object-row { display: flex; gap: .75rem; align-items: flex-start; }
+.object-text { min-width: 0; flex: 1; }
+.sketch-thumb { flex: none; width: 96px; }
+/* A notebook's card shows its outside front cover. */
+.notebook-card { display: flex; gap: .75rem; align-items: flex-start; }
+.cover-thumb { flex: none; display: block; width: 72px; height: auto; border: 1px solid var(--border); border-radius: 3px; }
+.sketch-thumb img { display: block; width: 96px; height: 96px; border-radius: 50%; }
+.sketch-frame { display: flex; flex-direction: column; gap: .75rem; }
+.sketch-frame .page img { width: 100%; height: auto; max-width: 36rem; }
