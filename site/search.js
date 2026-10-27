@@ -27,6 +27,15 @@ export function eventName(site) {
   return event || String(site);
 }
 
+// A session's spot on the map, "lat,lon" to 0.1° (about 10 km), or null
+// without coordinates. Sessions on one spot share a marker, and the Near
+// filter (near=) narrows to one.
+const tenth = (v) => Math.round(v * 10) / 10;
+export function spotOf(s) {
+  const { lat, lon } = s.site ?? {};
+  return Number.isFinite(lat) && Number.isFinite(lon) ? `${tenth(lat)},${tenth(lon)}` : null;
+}
+
 // "NGC 5194" is also found as "ngc5194".
 const squash = (id) => String(id).replace(/\s+/g, "");
 
@@ -83,10 +92,10 @@ export const FILTERS = [
   { key: "seeing", label: "Seeing", values: (o) => [Number.isInteger(o.seeing) ? seeingText(o.seeing) : null] },
   { key: "transparency", label: "Transparency", values: (o) => [Number.isInteger(o.transparency) ? transparencyText(o.transparency) : null] },
 ];
-// Also: a date range (from, to), "has to-dos" (todo=1) and "favorites
-// only" (fav=1).
+// Also: a date range (from, to), "has to-dos" (todo=1), "favorites only"
+// (fav=1) and near (a spot, set from the map's popups).
 const RANGE = ["from", "to"];
-export const FILTER_KEYS = ["q", ...FILTERS.map((f) => f.key), ...RANGE, "todo", "fav"];
+export const FILTER_KEYS = ["q", ...FILTERS.map((f) => f.key), ...RANGE, "todo", "fav", "near"];
 
 // A blank field on the observation or its NEW SESSION block (site/todos.js).
 export const hasTodo = (o, s) => [...entryFields(o), ...headerFields(s)].some(([, v]) => isBlank(v));
@@ -108,6 +117,7 @@ export function matchesAll(doc, state) {
   if (state.to && doc.s.date > state.to) return false;
   if (state.todo && !hasTodo(doc.o, doc.s)) return false;
   if (state.fav && !doc.o.favorite) return false;
+  if (state.near && spotOf(doc.s) !== state.near) return false;
   return true;
 }
 

@@ -267,9 +267,9 @@ how many observations were made there. Tap one for a summary that stays
 small however often you observe there: the site without its year (Okie-Tex
 2026 and 2027 are both Okie-Tex), its observations and sessions, the
 first and last dates, and a link to the Sessions tab filtered to that
-site. When several sites share a spot, the newest two get a link each;
-tap "+ 2 more sites" to list the rest (past about six, the list scrolls
-inside the popup).
+site. When several sites share a spot, the newest two get a link each,
+and **See all N sessions here** opens the Sessions tab with every session
+at that spot (a **Near** chip, named for the newest site there).
 It uses each session's lat/long, rounded to 0.1° (about 10 km) so the map
 never shows exactly where you observe from; session pages still show the
 coordinates as written. Sessions without coordinates are listed under the

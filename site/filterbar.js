@@ -11,7 +11,7 @@
 // while the URL keeps the filters for the pages after it.
 import { CATALOGS } from "./catalog.js";
 import { el } from "./lib.js";
-import { FILTERS, activeFilters, hasTodo, keepFilters, nameKey, readFilters, writeFilters } from "./search.js";
+import { FILTERS, activeFilters, eventName, hasTodo, keepFilters, nameKey, readFilters, spotOf, writeFilters } from "./search.js";
 
 const CATALOG_ORDER = [...CATALOGS.map((c) => c.name), "Other"];
 
@@ -92,7 +92,12 @@ export function filterBar(docs, onChange, { placeholder = "Search", count = docs
     panel.append(label);
   }
 
-  const LABELS = Object.fromEntries([...FILTERS.map((f) => [f.key, f.label]), ["from", "From"], ["to", "To"], ["todo", "Has to-dos"], ["fav", "Favorites only"]]);
+  const LABELS = Object.fromEntries([...FILTERS.map((f) => [f.key, f.label]), ["from", "From"], ["to", "To"], ["todo", "Has to-dos"], ["fav", "Favorites only"], ["near", "Near"]]);
+  // The Near chip names the spot by its newest site.
+  const nearName = (spot) => {
+    const here = docs.filter((d) => spotOf(d.s) === spot).sort((a, b) => b.s.date.localeCompare(a.s.date));
+    return here.length ? eventName(here[0].s.site.name) : "a map spot";
+  };
   function update(next) {
     state = next;
     writeFilters(state);
@@ -111,7 +116,8 @@ export function filterBar(docs, onChange, { placeholder = "Search", count = docs
     chips.replaceChildren(...active.map((key) => {
       const chip = el("button", "chip");
       chip.type = "button";
-      chip.textContent = key === "todo" || key === "fav" ? `${LABELS[key]} ×` : `${LABELS[key]}: ${state[key]} ×`;
+      const value = key === "near" ? nearName(state.near) : state[key];
+      chip.textContent = key === "todo" || key === "fav" ? `${LABELS[key]} ×` : `${LABELS[key]}: ${value} ×`;
       chip.setAttribute("aria-label", `Remove filter ${LABELS[key]}`);
       chip.addEventListener("click", () => update({ ...state, [key]: "" }));
       return chip;
