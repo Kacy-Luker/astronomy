@@ -1,0 +1,47 @@
+{
+  "id": "2025-12-05-library-star-party",
+  "program": null,
+  "date": "2025-12-05",
+  "site": { "name": "Library star party" },
+  "scope": {
+    "name": "Orion XT8",
+    "type": "Dobsonian",
+    "aperture_mm": 203,
+    "focal_length_mm": 1200,
+    "f_ratio": 5.9
+  },
+  "observers": ["Test Observer"],
+  "notebook": "test-001",
+  "pages": [9],
+  "header_box": { "page": 9, "box": [0.03, 0.02, 0.94, 0.27] },
+  "observations": [
+    {
+      "catalog_id": "M42",
+      "aka": "Orion Nebula",
+      "ids": ["M42", "NGC 1976"],
+      "page": 9,
+      "local_time": "19:30",
+      "seeing": 3,
+      "transparency": 2,
+      "eyepiece": "25mm Plossl",
+      "magnification": 48,
+      "filter": "UHC",
+      "description": "Public night; the wings stood out much better with the UHC",
+      "box": [0.03, 0.3, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "Jupiter",
+      "aka": null,
+      "ids": [],
+      "page": 9,
+      "local_time": "19:45",
+      "seeing": 3,
+      "transparency": 2,
+      "eyepiece": "9mm Nagler",
+      "magnification": 133,
+      "filter": "N/A",
+      "description": "Two belts and four moons",
+      "box": [0.03, 0.62, 0.94, 0.31]
+    }
+  ]
+}

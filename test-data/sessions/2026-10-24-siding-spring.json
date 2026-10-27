@@ -1,0 +1,76 @@
+{
+  "id": "2026-10-24-siding-spring",
+  "program": "Southern sky",
+  "date": "2026-10-24",
+  "site": { "name": "Siding Spring", "lat": -31.27, "lon": 149.06 },
+  "sky": { "sqm": 21.7, "notes": "Travel scope; Milky Way core setting in the west" },
+  "scope": {
+    "name": "Explore 102 refractor",
+    "type": "Refractor",
+    "aperture_mm": 102,
+    "focal_length_mm": 714,
+    "f_ratio": 7
+  },
+  "observers": ["Test Observer"],
+  "notebook": "test-002",
+  "pages": [4, 5],
+  "header_box": { "page": 4, "box": [0.03, 0.34, 0.94, 0.27] },
+  "observations": [
+    {
+      "catalog_id": "C80",
+      "aka": "Omega Centauri",
+      "ids": ["C80", "NGC 5139"],
+      "page": 4,
+      "local_time": "20:40",
+      "seeing": 2,
+      "transparency": 4,
+      "eyepiece": "13mm Ethos",
+      "magnification": 55,
+      "filter": "N/A",
+      "description": "Low in the southwest but huge; a ball of resolved stars, slightly flattened",
+      "box": [0.03, 0.62, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "C106",
+      "aka": "47 Tucanae",
+      "ids": ["C106", "NGC 104"],
+      "page": 5,
+      "local_time": "21:10",
+      "seeing": 2,
+      "transparency": 5,
+      "eyepiece": "13mm Ethos",
+      "magnification": 55,
+      "filter": "N/A",
+      "description": "Bright, tightly packed core; outer stars resolve all the way in",
+      "box": [0.03, 0.02, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "LMC",
+      "aka": "Large Magellanic Cloud",
+      "ids": [],
+      "page": 5,
+      "local_time": "21:30",
+      "seeing": 2,
+      "transparency": 5,
+      "eyepiece": "32mm Plossl",
+      "magnification": 22,
+      "filter": "N/A",
+      "description": "Naked-eye cloud; the Tarantula Nebula obvious in the scope",
+      "box": [0.03, 0.34, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "C94",
+      "aka": "Jewel Box",
+      "ids": ["C94", "NGC 4755"],
+      "page": 5,
+      "local_time": "21:50",
+      "seeing": 3,
+      "transparency": 4,
+      "eyepiece": "13mm Ethos",
+      "magnification": 55,
+      "filter": "N/A",
+      "description": "Small cluster with one orange star among the blue-white ones",
+      "box": [0.03, 0.66, 0.94, 0.31]
+    }
+  ]
+}

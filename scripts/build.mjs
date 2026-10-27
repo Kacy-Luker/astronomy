@@ -21,68 +21,12 @@ await cp("schema", join(OUT, "schema"), { recursive: true });
 await cp("node_modules/leaflet/dist", join(OUT, "vendor", "leaflet"), {
   recursive: true, filter: (f) => !f.endsWith(".map") && !f.includes("leaflet-src"),
 });
-if (existsSync("scans")) await cp("scans", join(OUT, "scans"), { recursive: true });
 
-const sessions = await readAll("data/sessions");
-sessions.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
-
-// Catalog info (data/objects.json, from OpenNGC) goes with each observation
-// whose designation it knows, under its key in the objects file.
-const objects = existsSync("data/objects.json") ? JSON.parse(await readFile("data/objects.json", "utf8")).objects : {};
-const objectOf = new Map(Object.entries(objects).flatMap(([key, o]) => o.ids.map((id) => [id, key])));
-for (const o of sessions.flatMap((s) => s.observations ?? [])) {
-  const key = [o.catalog_id, ...(o.ids ?? [])].map((id) => objectOf.get(id)).find(Boolean);
-  if (key) {
-    const { name, type, constellation, magnitude, size } = objects[key];
-    o.catalog = { key, name, type, constellation, magnitude, size };
-  }
-}
-
-// Give each notebook page its name, its image, and the sessions written on
-// it. Image sizes let pages reserve their space before the images load.
-const notebooks = await Promise.all((await readAll("data/notebooks")).map(async ({ scan, ...nb }) => {
-  const rank = ranks(nb.pages);
-  // The outside front cover, scanned on its own.
-  const cover = `scans/${nb.id}/cover-front.jpg`;
-  const front = nb.front_cover && existsSync(cover) ? await sharp(cover).metadata() : null;
-  // A small copy for the notebook's card on the home page.
-  const thumb = cover.replace(/\.jpg$/, ".thumb.jpg");
-  if (front) await sharp(cover).resize({ height: 240 }).jpeg({ quality: 80 }).toFile(join(OUT, thumb));
-  return {
-    ...nb,
-    front_cover: front && { label: "Front cover", slot: 0, sessions: [], image: cover, thumb, width: front.width, height: front.height },
-    pages: await Promise.all(nb.pages.map(async ({ redact, ...page }, i) => {
-      const image = `scans/${nb.id}/${String(i + 1).padStart(2, "0")}.jpg`;
-      const { width, height } = await sharp(image).metadata();
-      // Pages that will still change aren't published until they're final. An
-      // unfinished notebook also leaves out its blank pages and the categories
-      // not shown in progress. Hidden categories are never shown.
-      const kind = page.kind === "unused" ? "session" : page.kind;
-      const hidden = Boolean(page.open && page.kind !== "session") || Boolean(category(kind)?.hidden) || (nb.status !== "completed" &&
-        (page.kind === "blank" || !category(kind)?.in_progress));
-      // The show-through-cleaned copy, when scripts/showthrough.py made one.
-      const clean = image.replace(/\.jpg$/, ".clean.jpg");
-      if (hidden) await rm(join(OUT, image));
-      if (hidden) await rm(join(OUT, clean), { force: true });
-      return {
-        ...page,
-        label: page.label ?? category(page.kind)?.label ?? null,
-        // Back matter (index, info page, ...) is paired from the end of the book.
-        back: isBack(rank[i]),
-        slot: i + 1,
-        image: hidden ? null : image,
-        clean: !hidden && existsSync(clean) ? clean : null,
-        hidden,
-        width,
-        height,
-        sessions: sessions
-          .filter((s) => s.notebook === nb.id && page.number != null && s.pages?.includes(page.number))
-          .map((s) => s.id),
-      };
-    })),
-  };
-}));
-notebooks.sort((a, b) => (b.started ?? "").localeCompare(a.started ?? ""));
+// The test site and PR previews (#64) also get the made-up test data
+// (test-data/, page images drawn by scripts/make-test-pages.mjs), under
+// dist/test-data/ with the same layout; the live site has only the real data.
+const TEST_SITE = Boolean(process.env.TEST_SITE);
+const withTestData = (TEST_SITE || Boolean(process.env.PREVIEW_OF)) && existsSync("test-data");
 
 // Sketch images: each observation's entry, cut from its page, and its
 // session's NEW SESSION block, so the sketch keeps its date, site and sky.
@@ -122,27 +66,101 @@ async function thumbnail(sketch) {
   }
   return out;
 }
-for (const s of sessions) {
-  const nb = notebooks.find((n) => n.id === s.notebook);
-  const pageAt = (number) => nb?.pages.find((p) => p.number === number);
-  const headerPage = s.header_box && pageAt(s.header_box.page);
-  if (!headerPage?.image) continue;
-  await mkdir(join(OUT, "sketches", s.id), { recursive: true });
-  const header = await cut(headerPage, s.header_box.box, `sketches/${s.id}/header.jpg`);
-  // The session card (site/cards.js) on the session page.
-  s.header_sketch = header;
-  for (const [i, o] of (s.observations ?? []).entries()) {
-    const page = o.box && pageAt(o.page);
-    if (!page?.image) continue;
-    o.sketch = { ...(await cut(page, o.box, `sketches/${s.id}/${i + 1}.jpg`)), header };
-    o.sketch.thumb = await thumbnail(o.sketch);
+// A dataset: its JSON in dir (data/ or test-data/), its page images in
+// <root>scans/, written to dist/<root> as data/*.json, scans/ and sketches/.
+// Image paths in the JSON start with root, so they work from the site's top.
+async function buildData(dir, root) {
+  const scansDir = `${root}scans`;
+  if (existsSync(scansDir)) await cp(scansDir, join(OUT, scansDir), { recursive: true });
+
+  const sessions = await readAll(join(dir, "sessions"));
+  sessions.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
+
+  // Catalog info (data/objects.json, from OpenNGC) goes with each observation
+  // whose designation it knows, under its key in the objects file.
+  const objectsFile = join(dir, "objects.json");
+  const objects = existsSync(objectsFile) ? JSON.parse(await readFile(objectsFile, "utf8")).objects : {};
+  const objectOf = new Map(Object.entries(objects).flatMap(([key, o]) => o.ids.map((id) => [id, key])));
+  for (const o of sessions.flatMap((s) => s.observations ?? [])) {
+    const key = [o.catalog_id, ...(o.ids ?? [])].map((id) => objectOf.get(id)).find(Boolean);
+    if (key) {
+      const { name, type, constellation, magnitude, size } = objects[key];
+      o.catalog = { key, name, type, constellation, magnitude, size };
+    }
   }
+
+  // Give each notebook page its name, its image, and the sessions written on
+  // it. Image sizes let pages reserve their space before the images load.
+  const notebooks = await Promise.all((await readAll(join(dir, "notebooks"))).map(async ({ scan, ...nb }) => {
+    const rank = ranks(nb.pages);
+    // The outside front cover, scanned on its own.
+    const cover = `${scansDir}/${nb.id}/cover-front.jpg`;
+    const front = nb.front_cover && existsSync(cover) ? await sharp(cover).metadata() : null;
+    // A small copy for the notebook's card on the home page.
+    const thumb = cover.replace(/\.jpg$/, ".thumb.jpg");
+    if (front) await sharp(cover).resize({ height: 240 }).jpeg({ quality: 80 }).toFile(join(OUT, thumb));
+    return {
+      ...nb,
+      front_cover: front && { label: "Front cover", slot: 0, sessions: [], image: cover, thumb, width: front.width, height: front.height },
+      pages: await Promise.all(nb.pages.map(async ({ redact, ...page }, i) => {
+        const image = `${scansDir}/${nb.id}/${String(i + 1).padStart(2, "0")}.jpg`;
+        const { width, height } = await sharp(image).metadata();
+        // Pages that will still change aren't published until they're final. An
+        // unfinished notebook also leaves out its blank pages and the categories
+        // not shown in progress. Hidden categories are never shown.
+        const kind = page.kind === "unused" ? "session" : page.kind;
+        const hidden = Boolean(page.open && page.kind !== "session") || Boolean(category(kind)?.hidden) || (nb.status !== "completed" &&
+          (page.kind === "blank" || !category(kind)?.in_progress));
+        // The show-through-cleaned copy, when scripts/showthrough.py made one.
+        const clean = image.replace(/\.jpg$/, ".clean.jpg");
+        if (hidden) await rm(join(OUT, image));
+        if (hidden) await rm(join(OUT, clean), { force: true });
+        return {
+          ...page,
+          label: page.label ?? category(page.kind)?.label ?? null,
+          // Back matter (index, info page, ...) is paired from the end of the book.
+          back: isBack(rank[i]),
+          slot: i + 1,
+          image: hidden ? null : image,
+          clean: !hidden && existsSync(clean) ? clean : null,
+          hidden,
+          width,
+          height,
+          sessions: sessions
+            .filter((s) => s.notebook === nb.id && page.number != null && s.pages?.includes(page.number))
+            .map((s) => s.id),
+        };
+      })),
+    };
+  }));
+  notebooks.sort((a, b) => (b.started ?? "").localeCompare(a.started ?? ""));
+
+  for (const s of sessions) {
+    const nb = notebooks.find((n) => n.id === s.notebook);
+    const pageAt = (number) => nb?.pages.find((p) => p.number === number);
+    const headerPage = s.header_box && pageAt(s.header_box.page);
+    if (!headerPage?.image) continue;
+    await mkdir(join(OUT, `${root}sketches`, s.id), { recursive: true });
+    const header = await cut(headerPage, s.header_box.box, `${root}sketches/${s.id}/header.jpg`);
+    // The session card (site/cards.js) on the session page.
+    s.header_sketch = header;
+    for (const [i, o] of (s.observations ?? []).entries()) {
+      const page = o.box && pageAt(o.page);
+      if (!page?.image) continue;
+      o.sketch = { ...(await cut(page, o.box, `${root}sketches/${s.id}/${i + 1}.jpg`)), header };
+      o.sketch.thumb = await thumbnail(o.sketch);
+    }
+  }
+
+  await mkdir(join(OUT, root, "data"), { recursive: true });
+  await writeFile(join(OUT, root, "data", "sessions.json"), JSON.stringify(sessions));
+  await writeFile(join(OUT, root, "data", "notebooks.json"), JSON.stringify(notebooks));
+  if (existsSync(objectsFile)) await cp(objectsFile, join(OUT, root, "data", "objects.json"));
+  return { notebooks, sessions };
 }
 
-await mkdir(join(OUT, "data"), { recursive: true });
-await writeFile(join(OUT, "data", "sessions.json"), JSON.stringify(sessions));
-await writeFile(join(OUT, "data", "notebooks.json"), JSON.stringify(notebooks));
-if (existsSync("data/objects.json")) await cp("data/objects.json", join(OUT, "data", "objects.json"));
+const { notebooks, sessions } = await buildData("data", "");
+const test = withTestData ? await buildData("test-data", "test-data/") : null;
 
 // Every page gets the site's icons (site/icons/: Kacy's telescope photos,
 // a wide crop for tab sizes and a close-up for larger ones), so a new page
@@ -174,17 +192,22 @@ if (mappings.length) {
 }
 const footer = footerParts.length ? `  <footer class="site-footer muted">\n    ${footerParts.join("\n    ")}\n  </footer>\n` : "";
 
-// A PR preview build also gets a banner on every page so it isn't mistaken
-// for the live site.
+// A PR preview or the test site also gets a banner on every page so it
+// isn't mistaken for the live site. With the test data built, data-test-data
+// is the dataset shown by default, and site/lib.js adds the real/test toggle.
 let banner = "";
+const testData = test ? ` data-test-data="${TEST_SITE ? "test" : "real"}"` : "";
 if (process.env.PREVIEW_OF) {
   const link = process.env.PREVIEW_LINK ? ` <a href="${escape(process.env.PREVIEW_LINK)}">View the pull request</a>` : "";
   const branch = process.env.PREVIEW_BRANCH ? ` data-branch="${escape(process.env.PREVIEW_BRANCH)}"` : "";
-  banner = `\n  <div class="preview-banner"${branch}>Preview of ${escape(process.env.PREVIEW_OF)}.${link}</div>`;
+  banner = `\n  <div class="preview-banner"${branch}${testData}>Preview of ${escape(process.env.PREVIEW_OF)}.${link}</div>`;
+} else if (TEST_SITE) {
+  banner = `\n  <div class="preview-banner"${testData}>Test site.</div>`;
 }
 for (const file of (await readdir(OUT)).filter((f) => f.endsWith(".html"))) {
   const html = (await readFile(join(OUT, file), "utf8")).replace("</head>", `${icons}</head>`).replace("</body>", `${footer}</body>`);
   await writeFile(join(OUT, file), html.replace(/<body( class="[^"]*")?>/, (body) => body + banner));
 }
 
-console.log(`Built ${notebooks.length} notebooks and ${sessions.length} sessions into ${OUT}/`);
+console.log(`Built ${notebooks.length} notebooks and ${sessions.length} sessions into ${OUT}/` +
+  (test ? `, and the test data's ${test.notebooks.length} and ${test.sessions.length}` : ""));

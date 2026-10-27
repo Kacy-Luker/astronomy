@@ -31,10 +31,46 @@ async function loadJSON(path) {
   return res.json();
 }
 
-export const loadSessions = () => loadJSON("data/sessions.json");
-export const loadNotebooks = () => loadJSON("data/notebooks.json");
+// The test site and PR previews (#64) can show the made-up test data
+// (test-data/) instead of the real log. Their banner carries
+// data-test-data, the dataset shown by default; ?data=test or ?data=real
+// switches, and this browser remembers the choice. The live site has no
+// test data and always shows the real log.
+const DATA_KEY = "observing-log-data";
+const testBanner = document.querySelector(".preview-banner[data-test-data]");
+function chooseData() {
+  if (!testBanner) return "real";
+  const asked = new URLSearchParams(location.search).get("data");
+  if (asked === "test" || asked === "real") {
+    try { localStorage.setItem(DATA_KEY, asked); } catch { /* not remembered */ }
+    return asked;
+  }
+  let saved = null;
+  try { saved = localStorage.getItem(DATA_KEY); } catch { /* none */ }
+  return saved === "test" || saved === "real" ? saved : testBanner.dataset.testData;
+}
+export const dataset = chooseData();
+const DATA_ROOT = dataset === "test" ? "test-data/" : "";
+// A data file's path in the repo, e.g. dataFile("notebooks/x.json").
+export const dataFile = (path) => `${dataset === "test" ? "test-data" : "data"}/${path}`;
+
+if (testBanner) {
+  const toggle = el("span", "data-toggle");
+  toggle.append(" · Showing ");
+  for (const [value, text] of [["real", "real data"], ["test", "test data"]]) {
+    const url = new URL(location.href);
+    url.searchParams.set("data", value);
+    const a = link(url.href, text);
+    if (value === dataset) a.setAttribute("aria-current", "true");
+    toggle.append(a, value === "real" ? " | " : "");
+  }
+  testBanner.append(toggle);
+}
+
+export const loadSessions = () => loadJSON(`${DATA_ROOT}data/sessions.json`);
+export const loadNotebooks = () => loadJSON(`${DATA_ROOT}data/notebooks.json`);
 // Catalog info by object (data/objects.json); empty when there is none.
-export const loadObjects = () => loadJSON("data/objects.json").then((d) => d.objects, () => ({}));
+export const loadObjects = () => loadJSON(`${DATA_ROOT}data/objects.json`).then((d) => d.objects, () => ({}));
 
 export const sessionHref = (id) => `session.html?id=${encodeURIComponent(id)}`;
 export const objectHref = (id) => `object.html?id=${encodeURIComponent(id)}`;
@@ -183,7 +219,7 @@ export const editMode = adminMode && stored(EDIT_KEY);
 
 // A link to edit a file in the repo (e.g. data/sessions/<id>.json), or null
 // when the Edit links are off.
-export const sessionFile = (id) => `data/sessions/${id}.json`;
+export const sessionFile = (id) => dataFile(`sessions/${id}.json`);
 export function editLink(path, text = "Edit") {
   if (!editMode) return null;
   const a = link(`${REPO}/edit/${branch}/${path}`, text, "edit-link");
@@ -197,7 +233,8 @@ export function editLink(path, text = "Edit") {
 // favorite.yml, which opens a pull request. n counts the observation from 1
 // in its session's file.
 export function favoriteLink(o, s, n) {
-  if (!adminMode) return null;
+  // The Favorite workflow only changes the real data.
+  if (!adminMode || dataset === "test") return null;
   const verb = o.favorite ? "Unfavorite" : "Favorite";
   const what = `${o.catalog_id} on ${formatDate(s.date)}`;
   const body = [

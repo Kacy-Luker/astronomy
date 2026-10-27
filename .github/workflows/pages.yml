@@ -1,8 +1,9 @@
 name: Deploy site
 
 # Publishes the site to the gh-pages branch, which GitHub Pages serves
-# (Settings → Pages → Deploy from a branch → gh-pages). PR previews live in
-# gh-pages/pr-preview/ and are left alone here.
+# (Settings → Pages → Deploy from a branch → gh-pages), then the test site
+# (#64: the same code with the made-up test data shown by default) to
+# gh-pages/test/. PR previews live in gh-pages/pr-preview/ and are left alone.
 on:
   push:
     branches: [main]
@@ -31,5 +32,16 @@ jobs:
         with:
           folder: dist
           branch: gh-pages
-          clean-exclude: pr-preview/
+          clean-exclude: |
+            pr-preview/
+            test/
+          force: false
+      - run: npm run build
+        env:
+          TEST_SITE: "1"
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+          target-folder: test
           force: false
