@@ -283,7 +283,9 @@ must match `PageReading` in `read-page.mjs`).
   scrolls sideways on phones, with the open tab kept in view.
 - Map tab (`site/map.js`): markers per site from the search documents,
   coordinates rounded to 0.1° (Kacy's privacy choice; session pages keep
-  exact values), loaded on first open. A marker's popup is a summary
+  exact values), loaded on first open. It opens fitted to the matching sites
+  inside `HOME` (the lower 48 states), or to all of them when none are
+  there (#97). A marker's popup is a summary
   (sites, observations, sessions, date range, a link to
   `?site=…#sessions` for each of the newest two sites, and
   `?near=<lat>,<lon>#sessions` for the whole spot when there are more),
