@@ -4,7 +4,7 @@
     {
       "kind": "front_cover",
       "label": "Front cover",
-      "describe": "The outside front cover of the closed notebook.",
+      "describe": "The outside of the closed notebook, often with a volume label (title, volume, start and finish dates, owner). Scanned closed, the scanner's plain lid fills the other half of the scan.",
       "in_progress": true,
       "rescan": true,
       "single": true
@@ -13,12 +13,6 @@
       "kind": "inside_front_cover",
       "label": "Inside front cover",
       "describe": "The inside of the front cover board, usually plain.",
-      "single": true
-    },
-    {
-      "kind": "volume_label",
-      "label": "Volume label",
-      "describe": "A printed label with the notebook's title, volume, start and finish dates, and owner.",
       "single": true
     },
     {

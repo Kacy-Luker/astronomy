@@ -1,7 +1,7 @@
 // Ask Claude to read one notebook page into structured data.
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import { CATEGORIES, PAGE_KINDS } from "./categories.mjs";
+import { CATEGORIES, READ_KINDS } from "./categories.mjs";
 
 const MODEL = "claude-opus-5-5";
 
@@ -26,7 +26,7 @@ const Scale = z.union([z.number().int(), NA]).nullable()
   .describe('Circled roman numeral as 1-5 (I is 1), as circled, without converting by any key; "N/A" if written; null if none circled');
 
 export const PageReading = z.object({
-  kind: z.enum(PAGE_KINDS).describe("The page's category"),
+  kind: z.enum(READ_KINDS).describe("The page's category"),
   printed_number: z.number().int().nullable()
     .describe("Page number printed in the top outer corner, if one is visible"),
   label: z.string().nullable()
@@ -38,7 +38,7 @@ export const PageReading = z.object({
     owner: z.string().nullable(),
     started: z.string().nullable().describe("YYYY-MM-DD"),
     finished: z.string().nullable().describe("YYYY-MM-DD"),
-  }).nullable().describe("Only for the volume label or title page"),
+  }).nullable().describe("Only for the front cover's volume label or the title page"),
   personal_info: z.array(z.object({ what: z.string(), box: Box }))
     .describe("Phone numbers, email addresses, and street addresses on the page"),
   header: z.object({
@@ -79,9 +79,10 @@ numeral each), EP/MAG (eyepiece and magnification), FILTER, a sketch circle, and
 DESCRIPTION lines that often run past the printed lines.
 
 Each page is in one category ("kind"), in the order they come in the notebook:
-${CATEGORIES.filter((c) => c.kind !== "front_cover").map((c) => `- ${c.kind}: ${c.describe}`).join("\n")}
+${CATEGORIES.map((c) => `- ${c.kind}: ${c.describe}`).join("\n")}
 - unused: a session page whose only entries are crossed out or never filled in.
-- blank: nothing written or printed on it.
+- blank: nothing written or printed on it, including the scanner's lid beside
+  the closed notebook's front cover.
 Odd pages carry a small printed page number in the top outer corner.
 
 Rules:
@@ -100,9 +101,8 @@ Rules:
   the ";" (e.g. "13mm Ethos; 92x" is 92). With nothing after the ";" the
   magnification is blank (null); the writer fills it in later.
 - will_change is true for a table of contents or index with empty rows left,
-  a volume label whose finish date is blank, and a session page with unused
-  space below its last entry where another entry could still go. Otherwise
-  false.
+  and a session page with unused space below its last entry where another
+  entry could still go. Otherwise false.
 - personal_info boxes must fully cover each item with a little margin.
 - The header and entry boxes are used to cut out each sketch: include the
   whole block with a little margin, and never cut through writing.

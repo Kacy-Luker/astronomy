@@ -10,6 +10,9 @@ export const category = (kind) => CATEGORIES.find((c) => c.kind === kind);
 // Kinds a scanned page can have: every category but the front cover (which
 // is scanned on its own), plus unused session pages and blank pages.
 export const PAGE_KINDS = [...CATEGORIES.map((c) => c.kind).filter((k) => k !== "front_cover"), "unused", "blank"];
+// Kinds Claude can read a scanned half as: a page, or the front cover when
+// the closed notebook was scanned with the pages (the import keeps it apart).
+export const READ_KINDS = ["front_cover", ...PAGE_KINDS];
 
 const SESSION = CATEGORIES.findIndex((c) => c.kind === "session");
 

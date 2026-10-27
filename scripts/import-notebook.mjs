@@ -20,7 +20,9 @@
 // page in that category instead. --start N numbers the session pages from N
 // (the first session page in the scan) when no printed page number could be
 // read; a printed number always wins.
-// The outside front cover is imported by scripts/import-cover.mjs.
+// A scan of the closed notebook among the spreads becomes the outside front
+// cover (cover-front.jpg), not two pages; a cover scanned on its own is
+// imported by scripts/import-cover.mjs.
 // Readings are cached in .import-cache/ so a rerun doesn't pay for the same
 // page twice.
 import { existsSync } from "node:fs";
@@ -30,6 +32,7 @@ import { basename, join } from "node:path";
 import { parseArgs } from "node:util";
 import { CATEGORIES, SESSION_RANK, category, ranks } from "./lib/categories.mjs";
 import { enrichSessions, loadCatalog, objectsFile } from "./lib/catalog.mjs";
+import { coverImage } from "./lib/cover.mjs";
 import { formatJSON } from "./lib/format-json.mjs";
 import { sessionTodos } from "../site/todos.js";
 import { matchPosition } from "./lib/match.mjs";
@@ -91,9 +94,12 @@ const list = await Promise.all((existing?.pages ?? []).map(async (page, i) => {
 
 // 1. Split the uploaded spreads into pages.
 const uploaded = [];
+let spreads = []; // the uploaded spreads as scanned, for a closed-notebook cover
 if (source) {
   const work = await mkdtemp(join(tmpdir(), "notebook-"));
-  const { pages: split, folds } = await splitSpreads(await listSpreads(source, work), scan);
+  const files = await listSpreads(source, work);
+  spreads = await Promise.all(files.map((f) => readFile(f)));
+  const { pages: split, folds } = await splitSpreads(files, scan);
   uploaded.push(...split);
   folds.forEach((f, k) => {
     if (f == null) notes.push(`- Spread ${k + 1} of the scan has no visible fold, so it was cut where the others were. Check its two pages.`);
@@ -146,6 +152,20 @@ if (mode === "add" && list.length && !named && startPage == null) {
   if (skipped) notes.push(`- Skipped ${skipped} uploaded page(s) that were already recorded. Tick **reread** to re-read them.`);
 }
 await read(toRead);
+
+// A scan of the closed notebook is the outside front cover: Claude reads one
+// half as the cover and the other (the scanner's lid) as blank. Neither is
+// a page.
+let coverScan = null;
+const coverAt = toRead.filter((u) => readings.get(u).kind === "front_cover");
+if (coverAt.length) {
+  const spread = coverAt[0] >> 1;
+  coverScan = await coverImage(spreads[spread], scan.rotate ?? 90);
+  if (coverAt.some((u) => u >> 1 !== spread)) {
+    notes.push(`- More than one spread reads as the front cover; scan ${spread + 1} was used and the others were left out. Check the scan.`);
+  }
+  toRead = toRead.filter((u) => u >> 1 !== spread && !coverAt.includes(u));
+}
 
 // 3. What each page read is, and its page number. Odd pages carry printed
 // numbers, which always win; the others follow from them by where they are
@@ -430,6 +450,13 @@ const pages = list.map((e) => e.page);
 const fresh = new Set(placed.map((e) => e.page));
 const toRescan = (p) => Boolean(category(p.kind)?.rescan) || (p.open && !["session", "blank"].includes(p.kind));
 let frontCover = existing?.front_cover ?? null;
+if (coverScan) {
+  if (!frontCover || frontCover.open || ["replace", "complete"].includes(mode)) frontCover = {};
+  else {
+    notes.push("- The scan of the closed notebook was skipped: the notebook already has its front cover. Tick **reread** to replace it.");
+    coverScan = null;
+  }
+}
 if (status === "completed") {
   const asking = mode === "complete" && !uploaded.length && existing.status !== "completed";
   for (const p of pages) {
@@ -471,7 +498,7 @@ const notebook = {
   owner: existing?.owner ?? label.owner ?? null,
   status,
   started: existing?.started ?? label.started ?? dates[0] ?? null,
-  // The finish date written on the volume label wins once it's been rescanned.
+  // The finish date on the cover's volume label wins once it's been rescanned.
   finished: label.finished ?? existing?.finished ?? (status === "completed" ? dates.at(-1) ?? null : null),
   scan,
   ...(frontCover && { front_cover: frontCover }),
@@ -487,6 +514,7 @@ for (const sid of removed) await rm(join("data", "sessions", `${sid}.json`), { f
 if (objects) await writeFile(join("data", "objects.json"), formatJSON(objectsFile(objects)) + "\n");
 // Images are named by position, so pages after an inserted one move along.
 await mkdir(join("scans", id), { recursive: true });
+if (coverScan) await writeFile(join("scans", id, "cover-front.jpg"), await webImage(coverScan));
 const changed = [];
 for (const [i, e] of list.entries()) {
   if (e.from === i && e.u == null) continue;
@@ -513,6 +541,7 @@ const lines = [
     ? ` from \`${basename(source)}\`: ${placed.length} of ${uploaded.length} uploaded pages recorded` +
       (recorded.length ? ` (${[...new Set(recorded)].join(", ")})` : "") + "."
     : "."),
+  ...(coverScan ? ["The scan of the closed notebook is the front cover; check it's upright and trimmed in the preview."] : []),
   `Status: **${status === "completed" ? "completed" : "in progress"}**.`,
   "",
 ];
@@ -538,7 +567,7 @@ if (status === "completed") {
     const ps = notebook.pages.filter((p) => p.kind === c.kind);
     return { c, todo: !ps.length ? "not scanned yet" : ps.some((p) => p.open) ? "rescan it" : null };
   });
-  // Other pages still waiting, like a volume label without its finish date.
+  // Other pages still waiting, like ones Claude said would still change.
   const others = [...new Set(notebook.pages.filter((p) => p.open && !category(p.kind)?.rescan).map(nameOf))];
   lines.push("", "### Rescan checklist", "",
     ...todo.map(({ c, todo: t }) => `- [${t ? " " : "x"}] ${c.label}${t ? `: ${t}` : ""}`),
@@ -548,7 +577,7 @@ if (status === "completed") {
       "**Complete notebook** again with that file. Each page goes back where its category belongs.");
   }
   if (todo.some((t) => t.todo && t.c.kind === "front_cover")) {
-    lines.push("", "Scan the closed notebook's front cover on its own, upload it, and run **Import** with **Front cover** picked as the category.");
+    lines.push("", "Scan the closed notebook's front cover too: in the same file, or on its own with **Front cover** picked as the category in **Import**.");
   }
   // Blank pages are confirmed by hand, and categories never scanned are listed.
   const blanks = notebook.pages.flatMap((p, i) => (p.kind === "blank" ? [p.number != null ? `page ${p.number}` : `scan position ${nn(i)}`] : []));
