@@ -16,6 +16,15 @@ on:
           - astronomy-001
           - new-notebook
           # notebooks:end
+      notebook_type:
+        description: "For a new notebook only: what kind it is (data/notebook-types.json). An existing notebook keeps its own"
+        type: choice
+        default: Stamped log, spreads
+        options:
+          # Written by scripts/sync-workflow.mjs from data/notebook-types.json.
+          # notebook-types:start
+          - Stamped log, spreads
+          # notebook-types:end
       scan:
         description: "File in astronomy-scans, e.g. astronomy-001/2026-10-23.pdf. Empty = the newest in the notebook's folder (for a new notebook, the one folder without a notebook yet)"
         required: false
@@ -59,6 +68,7 @@ jobs:
     with:
       action: Import
       notebook: ${{ inputs.notebook }}
+      notebook_type: ${{ inputs.notebook_type }}
       scan: ${{ inputs.scan }}
       category: ${{ inputs.category }}
       reread: ${{ inputs.reread }}

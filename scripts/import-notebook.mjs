@@ -1,7 +1,7 @@
 // Import a scan into a notebook: split pages, read them with Claude, write JSON.
 //
 //   node scripts/import-notebook.mjs <notebook-id> [scan] --mode add|new|replace|complete
-//                                    [--category C] [--start N] [--title T] [--summary out.md]
+//                                    [--category C] [--start N] [--title T] [--type T] [--summary out.md]
 //
 // [scan] is a PDF, an image, or a folder of images holding two-page spreads.
 //
@@ -19,7 +19,10 @@
 // re-read. --category C (a category's kind or label) puts every non-blank
 // page in that category instead. --start N numbers the session pages from N
 // (the first session page in the scan) when no printed page number could be
-// read; a printed number always wins.
+// read; a printed number always wins. --type T (an id or label from
+// data/notebook-types.json, #48) is the kind of a new notebook, which says
+// how its scans are turned and split; the first type when not given. An
+// existing notebook keeps the type it was made with.
 // A scan of the closed notebook among the spreads becomes the outside front
 // cover (cover-front.jpg), not two pages; a cover scanned on its own is
 // imported by scripts/import-cover.mjs.
@@ -38,6 +41,7 @@ import { numberPages } from "./lib/import/numbering.mjs";
 import { present, recordSessions } from "./lib/import/sessions.mjs";
 import { nameOf, summarize } from "./lib/import/summary.mjs";
 import { matchPosition } from "./lib/match.mjs";
+import { TYPES, findType, typeOf, unsupported } from "./lib/notebook-types.mjs";
 import { loadReader } from "./lib/reader.mjs";
 import { PageReading, RedactionCheck } from "./lib/reading.mjs";
 import { check } from "./lib/schema.mjs";
@@ -52,11 +56,12 @@ const { positionals: [id, source], values: opts } = parseArgs({
     category: { type: "string" },
     start: { type: "string" },
     title: { type: "string" },
+    type: { type: "string" },
     summary: { type: "string" },
   },
 });
 if (!id || !MODES.includes(opts.mode) || (!source && opts.mode !== "complete")) {
-  console.error("usage: node scripts/import-notebook.mjs <notebook-id> [scan] --mode add|new|replace|complete [--category C] [--start N] [--title T] [--summary out.md]");
+  console.error("usage: node scripts/import-notebook.mjs <notebook-id> [scan] --mode add|new|replace|complete [--category C] [--start N] [--title T] [--type T] [--summary out.md]");
   process.exit(2);
 }
 const mode = opts.mode;
@@ -73,7 +78,13 @@ const notebookPath = join("data", "notebooks", `${id}.json`);
 const existing = existsSync(notebookPath) ? JSON.parse(await readFile(notebookPath, "utf8")) : null;
 if (mode === "new" && existing) throw new Error(`notebook ${id} already exists; pick it in the notebook dropdown instead of new-notebook`);
 if (mode !== "new" && !existing) throw new Error(`there is no notebook ${id}; import its first scan with new-notebook picked`);
-const scan = existing?.scan ?? { rotate: 90, split: 0.47 };
+const type = mode === "new" && opts.type ? findType(opts.type) : typeOf(existing);
+if (!type) throw new Error(`"${opts.type}" isn't a notebook type; pick one of ${TYPES.map((t) => t.label).join(", ")}`);
+if (existing && opts.type && findType(opts.type) !== type) {
+  throw new Error(`${id} is a ${type.label} notebook; its type is chosen when it's created`);
+}
+if (unsupported(type)) throw new Error(`${type.label} notebooks can't be imported yet: ${unsupported(type)} aren't supported`);
+const scan = existing?.scan ?? { rotate: type.scan.rotate, split: type.scan.split };
 const notes = []; // lines for the PR summary
 const nn = (i) => String(i + 1).padStart(2, "0");
 
@@ -367,6 +378,7 @@ const notebook = {
   id,
   title: existing?.title ?? opts.title ?? label.title ?? id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
   owner: existing?.owner ?? label.owner ?? null,
+  type: type.id,
   status,
   started: existing?.started ?? label.started ?? dates[0] ?? null,
   // The finish date on the cover's volume label wins once it's been rescanned.

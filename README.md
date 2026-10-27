@@ -99,7 +99,7 @@ form:
 | To | Pick | Scan |
 | --- | --- | --- |
 | Add a session | the notebook | The spreads you wrote on, including the one you started on. Only new pages and pages still being written on are read |
-| Start a notebook | **new-notebook** | The closed notebook (its front cover), then the inside front cover through any sessions so far, in a new folder named for the notebook, e.g. `astronomy-002/`. The folder name becomes the notebook's id |
+| Start a notebook | **new-notebook** | The closed notebook (its front cover), then the inside front cover through any sessions so far, in a new folder named for the notebook, e.g. `astronomy-002/`. The folder name becomes the notebook's id. Pick its kind in **notebook type** |
 | Re-read pages | the notebook, and tick **reread** | The spreads to re-read, for a misread page or a rescan. What was recorded for those pages is replaced |
 | Add the front cover | the notebook, and **Front cover** as the category | The closed notebook on the scanner, on its own. The scanner lid is trimmed off and the cover turned upright; run it again to replace it. A scan of the closed notebook among the spreads of any import is found and used as the cover too |
 
@@ -114,7 +114,17 @@ folder; for a new notebook, that's the one folder with no notebook yet
 means no scan. The notebook and category dropdowns are generated from
 `data/notebooks/` and `data/categories.json` by
 `scripts/sync-workflow.mjs`; a new notebook appears in them once its
-import is merged. All three forms share their steps through
+import is merged.
+
+**Notebook type.** A new notebook's kind, from `data/notebook-types.json`:
+how it's scanned (spreads or single sheets, which way up, where the fold
+usually is), how its pages are numbered, and what they're written on. Today
+there's one, **Stamped log, spreads** (this notebook: any page size, the
+rubber-stamped form). The notebook keeps the type it was made with (its
+`type`; one without is the first type), so the field only matters for
+**new-notebook**. A kind the import can't read yet (single sheets, free
+text, #109) isn't offered in the form. Page images are 1600 px tall
+whatever the paper size. All three forms share their steps through
 `.github/workflows/notebook-job.yml`, and run one at a time.
 
 **Start page.** Session pages are placed by the page numbers printed on
@@ -156,8 +166,9 @@ Locally, the same thing runs as:
 ANTHROPIC_API_KEY=... node scripts/import-notebook.mjs astronomy-001 path/to/scan.pdf --mode add
 ```
 
-`--mode` is `new`, `add`, `replace` or `complete`; `--category` and
-`--start` are the form's category and start page. A front cover is
+`--mode` is `new`, `add`, `replace` or `complete`; `--category`,
+`--start` and `--type` are the form's category, start page and notebook
+type. A front cover is
 imported with `node scripts/import-cover.mjs astronomy-001 path/to/cover.jpg`.
 
 One-time setup:
