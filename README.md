@@ -394,8 +394,9 @@ trying features your own notebooks don't use yet: an object seen four
 times under different designations (M31 / NGC 224), Messier, NGC, IC,
 Caldwell and non-catalog objects (Albireo, Saturn), a completed notebook
 with its contents and index, N/A and blank fields, a crossed-out page, two
-sessions on one page, a session without coordinates, a favorite, and four
-sites at one map spot. Every merge to `main` deploys it alongside the live
+sessions on one page, a session without coordinates, a favorite, and three
+sites at one map spot (Okie-Tex in two years, Camp Billy Joe and Black
+Mesa, for the Near link). Every merge to `main` deploys it alongside the live
 site, so it's never out of date.
 
 Its banner says **Test site** and has a **Showing real data | test data**
