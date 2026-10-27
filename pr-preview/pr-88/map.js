@@ -9,7 +9,7 @@
 // build) and loaded the first time the tab opens. The map tiles are the one
 // outside service; their address is TILES, credited on the map.
 import { el, formatDate, link, plural, sessionHref } from "./lib.js";
-import { eventName, keepFilters } from "./search.js";
+import { eventName, keepFilters, spotOf } from "./search.js";
 
 const TILES = {
   url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -17,8 +17,7 @@ const TILES = {
   maxZoom: 12,
 };
 
-const round = (v) => Math.round(v * 10) / 10;
-const located = (s) => Number.isFinite(s.site?.lat) && Number.isFinite(s.site?.lon);
+const located = (s) => spotOf(s) != null;
 
 let leaflet;
 function loadLeaflet() {
@@ -35,17 +34,17 @@ function loadLeaflet() {
   return leaflet;
 }
 
-// [{ lat, lon, events, sessions: [{ s, count }], count }] for the matching
+// [{ key, lat, lon, events, sessions: [{ s, count }], count }] for the matching
 // observations, one per rounded spot, most observations first. events are
 // the site names without their years (eventName()), newest first, as the
 // Site filter has them.
 function spots(docs) {
   const bySpot = new Map();
   for (const { s } of docs) {
-    if (!located(s)) continue;
-    const [lat, lon] = [round(s.site.lat), round(s.site.lon)];
-    const key = `${lat},${lon}`;
-    if (!bySpot.has(key)) bySpot.set(key, { lat, lon, sessions: new Map() });
+    const key = spotOf(s);
+    if (!key) continue;
+    const [lat, lon] = key.split(",").map(Number);
+    if (!bySpot.has(key)) bySpot.set(key, { key, lat, lon, sessions: new Map() });
     const spot = bySpot.get(key);
     spot.sessions.set(s, (spot.sessions.get(s) ?? 0) + 1);
   }
@@ -63,43 +62,32 @@ function spots(docs) {
 // A summary, so the popup stays small however many sessions a site has: the
 // site without its year, its observations, sessions and date range, and a
 // link to the Sessions tab filtered to it. When several sites share a spot,
-// the newest two get a link each and "+ N more sites" lists the rest when
-// tapped, scrolling past a few. resized() lets Leaflet refit the popup.
+// the newest two get a link each, and one more link opens every session at
+// the spot (the Near filter).
 const SHOWN_EVENTS = 2;
-function popup(spot, resized) {
+function popup(spot) {
   const box = el("div", "map-popup");
   const dates = spot.sessions.map(({ s }) => s.date).sort();
   const range = dates.length > 1 ? `${formatDate(dates[0])} – ${formatDate(dates.at(-1))}` : formatDate(dates[0]);
   const shown = spot.events.slice(0, SHOWN_EVENTS);
-  const rest = spot.events.slice(SHOWN_EVENTS);
+  const more = spot.events.length - shown.length;
   box.append(
-    el("strong", null, shown.join(" · ") + (rest.length ? ` + ${rest.length} more` : "")),
+    el("strong", null, shown.join(" · ") + (more ? ` + ${more} more` : "")),
     el("div", "muted", `${plural(spot.count, "observation")} · ${plural(spot.sessions.length, "session")}`),
     el("div", "muted", range),
   );
-  const row = (event) => {
-    const sessions = spot.sessions.filter(({ s }) => eventName(s.site.name) === event).length;
-    const text = spot.events.length > 1 ? `See ${plural(sessions, "session")} at ${event}` : `See ${sessions === 1 ? "the session" : `all ${sessions} sessions`}`;
+  const row = (href, text) => {
     const div = el("div", "map-popup-link");
-    div.append(link(`./?${new URLSearchParams({ site: event })}#sessions`, text));
-    keepFilters(div);
+    div.append(link(href, text));
     return div;
   };
-  box.append(...shown.map(row));
-  if (rest.length) {
-    const more = el("button", "map-popup-more", `+ ${plural(rest.length, "more site")}`);
-    more.type = "button";
-    more.addEventListener("click", (event) => {
-      // Leaflet would take a click on a removed button for one on the map
-      // and close the popup.
-      event.stopPropagation();
-      const list = el("div", "map-popup-list");
-      list.append(...rest.map(row));
-      more.replaceWith(list);
-      resized();
-    });
-    box.append(more);
+  for (const event of shown) {
+    const sessions = spot.sessions.filter(({ s }) => eventName(s.site.name) === event).length;
+    const text = spot.events.length > 1 ? `See ${plural(sessions, "session")} at ${event}` : `See ${sessions === 1 ? "the session" : `all ${sessions} sessions`}`;
+    box.append(row(`./?${new URLSearchParams({ site: event })}#sessions`, text));
   }
+  if (more) box.append(row(`./?${new URLSearchParams({ near: spot.key })}#sessions`, `See all ${spot.sessions.length} sessions here`));
+  keepFilters(box);
   return box;
 }
 
@@ -133,13 +121,9 @@ export function mapPanel(panel) {
     const found = spots(latest);
     for (const spot of found) {
       const icon = L.divIcon({ className: "map-marker", html: `<span>${spot.count}</span>`, iconSize: [34, 34] });
-      // Leaflet asks for the content again on update(), so keep it while
-      // the popup is open (an expanded list stays expanded). The top padding
-      // keeps it clear of the zoom buttons.
-      const marker = L.marker([spot.lat, spot.lon], { icon, title: spot.events.join(", ") });
-      let content;
-      marker.bindPopup(() => (content ??= popup(spot, () => marker.getPopup().update())), { autoPanPaddingTopLeft: [5, 80] }).addTo(layer);
-      marker.on("popupclose", () => { content = null; });
+      // The top padding keeps the popup clear of the zoom buttons.
+      L.marker([spot.lat, spot.lon], { icon, title: spot.events.join(", ") })
+        .bindPopup(() => popup(spot), { autoPanPaddingTopLeft: [5, 80] }).addTo(layer);
     }
     if (found.length) map.fitBounds(L.latLngBounds(found.map((x) => [x.lat, x.lon])).pad(0.5), { maxZoom: 7 });
     else map.setView([39, -98], 3);
