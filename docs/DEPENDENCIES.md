@@ -9,7 +9,7 @@ writing one new module that meets the contract.
 | --- | --- | --- | --- |
 | Claude (Anthropic API) | Reading each page; checking blurred pages | `scripts/lib/reader.mjs` | Wrapped |
 | OpenNGC, SIMBAD | Catalog info and designations | `scripts/lib/catalog.mjs` | Wrapped |
-| sharp (libvips) | Rotating, cropping, resizing, blurring, encoding images | — | Not yet |
+| sharp (libvips) | Rotating, cropping, resizing, blurring, encoding images | `scripts/lib/image.mjs` | Wrapped |
 | poppler `pdfimages` | Pulling the scanned JPEGs out of a PDF | `scripts/lib/pages.mjs` (`listSpreads`) | Partly |
 | numpy, scipy, Pillow | Show-through cleaning | `scripts/showthrough.py` | Wrapped (a script) |
 | zod, ajv | Checking readings and the JSON files | — | Not yet |
@@ -78,6 +78,38 @@ Kacy's mappings (`data/personalObjectMappings.json`) are applied before
 any source. The credits in the site's footer come from `name`, `url` and
 `license`.
 
+## Image operations
+
+**Module:** `scripts/lib/image.mjs`. Nothing else in `scripts/` or `site/`
+imports the image library; a unit test checks that. The test-page drawing
+script also uses it to render SVG, but it isn't part of the import or the
+site.
+
+**The contract:**
+- `image(input)` takes a file path or a buffer and returns a chain of
+  steps, applied in the order called:
+  - `rotate(degrees)`: clockwise; with no angle, upright by the photo's
+    EXIF.
+  - `crop({ left, top, width, height })`, in pixels.
+  - `resize({ width, height, fit, background, withoutEnlargement })`:
+    either side alone keeps the aspect ratio; `fit` is `fill` or
+    `contain`.
+  - `grey()`, `blur(sigma)` and `invert()`.
+  - `overlay([{ input, left, top }])`: images laid over this one.
+  - `jpeg({ quality, mozjpeg })` or `png()`.
+- The chain ends in `buffer()`, `toFile(path)` or `pixels()`. `pixels()`
+  gives `{ data, width, height, channels }`: raw bytes, rows top to
+  bottom.
+- `size(input)` returns `{ width, height }`.
+- `blank(width, height, colour)` starts a new chain on an image of one
+  colour.
+
+`tests/unit/image.test.mjs` checks each operation on a small drawn image.
+A replacement should also give the same results on the real pages: the
+fold finder, the blur of personal details, the circle finder and the
+rescan matcher all read these pixels. The import, circle and redaction
+tests cover them.
+
 ## Show-through cleaning
 
 **Module:** `scripts/showthrough.py <notebook> [positions…]`. It reads
@@ -92,10 +124,6 @@ any source. The credits in the site's footer come from `name`, `url` and
 
 These are still called directly. Moving each one behind a module like the
 ones above is the rest of #49:
-- **Image operations (sharp):** rotate, crop, resize, blur a region, encode
-  a JPEG, read an image's size and grey pixels. Today they're called from
-  `scripts/lib/pages.mjs`, `match.mjs`, `circle.mjs`, `cover.mjs`,
-  `import-cover.mjs` and `build.mjs`.
 - **Scan source:** listing an upload's spreads and pulling images out of a
   PDF (`listSpreads` and `pdfimages`), and fetching from the private scans
   repo (`notebook-job.yml`).

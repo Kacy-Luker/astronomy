@@ -2,7 +2,7 @@
 // thumbnails. A Hough search: every dark (ink) pixel votes for the circles
 // it could lie on, and the circle with the most votes wins. Pencil marks
 // touching the ring and small gaps in it don't throw it off.
-import sharp from "sharp";
+import { image } from "./image.mjs";
 
 const W = 240; // search at this width; plenty for a ring a third as wide
 const MIN_SCORE = 3;
@@ -22,7 +22,7 @@ export async function findCircle(file) {
   // is ink if any pixel in it is), so a thin ring isn't averaged away into
   // the paper by shrinking. "Dark" is relative to this entry's paper (its
   // median), so a light stamp or a faint scan still counts.
-  const { data, info } = await sharp(file).greyscale().raw().toBuffer({ resolveWithObject: true });
+  const { data, ...info } = await image(file).grey().pixels();
   const scale = W / info.width;
   const w = W, h = Math.max(1, Math.round(info.height * scale));
   const paper = median(data);

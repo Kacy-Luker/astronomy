@@ -1,14 +1,13 @@
 // Find where rescanned spreads sit in a notebook by comparing them with the
 // page images already published. Works for written pages; faint or blank
 // pages carry too little detail to match and are left out.
-import sharp from "sharp";
+import { image } from "./image.mjs";
 
 const MIN_DETAIL = 6; // brightness spread below this is too faint to compare
 const MIN_MATCH = 0.8; // average correlation a placement needs
 
 async function thumb(input) {
-  const { data } = await sharp(input).grayscale().resize(24, 32, { fit: "fill" }).blur(1).raw()
-    .toBuffer({ resolveWithObject: true });
+  const { data } = await image(input).grey().resize({ width: 24, height: 32, fit: "fill" }).blur(1).pixels();
   const values = [...data];
   const mean = values.reduce((a, b) => a + b) / values.length;
   const sd = Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length);
