@@ -9,7 +9,7 @@ Astronomy observations transcribed from paper notes, published at
 | --- | --- |
 | `data/notebooks/` | One JSON file per paper notebook, listing every page |
 | `data/sessions/` | One JSON file per observing session |
-| `data/objects.json` | Catalog info for every observed object, from OpenNGC (generated) |
+| `data/objects.json` | Catalog info for every observed object, from OpenNGC and SIMBAD (generated) |
 | `data/personalObjectMappings.json` | Objects you take differently from the catalogs (edit by hand) |
 | `schema/` | The shape every notebook and session file must match |
 | `scans/<notebook>/` | One image per notebook page, in order (`01.jpg`, `02.jpg`, …) |
@@ -246,8 +246,13 @@ those numbers aren't added. IDs already there stay, and `aka` stays as
 written; the site shows the catalog's common name when the sheet has
 none. Don't edit `data/objects.json` by hand. To fill in existing
 sessions, run `node scripts/enrich-ids.mjs`; it only adds. Objects
-OpenNGC doesn't cover (stars, planets, most Barnard and Abell objects)
-are left as written. The home page's Sketches tab shows one catalog at
+OpenNGC doesn't cover (stars and double stars like Albireo, Barnard and
+Abell objects, Sharpless regions, Melotte and Stock clusters) are looked
+up in [SIMBAD](https://simbad.cds.unistra.fr/) (CDS, Strasbourg) during
+the import, by any name SIMBAD knows (Albireo, beta Cyg, Abell 426).
+SIMBAD gives no constellation. If SIMBAD can't be reached, those objects
+are left as written until the next import. Planets aren't in either and
+stay as written. The home page's Sketches tab shows one catalog at
 a time, picked with a toggle, and lists every observed object under each
 catalog it's in (M31 under Messier and NGC), in catalog order, with a
 thumbnail of its latest sketch (just the sketch circle, found

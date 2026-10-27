@@ -5,7 +5,7 @@ import {
   sessionHref,
 } from "./lib.js";
 import { field, observationDescription, observationFacts } from "./observation.js";
-import { findObject, observedObjects } from "./objects.js";
+import { findObject, observedObjects, sameName } from "./objects.js";
 
 const main = document.getElementById("object");
 
@@ -13,7 +13,8 @@ function renderHeader(obj, info) {
   const header = el("section", "session-header");
   const head = el("div", "session-head");
   head.append(el("h2", "session-title", obj.ids[0] ?? obj.key));
-  if (obj.name) head.append(el("span", "muted", obj.name));
+  // An object known by its name (Albireo) isn't named twice.
+  if (obj.name && !sameName(obj.name, obj.ids[0] ?? obj.key)) head.append(el("span", "muted", obj.name));
   header.append(head);
   const others = obj.ids.slice(1);
   if (others.length) {
@@ -91,7 +92,7 @@ try {
   const [sessions, notebooks, catalog] = await Promise.all([loadSessions(), loadNotebooks(), loadObjects()]);
   const obj = id && findObject(observedObjects(sessions, catalog), id);
   if (!obj) throw new Error(id ? `no observations of "${id}"` : "no object in the link");
-  document.title = `${obj.ids[0]}${obj.name ? ` · ${obj.name}` : ""} · Observing Log`;
+  document.title = `${obj.ids[0]}${obj.name && !sameName(obj.name, obj.ids[0]) ? ` · ${obj.name}` : ""} · Observing Log`;
   main.replaceChildren(
     renderHeader(obj, catalog[obj.key]),
     ...renderSketches(obj),

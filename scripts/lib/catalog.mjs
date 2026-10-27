@@ -1,7 +1,7 @@
 // Catalog lookups for observed objects, from catalog sources. A source is a
 // module in scripts/lib/catalogs/ exporting
 //
-//   { name, version, url, license, load() }
+//   { name, by?, version, url, license, load() }
 //
 // where load() returns an async lookup(designation) -> entry or null, and
 // an entry is { ids, name, names?, type, constellation, magnitude, size,
@@ -21,10 +21,12 @@ import { existsSync, readFileSync } from "node:fs";
 import { compareIds } from "../../site/catalog.js";
 import { designation, keyOf } from "./catalogs/common.mjs";
 import { openngc } from "./catalogs/openngc.mjs";
+import { simbad } from "./catalogs/simbad.mjs";
 
 export { normalize } from "./catalogs/common.mjs";
 
-export const SOURCES = [openngc];
+// OpenNGC first; SIMBAD (over the network) only for what it doesn't know.
+export const SOURCES = [openngc, simbad];
 export const MAPPINGS_FILE = "data/personalObjectMappings.json";
 
 // Kacy's mappings as { from, to } designations, with the rest of each entry.
@@ -87,7 +89,7 @@ export async function enrichSessions(sessions, lookup) {
 export function objectsFile(objects, sources = SOURCES) {
   const used = sources.filter((s) => Object.values(objects).some((o) => o.source === s.name));
   return {
-    sources: used.map(({ name, version, url, license }) => ({ name, version, url, license })),
+    sources: used.map(({ name, by, version, url, license }) => ({ name, ...(by ? { by } : {}), version, url, license })),
     objects,
   };
 }
