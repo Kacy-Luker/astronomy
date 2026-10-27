@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Kacy's catalog mappings",
+  "description": "An object written as `from` is looked up as `to`, and takes its info and other designations from it. Read by scripts/lib/catalog.mjs; linked from the site's footer.",
+  "type": "object",
+  "required": ["mappings"],
+  "additionalProperties": false,
+  "$defs": {
+    "object": {
+      "type": "object",
+      "required": ["catalog", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "catalog": { "description": "Messier, NGC, IC, Caldwell, or another catalog's prefix (e.g. Sh2).", "type": "string", "minLength": 1 },
+        "object": { "description": "The object's number in that catalog, e.g. \"102\".", "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "properties": {
+    "description": { "type": "string" },
+    "mappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to"],
+        "additionalProperties": false,
+        "properties": {
+          "from": { "$ref": "#/$defs/object" },
+          "to": { "$ref": "#/$defs/object" },
+          "why": { "type": "string" }
+        }
+      }
+    }
+  }
+}
