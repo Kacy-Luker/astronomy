@@ -4,6 +4,10 @@
 # the favorite with scripts/favorite.mjs, opens a pull request, links it on
 # the issue and closes the issue. Only issues Kacy (the repo owner) opens
 # are acted on.
+#
+# The pull request merges itself: it's checked here (validation, and only
+# session files changed), then GitHub's auto-merge waits for the required
+# checks (preview: validate and build; docs) before merging it.
 name: Favorite
 
 on:
@@ -46,6 +50,10 @@ jobs:
           node scripts/favorite.mjs "$SESSION" "$NUMBER" $OFF --summary "$RUNNER_TEMP/summary.md"
           printf '\nCloses #%s\n' "$ISSUE" >> "$RUNNER_TEMP/summary.md"
       - run: npm run validate
+      - name: Check only session files changed
+        run: |
+          OTHER=$(git status --porcelain | grep -v ' data/sessions/[a-z0-9-]*\.json$' || true)
+          [ -z "$OTHER" ] || { echo "::error::Unexpected changes:"; echo "$OTHER"; exit 1; }
       - id: pr
         uses: peter-evans/create-pull-request@v8
         with:
@@ -55,9 +63,22 @@ jobs:
           commit-message: ${{ env.TITLE }}
           body-path: ${{ runner.temp }}/summary.md
           add-paths: data/sessions
+      # Auto-merge needs "Allow auto-merge" on in the repo settings; without
+      # it the pull request waits for Kacy to merge it.
+      - name: Merge when the checks pass
+        id: auto
+        if: steps.pr.outputs.pull-request-url
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.ASTRONOMY_TOKEN }}
+          URL: ${{ steps.pr.outputs.pull-request-url }}
+        run: gh pr merge "$URL" --auto --merge
       - name: Link the pull request on the issue
         if: steps.pr.outputs.pull-request-url
         env:
           GH_TOKEN: ${{ github.token }}
           URL: ${{ steps.pr.outputs.pull-request-url }}
-        run: gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "Pull request: $URL. Merge it to update the site."
+          AUTO: ${{ steps.auto.outcome }}
+        run: |
+          if [ "$AUTO" = success ]; then NEXT="It merges itself once its checks pass."; else NEXT="Merge it to update the site."; fi
+          gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "Pull request: $URL. $NEXT"

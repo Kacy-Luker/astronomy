@@ -268,7 +268,10 @@ must match `PageReading` in `read-page.mjs`).
   pre-filled issue ("Favorite: …"/"Unfavorite: …" with `Session:` and
   `Observation:` lines); `.github/workflows/favorite.yml` acts only on the
   repo owner's issues, runs `scripts/favorite.mjs` (which clears the
-  object's other favorites) and opens a PR that closes the issue. The
+  object's other favorites), checks only `data/sessions/` changed, and
+  opens a PR that closes the issue, with auto-merge on (`gh pr merge
+  --auto --merge`, so it waits for the required checks; if the repo's
+  auto-merge setting is off, the issue comment says to merge by hand). The
   favorite's sketch is first on the object page and is the Sketches
   thumbnail; `fav=1` is the Favorites only filter.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in

@@ -233,7 +233,11 @@ Mark your favorite observation of an object in admin mode: each
 observation on an object page has a star (☆, or ★ for the favorite).
 Tapping it opens a ready-made GitHub issue ("Favorite: M31 on Oct 11,
 2026"); tap **Submit** and the **Favorite** workflow opens a pull request
-setting it, links it on the issue, and the issue closes when you merge.
+setting it and links it on the issue. The pull request merges itself once
+its checks pass (the workflow validates the data and refuses any change
+outside the session files, then the `preview` and `docs` checks run), and
+the issue closes with it. This needs **Settings → General → Allow
+auto-merge** on; without it, merge the pull request yourself.
 An object has one favorite: a new one replaces the old. Tap ★ to clear it
 the same way. Only issues you open are acted on. The favorite is stored as
 `"favorite": true` on the observation. Its sketch is shown first on the
