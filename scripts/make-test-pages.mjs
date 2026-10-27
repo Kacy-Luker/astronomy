@@ -1,7 +1,8 @@
 // Draw the test site's page images (#64) from the test data: made-up
 // notebook pages, never Kacy's scans. Writes test-data/scans/<id>/NN.jpg
 // (and .clean.jpg for test-001's session pages, so both views are tested),
-// cover-front.jpg, and each session's header_box and observation boxes,
+// cover-front.jpg, unblurred/<id>-NN.jpg for pages with redact boxes (for
+// the import test), and each session's header_box and observation boxes,
 // which come from where this script draws them.
 //
 //   node scripts/make-test-pages.mjs
@@ -16,7 +17,7 @@ import { redact } from "./lib/pages.mjs";
 
 const DIR = "test-data";
 const W = 1000, H = 1600;
-const PAPER = "#f4f1e8", STAMP = "#5b4b9c", PENCIL = "#4a4a4a";
+const PAPER = "#f4f1e8", STAMP = "#5b4b9c", PENCIL = "#3a3a3a";
 const ROMAN = ["I", "II", "III", "IV", "V"];
 
 const readAll = async (dir) => Promise.all((await readdir(dir)).filter((f) => f.endsWith(".json")).sort()
@@ -67,6 +68,9 @@ function entry(o, top, h, crossed = false) {
   // on the real sheets, so scripts/lib/circle.mjs finds it for the thumbnails.
   const r = 130, cx = W - 60 - r - 20, cy = top + 20 + r;
   const rand = random(`${o.catalog_id}${o.local_time}`);
+  // A shaded glow, as the real sketches have for nebulae and galaxies;
+  // its tone also gives the page the contrast scripts/lib/match.mjs needs.
+  const glow = `<ellipse cx="${cx}" cy="${cy}" rx="${Math.round(r * (0.6 + rand() * 0.3))}" ry="${Math.round(r * (0.45 + rand() * 0.2))}" fill="url(#glow)" transform="rotate(${Math.round(rand() * 180)} ${cx} ${cy})"/>`;
   const stars = Array.from({ length: 40 }, () => {
     const a = rand() * 2 * Math.PI, d = Math.sqrt(rand()) * (r - 8);
     return `<circle cx="${(cx + d * Math.cos(a)).toFixed(1)}" cy="${(cy + d * Math.sin(a)).toFixed(1)}" r="${(1 + rand() * 3).toFixed(1)}" fill="${PENCIL}"/>`;
@@ -78,13 +82,15 @@ function entry(o, top, h, crossed = false) {
     label(50, at(2), "LT / UT") + text(150, at(2), [o.local_time, o.ut].map(shown).join(" / ")) +
     label(50, at(3), "SEEING") + circled(190, at(3), o.seeing) +
     label(50, at(4), "TRANS") + circled(190, at(4), o.transparency) +
-    label(50, at(5), "EP / MAG") + text(160, at(5), ep) + label(400, at(5), "FILTER") + text(480, at(5), shown(o.filter)) +
-    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${STAMP}" stroke-width="4"/>` + stars +
+    label(50, at(5), "EP / MAG") + text(160, at(5), ep) + label(430, at(5), "FILTER") + text(510, at(5), shown(o.filter)) +
+    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${STAMP}" stroke-width="4"/>` + glow + stars +
     lines.map((l, i) => text(50, at(6) + i * 30, l, { size: 22 })).join("") +
     (crossed ? `<path d="M40 ${top + 10} L${W - 40} ${top + h - 10} M${W - 40} ${top + 10} L40 ${top + h - 10}" stroke="${PENCIL}" stroke-width="5"/>` : "");
 }
 const page = (body, { number, fill = PAPER } = {}) => Buffer.from(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect width="100%" height="100%" fill="${fill}"/>${body}` +
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">` +
+  `<defs><radialGradient id="glow"><stop offset="0" stop-color="${PENCIL}" stop-opacity="1"/><stop offset="1" stop-color="${PENCIL}" stop-opacity="0"/></radialGradient></defs>` +
+  `<rect width="100%" height="100%" fill="${fill}"/>${body}` +
   (number % 2 ? text(W - 40, 40, number, { size: 24, color: "#222", italic: false, anchor: "end" }) : "") + "</svg>");
 
 // Session pages: each session's NEW SESSION block on its first page, then
@@ -155,6 +161,7 @@ for (const { file, data: nb } of notebooks) {
   const out = join(DIR, "scans", nb.id);
   await rm(out, { recursive: true, force: true });
   await mkdir(out, { recursive: true });
+  await mkdir(join(DIR, "unblurred"), { recursive: true });
   const byPage = layout(nb.id);
   for (const [i, p] of nb.pages.entries()) {
     const name = join(out, `${String(i + 1).padStart(2, "0")}.jpg`);
@@ -166,7 +173,12 @@ for (const { file, data: nb } of notebooks) {
         : items.map((it) => (it.o ? entry(it.o, Math.round(it.box[1] * H), Math.round(it.box[3] * H)) : header(it.s, Math.round(it.box[1] * H), Math.round(it.box[3] * H)))).join("");
       svg = page(body, { number: p.number });
     } else svg = frontMatter(nb, p, i);
-    const image = await redact(await sharp(svg).png().toBuffer(), p.redact ?? []);
+    const drawn = await sharp(svg).png().toBuffer();
+    // The import test (tests/import.test.mjs) feeds the unblurred title page
+    // to the import, which must blur it; kept outside scans/, so it isn't
+    // published. Its contact details are made up.
+    if (p.redact) await sharp(drawn).jpeg({ quality: 70, mozjpeg: true }).toFile(join(DIR, "unblurred", `${nb.id}-${String(i + 1).padStart(2, "0")}.jpg`));
+    const image = await redact(drawn, p.redact ?? []);
     await sharp(image).jpeg({ quality: 70, mozjpeg: true }).toFile(name);
     if (nb.id === "test-001" && p.kind === "session") await sharp(image).jpeg({ quality: 70, mozjpeg: true }).toFile(name.replace(/\.jpg$/, ".clean.jpg"));
   }
