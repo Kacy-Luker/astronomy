@@ -262,6 +262,12 @@ a { color: var(--accent); }
 .map-frame.leaflet-container { background: var(--surface); font: inherit; }
 .map-frame .leaflet-popup-content a, .map-frame .leaflet-popup-close-button { color: var(--accent); }
 .map-popup-link { margin-top: .4rem; }
+.map-popup-more {
+  margin-top: .4rem; padding: 0; border: 0; background: none;
+  color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer;
+}
+/* About six sites, then the list scrolls inside the popup. */
+.map-popup-list { max-height: 10.5rem; overflow-y: auto; overscroll-behavior: contain; }
 .map-note { margin: .5rem 0 0; font-size: .9rem; }
 .map-note:empty { display: none; }
 
