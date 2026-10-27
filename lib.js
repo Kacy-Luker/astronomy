@@ -159,8 +159,9 @@ export function imageFigure(page, alt, caption) {
 
 // Admin mode is for Kacy: turned on by opening any page with ?admin=on
 // (?admin=off turns it off), which this browser remembers (previews share
-// the setting, being on the same site). It adds an admin bar to the footer with a toggle for the Edit
-// links, which open a data file in GitHub's web editor.
+// the setting, being on the same site). It adds an admin bar to the footer
+// with the how-to page (help.html) and a toggle for the Edit links, which
+// open a data file in GitHub's web editor.
 const REPO = "https://github.com/Kacy-Luker/astronomy";
 const ADMIN_KEY = "observing-log-admin";
 const EDIT_KEY = "observing-log-edit";
@@ -200,6 +201,6 @@ if (adminMode) {
   toggle.addEventListener("click", () => { store(EDIT_KEY, !editMode); location.reload(); });
   const off = new URL(location.href);
   off.searchParams.set("admin", "off");
-  bar.append(toggle, " · ", link(off.href, "Leave admin mode"));
+  bar.append(link("help.html", "How to add a session"), " · ", toggle, " · ", link(off.href, "Leave admin mode"));
   footer.append(bar);
 }
