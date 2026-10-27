@@ -6,7 +6,7 @@ import {
   objectName, plural, sessionHref,
 } from "./lib.js";
 import { CATALOGS, catalogOf, compareIds } from "./catalog.js";
-import { observedObjects } from "./objects.js";
+import { observedObjects, sameName } from "./objects.js";
 import { todoCount } from "./todos.js";
 
 const summary = document.getElementById("summary");
@@ -82,7 +82,7 @@ function renderObjectRow(id, obj) {
   item.append(text);
   const head = el("div", "session-head");
   head.append(link(objectHref(id), id, "object-id"));
-  if (obj.name) head.append(el("span", null, obj.name));
+  if (obj.name && !sameName(obj.name, id)) head.append(el("span", null, obj.name));
   for (const other of obj.ids.filter((x) => x !== id)) head.append(el("span", "tag", other));
   text.append(head);
   const { o, s } = obj.seen[0];
