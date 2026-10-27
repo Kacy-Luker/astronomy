@@ -75,7 +75,7 @@ const RANGE = ["from", "to"];
 export const FILTER_KEYS = ["q", ...FILTERS.map((f) => f.key), ...RANGE, "todo"];
 
 // A blank field on the observation or its NEW SESSION block (site/todos.js).
-const hasTodo = (o, s) => [...entryFields(o), ...headerFields(s)].some(([, v]) => isBlank(v));
+export const hasTodo = (o, s) => [...entryFields(o), ...headerFields(s)].some(([, v]) => isBlank(v));
 
 // The search and filters in the URL: { q, program, ..., from, to, todo }.
 export function readFilters() {

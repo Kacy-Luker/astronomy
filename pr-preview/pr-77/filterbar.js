@@ -2,15 +2,27 @@
 // Filters button opening a dropdown for each filter (site/search.js), a
 // date range and "Has to-dos", and the active filters as chips with an ×
 // and Clear all. Changes go into the URL and to onChange(state).
+//
+// docs are what the page shows (all observations on the home page, one
+// session's on its page, ...), and the dropdowns offer only their values,
+// hiding a filter with a single choice. When the page lists fewer than two
+// things (count: observations, or sessions on a notebook page), there's
+// nothing to narrow: the bar is hidden and the page gets an empty state,
+// while the URL keeps the filters for the pages after it.
 import { CATALOGS } from "./catalog.js";
 import { el } from "./lib.js";
-import { FILTERS, activeFilters, keepFilters, readFilters, writeFilters } from "./search.js";
+import { FILTERS, activeFilters, hasTodo, keepFilters, readFilters, writeFilters } from "./search.js";
 
 const CATALOG_ORDER = [...CATALOGS.map((c) => c.name), "Other"];
 
-export function filterBar(docs, onChange, { placeholder = "Search" } = {}) {
+export function filterBar(docs, onChange, { placeholder = "Search", count = docs.length } = {}) {
   let state = readFilters();
   const bar = el("div", "search");
+  if (count < 2) {
+    bar.hidden = true;
+    const none = Object.fromEntries(Object.keys(state).map((k) => [k, ""]));
+    return { element: bar, state: () => none };
+  }
 
   const row = el("div", "search-row");
   const input = el("input");
@@ -46,18 +58,25 @@ export function filterBar(docs, onChange, { placeholder = "Search" } = {}) {
     controls[f.key] = select;
     panel.append(labelled(f.label, select));
   }
+  // A date range only with more than one night, and Has to-dos only when
+  // some observations have them and some don't.
+  const dates = new Set(docs.map((d) => d.s.date));
   for (const [key, text] of [["from", "From"], ["to", "To"]]) {
+    if (dates.size < 2 && !state.from && !state.to) continue;
     const date = el("input");
     date.type = "date";
     controls[key] = date;
     panel.append(labelled(text, date));
   }
-  const todo = el("input");
-  todo.type = "checkbox";
-  controls.todo = todo;
-  const todoLabel = el("label", "filter check");
-  todoLabel.append(todo, " Has to-dos");
-  panel.append(todoLabel);
+  const todos = new Set(docs.map((d) => hasTodo(d.o, d.s)));
+  if (todos.size > 1 || state.todo) {
+    const todo = el("input");
+    todo.type = "checkbox";
+    controls.todo = todo;
+    const todoLabel = el("label", "filter check");
+    todoLabel.append(todo, " Has to-dos");
+    panel.append(todoLabel);
+  }
 
   const LABELS = Object.fromEntries([...FILTERS.map((f) => [f.key, f.label]), ["from", "From"], ["to", "To"], ["todo", "Has to-dos"]]);
   function update(next) {

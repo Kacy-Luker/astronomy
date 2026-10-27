@@ -137,7 +137,7 @@ try {
     const n = sessions.filter((s) => hit.has(s.id)).length;
     note.textContent = on ? `${n} of ${plural(sessions.length, "session")} match.` : "";
   };
-  const bar = filterBar(docs, draw);
+  const bar = filterBar(docs.filter((d) => d.s.notebook === nb.id), draw, { count: sessions.length });
   main.replaceChildren(
     bar.element,
     renderHeader(nb, sessions),

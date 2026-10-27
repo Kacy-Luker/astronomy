@@ -107,7 +107,7 @@ try {
     cards.forEach((card, i) => card.classList.toggle("dim", Boolean(on) && !hits[i]));
     note.textContent = on ? `${hits.filter(Boolean).length} of ${plural(hits.length, "observation")} match.` : "";
   };
-  const bar = filterBar(docs, draw);
+  const bar = filterBar(mine, draw);
   main.replaceChildren(
     bar.element,
     renderHeader(s, notebook),
