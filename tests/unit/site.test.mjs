@@ -2,6 +2,7 @@
 // their years, and map spots.
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { catalogOf, compareIds } from "../../site/catalog.js";
 import { isNA, sessionTodos, todoCount } from "../../site/todos.js";
 
 // site/search.js loads site/lib.js, which looks at the page; give it an
@@ -35,4 +36,11 @@ test("map spots round to 0.1°, and need both coordinates", () => {
   assert.equal(spotOf({ site: { lat: 36.94, lon: -102.98 } }), "36.9,-103");
   assert.equal(spotOf({ site: { name: "Library" } }), null);
   assert.equal(spotOf({ site: { lat: "N/A", lon: "N/A" } }), null);
+});
+
+test("designations sort by catalog, then number", () => {
+  const ids = ["Sh2-155", "NGC 224", "M13", "Albireo", "M2", "Sh2-27", "C14", "IC 434"];
+  assert.deepEqual(ids.sort(compareIds), ["M2", "M13", "NGC 224", "IC 434", "C14", "Sh2-27", "Sh2-155", "Albireo"]);
+  assert.equal(catalogOf("Sh2-155"), "Other");
+  assert.equal(catalogOf("NGC 224"), "NGC");
 });
