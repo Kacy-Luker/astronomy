@@ -253,7 +253,10 @@ must match `PageReading` in `read-page.mjs`).
   applies to the whole page (pages and cards). The Sketches tab's thumbnails
   (`<n>.thumb.jpg`, `.thumb.clean.jpg`, 240 px, shown at 96 px) show just
   the sketch circle, which `scripts/lib/circle.mjs` finds with a Hough
-  search over the entry's ink (the whole entry if none is found). Boxes
+  search over the entry's ink (the whole entry if none is found). Ink is
+  found at full size, darker than 60% of the entry's paper (its median),
+  then mapped onto the 240 px search grid, so thin or faint rings survive
+  (#94; `tests/unit/circle.test.mjs` checks every entry, also faded). Boxes
   are `[x, y, width, height]` fractions; the reader returns them at import
   and Kacy can fix them by hand. `view.html` accepts `scans/` and
   `sketches/` images (also under `test-data/`).
