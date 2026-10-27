@@ -17,6 +17,10 @@ async function readAll(dir) {
 await rm(OUT, { recursive: true, force: true });
 await cp("site", OUT, { recursive: true });
 await cp("schema", join(OUT, "schema"), { recursive: true });
+// Leaflet for the Map tab, served with the site rather than from a CDN.
+await cp("node_modules/leaflet/dist", join(OUT, "vendor", "leaflet"), {
+  recursive: true, filter: (f) => !f.endsWith(".map") && !f.includes("leaflet-src"),
+});
 if (existsSync("scans")) await cp("scans", join(OUT, "scans"), { recursive: true });
 
 const sessions = await readAll("data/sessions");
