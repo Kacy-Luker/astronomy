@@ -15,8 +15,9 @@
     { "kind": "session", "number": 1 },
     { "kind": "session", "number": 2 },
     { "kind": "session", "number": 3 },
-    { "kind": "session", "number": 4, "open": true },
-    { "kind": "blank", "number": 5, "open": true },
+    { "kind": "session", "number": 4 },
+    { "kind": "session", "number": 5, "open": true },
+    { "kind": "blank", "number": 6, "open": true },
     { "kind": "info" }
   ]
 }

@@ -394,7 +394,8 @@ leaves `gh-pages/pr-preview/` alone.
 `kacyluker.com/astronomy/test/` is the site with made-up test data, for
 trying features your own notebooks don't use yet: an object seen four
 times under different designations (M31 / NGC 224), Messier, NGC, IC,
-Caldwell and non-catalog objects (Albireo, Saturn), a completed notebook
+Caldwell and non-catalog objects (Albireo, Saturn, the Large Magellanic
+Cloud), a southern-sky session in Australia, a completed notebook
 with its contents and index, N/A and blank fields, a crossed-out page, two
 sessions on one page, a session without coordinates, a favorite, and three
 sites at one map spot (Okie-Tex in two years, Camp Billy Joe and Black
