@@ -8,7 +8,9 @@
 // coordinates, telescope, eyepiece, filter, magnification, observers,
 // program, notebook and page, and description. Case and accents don't
 // matter.
+import { catalogOf } from "./catalog.js";
 import { formatDate, seeingText, transparencyText } from "./lib.js";
+import { entryFields, headerFields, isBlank } from "./todos.js";
 
 const fold = (text) => String(text).normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
@@ -34,25 +36,87 @@ function observationText(o, s, notebook) {
   return fold(parts.filter((x) => x != null && x !== false && x !== "").join(" \n "));
 }
 
-// [{ o, s, text }] for every observation, sessions in the order given.
+// [{ o, s, text, values }] for every observation, sessions in the order
+// given; values holds each filter's values for it.
 export function searchDocuments(sessions, notebooks = []) {
   const byId = new Map(notebooks.map((n) => [n.id, n]));
-  return sessions.flatMap((s) => s.observations.map((o) => ({ o, s, text: observationText(o, s, byId.get(s.notebook)) })));
+  return sessions.flatMap((s) => s.observations.map((o) => {
+    const nb = byId.get(s.notebook);
+    const values = Object.fromEntries(FILTERS.map((f) => [f.key, f.values(o, s, nb).filter(Boolean)]));
+    return { o, s, text: observationText(o, s, nb), values };
+  }));
 }
 
-// The search in the URL (?q=), or "" for none.
-export const searchQuery = () => new URLSearchParams(location.search).get("q") ?? "";
 const words = (q) => fold(q).split(/\s+/).filter(Boolean);
 
 export function matches(doc, q) {
   return words(q).every((w) => doc.text.includes(w));
 }
 
-// Keeps the query in the URL (replacing, so typing doesn't pile up history)
-// and the tab or anchor after #.
-export function setSearchQuery(q) {
+// Filters (#26): each narrows to observations whose field equals the value
+// picked. Like the search, they're in the URL (?site=Okie-Tex%202026&...),
+// so a filtered view can be shared, and links between pages keep them.
+// Options come from the observations themselves.
+const name = (x) => (x == null || x === "" || x === "N/A" ? null : String(x));
+export const FILTERS = [
+  { key: "program", label: "Program", values: (o, s) => [name(s.program)] },
+  { key: "catalog", label: "Catalog", values: (o) => [...new Set((o.ids ?? [o.catalog_id]).map(catalogOf))] },
+  { key: "site", label: "Site", values: (o, s) => [name(s.site?.name)] },
+  { key: "scope", label: "Telescope", values: (o, s) => [name(s.scope?.name)] },
+  { key: "eyepiece", label: "Eyepiece", values: (o) => [name(o.eyepiece)] },
+  { key: "filter", label: "Filter", values: (o) => [name(o.filter)] },
+  { key: "observer", label: "Observer", values: (o, s) => (s.observers ?? []).map(name) },
+  { key: "notebook", label: "Notebook", values: (o, s, nb) => [name(nb?.title ?? s.notebook)] },
+  { key: "seeing", label: "Seeing", values: (o) => [Number.isInteger(o.seeing) ? seeingText(o.seeing) : null] },
+  { key: "transparency", label: "Transparency", values: (o) => [Number.isInteger(o.transparency) ? transparencyText(o.transparency) : null] },
+];
+// Also: a date range (from, to) and "has to-dos" (todo=1).
+const RANGE = ["from", "to"];
+export const FILTER_KEYS = ["q", ...FILTERS.map((f) => f.key), ...RANGE, "todo"];
+
+// A blank field on the observation or its NEW SESSION block (site/todos.js).
+const hasTodo = (o, s) => [...entryFields(o), ...headerFields(s)].some(([, v]) => isBlank(v));
+
+// The search and filters in the URL: { q, program, ..., from, to, todo }.
+export function readFilters() {
+  const params = new URLSearchParams(location.search);
+  return Object.fromEntries(FILTER_KEYS.map((k) => [k, params.get(k) ?? ""]));
+}
+
+export const activeFilters = (state) => FILTER_KEYS.filter((k) => k !== "q" && state[k]);
+
+export function matchesAll(doc, state) {
+  if (!matches(doc, state.q ?? "")) return false;
+  for (const f of FILTERS) {
+    if (state[f.key] && !doc.values[f.key].includes(state[f.key])) return false;
+  }
+  if (state.from && doc.s.date < state.from) return false;
+  if (state.to && doc.s.date > state.to) return false;
+  if (state.todo && !hasTodo(doc.o, doc.s)) return false;
+  return true;
+}
+
+export function writeFilters(state) {
   const url = new URL(location.href);
-  if (q.trim()) url.searchParams.set("q", q);
-  else url.searchParams.delete("q");
+  for (const k of FILTER_KEYS) {
+    if (state[k] && String(state[k]).trim()) url.searchParams.set(k, state[k]);
+    else url.searchParams.delete(k);
+  }
   history.replaceState(history.state, "", url);
+}
+
+// Links to the site's own pages keep the search and filters, so they stay
+// applied from page to page. Call after drawing links.
+export function keepFilters(root = document) {
+  const state = readFilters();
+  for (const a of root.querySelectorAll("a[href]")) {
+    const href = a.getAttribute("href");
+    if (!/^(\.\/|[a-z]+\.html)/.test(href) || href.startsWith("view.html") || href.startsWith("help.html")) continue;
+    const url = new URL(href, location.href);
+    for (const k of FILTER_KEYS) {
+      if (state[k]) url.searchParams.set(k, state[k]);
+      else url.searchParams.delete(k);
+    }
+    a.setAttribute("href", (url.pathname.split("/").pop() || "./") + url.search + url.hash);
+  }
 }

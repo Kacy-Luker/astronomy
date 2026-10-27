@@ -205,11 +205,32 @@ a { color: var(--accent); }
 
 /* The search box above the home page's tabs (site/search.js). */
 .search { margin: 0 0 1rem; }
-.search input {
-  width: 100%; box-sizing: border-box; font: inherit; color: var(--text);
-  background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .6rem .8rem;
+.search-row { display: flex; gap: .5rem; }
+.search input[type="search"], .filters-panel select, .filters-panel input[type="date"] {
+  font: inherit; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px; padding: .5rem .6rem; min-width: 0;
 }
-.search input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.search input[type="search"] { flex: 1; padding: .6rem .8rem; }
+.search :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filters-button, .chip {
+  font: inherit; color: var(--accent); background: var(--surface); cursor: pointer;
+  border: 1px solid var(--border); border-radius: 999px; padding: .4rem .9rem; white-space: nowrap;
+}
+.filters-button[aria-expanded="true"] { border-color: var(--accent); }
+.filters-panel {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: .6rem .75rem;
+  margin-top: .75rem; padding: .75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+}
+.filters-panel[hidden] { display: none; }
+.filter { display: flex; flex-direction: column; gap: .25rem; font-size: .9rem; }
+.filter.check { flex-direction: row; align-items: center; gap: .4rem; align-self: end; padding-bottom: .5rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+.chips:empty { display: none; }
+.chip { font-size: .85rem; padding: .2rem .7rem; }
+.chip.clear { color: var(--muted); }
+/* Observations outside the search and filters, on pages that show them all. */
+.dim { opacity: .35; }
+.filter-note:empty { display: none; }
 .no-match { list-style: none; padding: .5rem 0; }
 
 /* Home page tabs. */
