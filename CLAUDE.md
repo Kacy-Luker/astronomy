@@ -20,13 +20,21 @@ needs to change things safely.
 - Show Kacy before/after evidence (zoomed crops, screenshots) for anything
   that changes how pages look, and ask before building when a choice is
   theirs (privacy, layout, workflow).
-- Test site changes in headless Chromium (Playwright with
+- Test site changes in headless Chromium too (Playwright with
   `executablePath: '/opt/pw-browsers/chromium'` in cloud sessions) at
   390px and desktop width. The site is dark only (`site/style.css`
   `:root`); there is no light theme. Serve `dist/` under `/astronomy/` to
   match production paths.
-- `npm run validate` and `npm run build` must pass. Every PR runs them and
-  gets a preview at `kacyluker.com/astronomy/pr-preview/pr-<n>/`.
+- `npm run validate`, `npm run build` and `npm test` must pass. Every PR
+  runs them (`preview.yml`, `test.yml`) and gets a preview at
+  `kacyluker.com/astronomy/pr-preview/pr-<n>/`. `npm test` is unit tests
+  (`tests/unit/*.test.mjs`, `node --test`; site modules need a stub
+  `document`/`location`, see `tests/unit/site.test.mjs`) then Playwright
+  (`tests/site.spec.mjs`, `playwright.config.mjs`) against a `TEST_SITE=1`
+  build served under `/astronomy/` by `tests/serve.mjs`, at 390px and
+  1280px; it fails on console errors, failed requests and sideways
+  scroll. Wait for loaded content before asserting a negative (a page's
+  "Loading" text passes `not.toContainText`). Add tests with features.
 - Test data (#64): `test-data/` is made-up data shaped like `data/`
   (notebooks, sessions, `objects.json`; validated the same way), with
   page images drawn by `scripts/make-test-pages.mjs` (which also writes
@@ -75,7 +83,8 @@ needs to change things safely.
 | `test-data/` | The test site's made-up data, laid out like `data/`, with drawn page images in `test-data/scans/` |
 | `site/` | Static pages: home (Notebooks, Sessions, Sketches, Equipment and Map tabs, `#notebooks`, `#sketches/ngc`, `#equipment`, `#map` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
 | `scripts/` | Build, validation, import, splitting, cleaning |
-| `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`), `favorite.yml` (favorites from issues) |
+| `tests/` | `npm test`: `tests/unit/*.test.mjs` (node --test) and `tests/site.spec.mjs` (Playwright) |
+| `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`), `favorite.yml` (favorites from issues), `test.yml` (`npm test`) |
 
 On the sheet Kacy writes N/A where a field doesn't apply; that's stored
 as `"N/A"` (the schema allows it for numbers and times too). A blank field
