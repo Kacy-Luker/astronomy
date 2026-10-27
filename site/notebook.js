@@ -64,9 +64,9 @@ function caption(page, sessionsById) {
 }
 
 // Pages come in scan order, two to a spread like the open book. The outside
-// front cover comes first on its own, as a right-hand page; when the inside
-// front cover isn't shown, the cover takes its side, next to the title page
-// (or whatever page faces it). Back matter
+// front cover comes first, on the left of the title page (or whatever page
+// faces it), since the inside front cover is never shown; on its own when
+// the first spread has nothing for it to face. Back matter
 // (index, info page) is paired from the end of the book, since the blank
 // pages before it aren't scanned: the info page is the last left-hand page.
 // Pages that aren't shown leave their side of the spread empty, so facing

@@ -52,9 +52,9 @@ const notebooks = await Promise.all((await readAll("data/notebooks")).map(async 
       const { width, height } = await sharp(image).metadata();
       // Pages that will still change aren't published until they're final. An
       // unfinished notebook also leaves out its blank pages and the categories
-      // not shown in progress.
+      // not shown in progress. Hidden categories are never shown.
       const kind = page.kind === "unused" ? "session" : page.kind;
-      const hidden = Boolean(page.open && page.kind !== "session") || (nb.status !== "completed" &&
+      const hidden = Boolean(page.open && page.kind !== "session") || Boolean(category(kind)?.hidden) || (nb.status !== "completed" &&
         (page.kind === "blank" || !category(kind)?.in_progress));
       // The show-through-cleaned copy, when scripts/showthrough.py made one.
       const clean = image.replace(/\.jpg$/, ".clean.jpg");

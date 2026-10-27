@@ -1,5 +1,5 @@
 {
-  "description": "Page categories in the order they appear in a notebook and on the site. in_progress: shown while the notebook is in progress. rescan: rescanned when the notebook is completed. single: a notebook has at most one, so once it's scanned, later uploads skip it. Session pages also cover unused (crossed out) pages; blank pages can be anywhere.",
+  "description": "Page categories in the order they appear in a notebook and on the site. in_progress: shown while the notebook is in progress. hidden: never shown on the site. rescan: rescanned when the notebook is completed. single: a notebook has at most one, so once it's scanned, later uploads skip it. Session pages also cover unused (crossed out) pages; blank pages can be anywhere.",
   "categories": [
     {
       "kind": "front_cover",
@@ -13,6 +13,7 @@
       "kind": "inside_front_cover",
       "label": "Inside front cover",
       "describe": "The inside of the front cover board, usually plain.",
+      "hidden": true,
       "single": true
     },
     {

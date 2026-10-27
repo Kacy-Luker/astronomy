@@ -41,7 +41,7 @@ Pages belong to categories, listed once for every notebook in
 | Category | Kind | In progress | Completing | Only one |
 | --- | --- | --- | --- | --- |
 | Front cover (outside) | `front_cover` | shown | rescanned | yes |
-| Inside front cover | `inside_front_cover` | hidden | | yes |
+| Inside front cover | `inside_front_cover` | never shown | never shown | yes |
 | Title page | `title` | shown | | yes |
 | Table of contents | `contents` | hidden | rescanned | |
 | Scales | `reference` | shown | | |
