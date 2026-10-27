@@ -363,12 +363,54 @@ if (mode === "replace") {
   }
 }
 
+// Adds a page's entries to a session, noting the page.
+function addEntries(session, entries, number, withHeader = false) {
+  if (number != null && !session.pages.includes(number) && (entries.length || withHeader)) {
+    session.pages.push(number);
+    session.pages.sort((a, b) => a - b);
+  }
+  for (const e of entries) {
+    // Same field order as hand-written files; UT and magnification only when written.
+    session.observations.push({
+      catalog_id: e.catalog_id,
+      aka: e.aka,
+      ids: [e.catalog_id],
+      page: number,
+      local_time: e.local_time,
+      ...present({ ut: e.ut }),
+      seeing: e.seeing,
+      transparency: e.transparency,
+      eyepiece: e.eyepiece,
+      ...present({ magnification: e.magnification }),
+      filter: e.filter,
+      description: e.description,
+      ...present({ box: boxOf(e.box) }),
+    });
+  }
+  if (entries.length) {
+    session.observations.sort((a, b) => (a.page ?? 0) - (b.page ?? 0));
+    touched.add(session.id);
+  }
+}
+
 let current = null;
 for (const { u, page } of [...placed].sort((a, b) => list.indexOf(a) - list.indexOf(b))) {
   const r = readings.get(u);
   const number = page.number ?? null;
   if (r.kind !== "session" || (!r.header && !r.entries.length)) continue;
   const recorded = mine().flatMap((s) => s.observations).filter((o) => number != null && o.page === number).length;
+  const added = r.entries.slice(recorded);
+  // When a session starts partway down a page, the entries above its NEW
+  // SESSION block continue the session before it.
+  const above = r.header?.box ? added.filter((e) => e.box && e.box.y < r.header.box.y) : [];
+  if (above.length) {
+    const before = current ?? mine()
+      .filter((s) => number == null || Math.min(...(s.pages ?? [Infinity])) < number)
+      .sort((a, b) => lastPage(a) - lastPage(b))
+      .at(-1);
+    if (before) addEntries(before, above, number);
+    else notes.push(`- Uploaded page ${nn(u)} has entries above its NEW SESSION block but no earlier session to belong to. They were skipped.`);
+  }
 
   if (r.header) {
     current = number != null ? startedOn.get(number) : null;
@@ -401,35 +443,8 @@ for (const { u, page } of [...placed].sort((a, b) => list.indexOf(a) - list.inde
       continue;
     }
   }
-
-  const added = r.entries.slice(recorded);
-  if (number != null && !current.pages.includes(number) && (added.length || r.header)) {
-    current.pages.push(number);
-    current.pages.sort((a, b) => a - b);
-  }
-  for (const e of added) {
-    // Same field order as hand-written files; UT and magnification only when written.
-    current.observations.push({
-      catalog_id: e.catalog_id,
-      aka: e.aka,
-      ids: [e.catalog_id],
-      page: number,
-      local_time: e.local_time,
-      ...present({ ut: e.ut }),
-      seeing: e.seeing,
-      transparency: e.transparency,
-      eyepiece: e.eyepiece,
-      ...present({ magnification: e.magnification }),
-      filter: e.filter,
-      description: e.description,
-      ...present({ box: boxOf(e.box) }),
-    });
-  }
-  if (added.length) {
-    current.observations.sort((a, b) => (a.page ?? 0) - (b.page ?? 0));
-    touched.add(current.id);
-    for (const note of r.uncertain) notes.push(`- ${current.id}, page ${number ?? "?"}: ${note}`);
-  }
+  addEntries(current, added.filter((e) => !above.includes(e)), number, Boolean(r.header));
+  if (added.length) for (const note of r.uncertain) notes.push(`- ${current.id}, page ${number ?? "?"}: ${note}`);
 }
 for (const s of mine()) {
   if (touched.has(s.id) && !s.observations.length) {
