@@ -82,7 +82,8 @@ mappings (`data/personalObjectMappings.json`) are applied first: a mapped
 designation is looked up as its target, so info and other IDs come from
 the target, never the original, and the mapped designation is added to the
 target's `ids` however it's looked up (M102 is NGC 5866, not OpenNGC's
-duplicate of M101). The build adds a footer to every page crediting the
+duplicate of M101). Validation checks the file: each side is a catalog
+designation, nothing maps to itself, and each object is mapped once. The build adds a footer to every page crediting the
 sources in `data/objects.json` and linking the mappings file with each
 mapping's `credit`.
 
