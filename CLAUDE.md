@@ -277,16 +277,17 @@ must match `PageReading` in `read-page.mjs`).
   the one outside service, credited on the map.
 - Favorites (#23): `favorite: true` on an observation, at most one per
   object (validation; objects matched through `data/objects.json`). The
-  admin-mode star (`favoriteLink()` in `site/lib.js`, object page) opens a
-  pre-filled issue ("Favorite: …"/"Unfavorite: …" with `Session:` and
-  `Observation:` lines); `.github/workflows/favorite.yml` acts only on the
-  repo owner's issues, runs `scripts/favorite.mjs` (which clears the
-  object's other favorites), checks only `data/sessions/` changed, and
-  opens a PR that closes the issue, with auto-merge on (`gh pr merge
-  --auto --merge`, so it waits for the required checks; if the repo's
-  auto-merge setting is off, the issue comment says to merge by hand). The
-  favorite's sketch is first on the object page and is the Sketches
-  thumbnail; `fav=1` is the Favorites only filter.
+  admin-mode star (`favoriteLink()` in `site/lib.js`, object page; hidden
+  while showing test data) opens a pre-filled issue ("Favorite: …"/
+  "Unfavorite: …" with `Session:` and `Observation:` lines);
+  `.github/workflows/favorite.yml` acts only on the repo owner's issues,
+  runs `scripts/favorite.mjs` (which clears the object's other
+  favorites), checks only `data/sessions/` changed, and opens a PR that
+  closes the issue, with auto-merge on (`gh pr merge --auto --merge`, so
+  it waits for the required checks; if the repo's auto-merge setting is
+  off, the issue comment says to merge by hand). The favorite's sketch is
+  first on the object page and is the Sketches thumbnail; `fav=1` is the
+  Favorites only filter.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in
   localStorage (`?admin=off` clears it), adds an admin bar across the top
   of the page (after `.preview-banner` when there is one) with a link to `help.html` (Kacy's phone how-to; keep it in step with
