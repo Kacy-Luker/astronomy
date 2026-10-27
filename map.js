@@ -11,6 +11,12 @@
 import { el, formatDate, link, plural, sessionHref } from "./lib.js";
 import { eventName, keepFilters, spotOf } from "./search.js";
 
+// The map opens on the sites in this area (the lower 48 states), so a trip
+// abroad doesn't zoom it out to the whole world; zoom out to see the rest.
+// With none of the matching sites here, it fits them all.
+const HOME = { south: 24, west: -125, north: 50, east: -66 };
+const atHome = ({ lat, lon }) => lat >= HOME.south && lat <= HOME.north && lon >= HOME.west && lon <= HOME.east;
+
 const TILES = {
   url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -125,11 +131,15 @@ export function mapPanel(panel) {
       L.marker([spot.lat, spot.lon], { icon, title: spot.events.join(", ") })
         .bindPopup(() => popup(spot), { autoPanPaddingTopLeft: [5, 80] }).addTo(layer);
     }
-    if (found.length) map.fitBounds(L.latLngBounds(found.map((x) => [x.lat, x.lon])).pad(0.5), { maxZoom: 7 });
+    const home = found.filter(atHome);
+    const shown = home.length ? home : found;
+    if (shown.length) map.fitBounds(L.latLngBounds(shown.map((x) => [x.lat, x.lon])).pad(0.5), { maxZoom: 7 });
     else map.setView([39, -98], 3);
     note.textContent = found.length
       ? `${plural(found.length, "site")} · ${plural(found.reduce((n, x) => n + x.count, 0), "observation")}. Sites are shown to about 10 km.`
       : "No observations with a location match.";
+    const away = home.length ? found.length - home.length : 0;
+    if (away) note.textContent += ` Zoom out for ${plural(away, "site")} outside the USA.`;
     const without = [...new Set(latest.filter(({ s }) => !located(s)).map(({ s }) => s))];
     missing.replaceChildren();
     if (without.length) {
