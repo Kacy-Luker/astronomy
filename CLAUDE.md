@@ -87,7 +87,7 @@ change things safely.
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
 | `test-data/` | The test site's made-up data, laid out like `data/`, with drawn page images in `test-data/scans/` |
 | `site/` | Static pages: home (Notebooks, Sessions, Sketches, Equipment and Map tabs, `#notebooks`, `#sketches/ngc`, `#equipment`, `#map` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
-| `scripts/` | Build, validation, import, splitting, cleaning; every image operation goes through `scripts/lib/image.mjs` (the only file that imports sharp, besides the test-page drawing script), and page reading through `scripts/lib/reader.mjs` |
+| `scripts/` | Build, validation, import, splitting, cleaning; every outside library or tool goes through one module (`docs/DEPENDENCIES.md`; `tests/unit/wrapped.test.mjs` checks it): images `scripts/lib/image.mjs`, page reading `scripts/lib/reader.mjs`, data formats `scripts/lib/schema.mjs`, scans and PDFs `scripts/lib/scans.mjs` (with `scripts/pick-scan.mjs`, the Notebook job's notebook and scan picker) |
 | `tests/` | `npm test`: `tests/unit/*.test.mjs` (node --test) and `tests/site.spec.mjs` (Playwright) |
 | `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`), `favorite.yml` (favorites from issues), `test.yml` (`npm test`) |
 
