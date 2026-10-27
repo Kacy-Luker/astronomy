@@ -2,8 +2,8 @@
 // (#notebooks, #sessions, #sketches, and #sketches/ngc for a catalog) so
 // links and the back button keep it.
 import {
-  el, formatDate, link, loadNotebooks, loadObjects, loadSessions, notebookHref, objectHref, objectName,
-  plural, sessionHref,
+  applyView, el, formatDate, link, loadNotebooks, loadObjects, loadSessions, notebookHref, objectHref,
+  objectName, plural, sessionHref,
 } from "./lib.js";
 import { CATALOGS, catalogOf, compareIds } from "./catalog.js";
 import { observedObjects } from "./objects.js";
@@ -55,18 +55,32 @@ function renderSession(s) {
 // more).
 function renderObjectRow(id, obj) {
   const item = el("li", "object-row");
+  // The latest sketch's circle, small, in the viewer's chosen view (see applyView).
+  const sketch = obj.seen.find(({ o }) => o.sketch)?.o.sketch;
+  if (sketch) {
+    const thumb = link(objectHref(id), null, "sketch-thumb");
+    const img = el("img");
+    img.dataset.original = sketch.thumb.image;
+    img.dataset.clean = sketch.thumb.clean;
+    img.alt = "";
+    img.loading = "lazy";
+    thumb.append(img);
+    item.append(thumb);
+  }
+  const text = el("div", "object-text");
+  item.append(text);
   const head = el("div", "session-head");
   head.append(link(objectHref(id), id, "object-id"));
   if (obj.name) head.append(el("span", null, obj.name));
   for (const other of obj.ids.filter((x) => x !== id)) head.append(el("span", "tag", other));
-  item.append(head);
+  text.append(head);
   const { o, s } = obj.seen[0];
   const latest = link(sessionHref(s.id), formatDate(s.date));
   const meta = el("p", "session-meta");
   meta.append(latest, ` · ${s.site.name}`);
   if (obj.seen.length > 1) meta.append(" · ", link(objectHref(id), plural(obj.seen.length, "observation")));
   else if (o.catalog?.type) meta.append(` · ${o.catalog.type}`);
-  item.append(meta);
+  text.append(meta);
   return item;
 }
 
@@ -101,6 +115,7 @@ function renderObjects(panel, objects) {
   function show(name) {
     const rows = sections.get(name).sort(([a], [b]) => compareIds(a, b));
     list.replaceChildren(...rows.map(([id, obj]) => renderObjectRow(id, obj)));
+    applyView(list);
     for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.catalog === slug(name)));
   }
   group.append(...buttons);

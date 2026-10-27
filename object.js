@@ -1,7 +1,8 @@
 // Object page: everything about one object (object.html?id=M31, or any of
 // its designations) and every observation of it, newest first.
 import {
-  el, formatDate, link, loadNotebooks, loadObjects, loadSessions, plural, sessionHref,
+  el, formatDate, imageFigure, link, loadNotebooks, loadObjects, loadSessions, plural, scanToggle,
+  sessionHref,
 } from "./lib.js";
 import { field, observationDescription, observationFacts } from "./observation.js";
 import { findObject, observedObjects } from "./objects.js";
@@ -34,6 +35,42 @@ function renderHeader(obj, info) {
   return header;
 }
 
+// The sketch from one session at a time: the session's header, then the
+// entry, cut from the page. A toggle switches sessions when there are
+// several, and the scan toggle switches Inverted / Cleaned / Original.
+function renderSketches(obj) {
+  const seen = obj.seen.filter(({ o }) => o.sketch);
+  if (!seen.length) return [];
+  const section = el("section", "scans sketches");
+  section.append(el("h3", null, "Sketch"));
+  const frame = el("div", "sketch-frame");
+  const label = ({ s }) => `${formatDate(s.date)} · ${s.site.name}`;
+  const show = (i) => {
+    const { o, s } = seen[i];
+    // The session's header and the entry, as two images with a gap.
+    frame.replaceChildren(
+      imageFigure(o.sketch.header, `Session header, ${label(seen[i])}`),
+      imageFigure(o.sketch, `${o.catalog_id}, ${label(seen[i])}`, link(sessionHref(s.id), label(seen[i]))),
+    );
+    for (const [j, b] of buttons.entries()) b.setAttribute("aria-pressed", String(j === i));
+  };
+  const group = el("div", "toggle");
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "Session");
+  const buttons = seen.map(({ s }, i) => {
+    const b = el("button", null, formatDate(s.date));
+    b.type = "button";
+    b.addEventListener("click", () => show(i));
+    return b;
+  });
+  group.append(...buttons);
+  const toggle = scanToggle(frame);
+  if (seen.length > 1) section.append(group);
+  section.append(toggle, frame);
+  show(0);
+  return [section];
+}
+
 // One observation: when and where, then the entry as on the sheet.
 function renderSighting({ o, s }, obj, notebooks) {
   const card = el("article", "observation");
@@ -57,6 +94,7 @@ try {
   document.title = `${obj.ids[0]}${obj.name ? ` · ${obj.name}` : ""} · Observing Log`;
   main.replaceChildren(
     renderHeader(obj, catalog[obj.key]),
+    ...renderSketches(obj),
     el("h3", "section-title", "Observations"),
     ...obj.seen.map((x) => renderSighting(x, obj, notebooks)),
   );
