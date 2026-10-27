@@ -29,7 +29,10 @@ needs to change things safely.
   runs them (`preview.yml`, `test.yml`) and gets a preview at
   `kacyluker.com/astronomy/pr-preview/pr-<n>/`. `npm test` is unit tests
   (`tests/unit/*.test.mjs`, `node --test`; site modules need a stub
-  `document`/`location`, see `tests/unit/site.test.mjs`) then Playwright
+  `document`/`location`, see `tests/unit/site.test.mjs`), the import end
+  to end (`tests/import.test.mjs`: test pages as spreads, hand-written
+  readings in `.import-cache/`, `CATALOG_SOURCES=""`, Python for
+  show-through) then Playwright
   (`tests/site.spec.mjs`, `playwright.config.mjs`) against a `TEST_SITE=1`
   build served under `/astronomy/` by `tests/serve.mjs`, at 390px and
   1280px; it fails on console errors, failed requests and sideways
@@ -98,8 +101,9 @@ version, url, license, load() }`, and `load()` returns an async lookup
 from a designation to an entry (`ids`, name, type, constellation,
 magnitude, size, RA/Dec) or null; that is the whole contract, so a source
 can be swapped for another. Each object records its `source`, and
-`data/objects.json` lists the sources used, for the credits. SIMBAD is
-reached over the network: `sim-id` resolves a designation the way its
+`data/objects.json` lists the sources used, for the credits. `CATALOG_SOURCES`
+(names, comma-separated; empty for none) narrows the sources, for tests.
+SIMBAD is reached over the network: `sim-id` resolves a designation the way its
 search box does, then TAP gives the data. In cloud sessions Node's fetch
 needs `NODE_USE_ENV_PROXY=1` to go through the proxy (Actions needs
 nothing). Kacy's
@@ -200,7 +204,9 @@ Remove list only existing notebooks) can be updated.
    session pages from N in scan order, for numbers missed by the scanner.
    An unnumbered blank goes beside the page it faces. A page replaces
    what's there when re-reading (replace, complete) or when that page is
-   open; otherwise it's skipped, so only-one pages aren't duplicated. Add
+   open; otherwise it's skipped, so only-one pages aren't duplicated. On a
+   page where a session starts partway down, entries above its NEW SESSION
+   block (by box) continue the session before it. Add
    mode first matches the upload against published images
    (`scripts/lib/match.mjs`) and reads only new and open pages; on a page
    that already has entries, only entries beyond that count are added, so

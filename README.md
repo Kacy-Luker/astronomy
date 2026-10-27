@@ -414,7 +414,9 @@ showing test data, since favorites only change the real data.
 
 The test data lives in `test-data/` (notebooks, sessions and
 `objects.json`, checked by `npm run validate` like `data/`). Its page
-images are drawn by `node scripts/make-test-pages.mjs`, which also writes
+images are drawn by `node scripts/make-test-pages.mjs` (plus unblurred
+title pages in `test-data/unblurred/` for the import test, never
+published), which also writes
 each session's `header_box` and boxes; run it after editing the test
 notebooks or sessions, and commit the images. They're made up, with a
 fake phone and email on the blurred title pages, so nothing in them is
@@ -430,6 +432,13 @@ yours.
   order, the JSON layout, to-dos, site names without years, map spots,
   and a privacy check that every `redact` box on every published page
   image, yours and the test data's, is still blurred.
+- **Import test** (`tests/import.test.mjs`): Test Notebook 2's drawn
+  pages, put back into sideways two-page spreads, go through the real
+  import in a scratch folder, with Claude's readings written by hand from
+  the test data (no API key, no catalog lookups). A new import of the
+  first four spreads, then an add with a rescan and a new spread, must
+  give back the test data's notebook and sessions, skip the rescanned
+  pages and blur the title page.
 - **Site tests** (`tests/site.spec.mjs`, Playwright in Chromium) against
   the test site's build, at phone and desktop width: every page loads with
   no errors, failed requests or sideways scroll; the real/test switch;
