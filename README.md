@@ -218,9 +218,9 @@ session or an object seen once has no bar). Tap **Filters** for a
 dropdown per field (program, catalog, site, telescope, eyepiece, filter,
 observer, notebook, seeing, transparency) with the values on that page; a
 field with only one value there isn't shown. There's also a date range
-(with more than one night) and **Has to-dos** (when only some have
-them). Active filters show as chips: tap one to remove it, or **Clear
-all**. They're in the address too
+(with more than one night), **Has to-dos** and **Favorites only** (each
+when only some have them). Active filters show as chips: tap one to
+remove it, or **Clear all**. They're in the address too
 (`?site=Okie-Tex+2026&eyepiece=13mm+Ethos`), and links between pages keep
 them. The home page narrows its tabs; a session page dims the observations
 outside them; an object page shows only the matching observations and
@@ -334,7 +334,7 @@ are left as written until the next import. Planets aren't in either and
 stay as written. The home page's Sketches tab shows one catalog at
 a time, picked with a toggle, and lists every observed object under each
 catalog it's in (M31 under Messier and NGC), in catalog order, with a
-thumbnail of its latest sketch (just the sketch circle, found
+thumbnail of its favorite or latest sketch (just the sketch circle, found
 automatically), its latest observation and a count when there are more.
 Tapping an object opens its page (`object.html?id=M31`): the catalog
 info, its sketch, shown as the session's NEW SESSION block and the entry,

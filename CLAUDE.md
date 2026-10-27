@@ -213,9 +213,9 @@ must match `PageReading` in `read-page.mjs`).
   toggle (`#sketches/ngc`); an object is listed under every catalog it's
   in, in catalog order (`site/catalog.js`, shared with the import:
   Messier, NGC, IC, Caldwell, then others, by number). Each row has a
-  thumbnail of the latest sketch and links to the object page, which shows
-  one sketch at a time (a toggle picks the session) and every observation,
-  newest first. Both use `site/objects.js` for the grouping; the session
+  thumbnail of the favorite or latest sketch and links to the object
+  page, which shows one sketch at a time (a toggle picks the session) and
+  every observation, newest first. Both use `site/objects.js` for the grouping; the session
   and object pages share the entry fields (`site/observation.js`).
 - Sketch images: the build cuts each session's `header_box` (NEW SESSION
   block) and each observation's `box` from their pages, from the cleaned
