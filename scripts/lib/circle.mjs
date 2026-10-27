@@ -6,14 +6,33 @@ import sharp from "sharp";
 
 const W = 240; // search at this width; plenty for a ring a third as wide
 const MIN_SCORE = 3;
+const INK = 0.6; // darker than this share of the paper's brightness
+
+function median(data) {
+  const counts = new Uint32Array(256);
+  for (const v of data) counts[v]++;
+  for (let v = 0, seen = 0; v < 256; v++) if ((seen += counts[v]) >= data.length / 2) return v;
+  return 255;
+}
 
 // { x, y, width, height } of a square around the circle, as fractions of
 // the image, or null when no clear circle is found.
 export async function findCircle(file) {
-  const { data, info } = await sharp(file).greyscale().resize({ width: W }).raw().toBuffer({ resolveWithObject: true });
-  const { width: w, height: h } = info;
+  // Ink is found at full size and then mapped onto the search grid (a cell
+  // is ink if any pixel in it is), so a thin ring isn't averaged away into
+  // the paper by shrinking. "Dark" is relative to this entry's paper (its
+  // median), so a light stamp or a faint scan still counts.
+  const { data, info } = await sharp(file).greyscale().raw().toBuffer({ resolveWithObject: true });
+  const scale = W / info.width;
+  const w = W, h = Math.max(1, Math.round(info.height * scale));
+  const paper = median(data);
+  const ink = new Uint8Array(w * h);
+  for (let y = 0; y < info.height; y++) {
+    const row = Math.min(h - 1, Math.floor(y * scale)) * w;
+    for (let x = 0; x < info.width; x++) if (data[y * info.width + x] < paper * INK) ink[row + Math.min(w - 1, Math.floor(x * scale))] = 1;
+  }
   const points = [];
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (data[y * w + x] < 110) points.push(x, y);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (ink[y * w + x]) points.push(x, y);
 
   // On the stamp the circle is a quarter to two fifths of the entry's width.
   const rMin = Math.round(w * 0.12), rMax = Math.round(w * 0.22);
