@@ -26,7 +26,7 @@
     "started": { "type": ["string", "null"], "format": "date" },
     "finished": { "type": ["string", "null"], "format": "date" },
     "scan": {
-      "description": "How scripts/split-notebook.mjs turns each scanned spread into two pages.",
+      "description": "How the import (scripts/lib/pages.mjs) turns each scanned spread into two pages.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
