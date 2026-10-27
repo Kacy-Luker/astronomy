@@ -233,6 +233,12 @@ a { color: var(--accent); }
 .filter-note:empty { display: none; }
 .no-match { list-style: none; padding: .5rem 0; }
 
+/* Equipment tab: one row per telescope, eyepiece or filter. */
+#equipment .section-title { margin-top: 0; }
+.equipment-row { padding: .5rem 0; border-top: 1px solid var(--border); }
+.equipment-row:first-child { border-top: 0; padding-top: 0; }
+.equipment-row .session-meta { margin: .15rem 0 0; }
+
 /* Home page tabs. */
 .tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
 .tabs [role="tab"] {
@@ -244,6 +250,11 @@ a { color: var(--accent); }
   font-weight: 600;
 }
 .tabs [role="tab"][aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+/* More tabs than fit a phone: the row scrolls sideways, not the page. */
+.tabs { overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs [role="tab"] { white-space: nowrap; flex: none; }
+@media (max-width: 480px) { .tabs [role="tab"] { padding: .5rem .6rem; } }
 .object-rows { list-style: none; margin: 0; padding: 0; }
 .object-row { padding: .5rem 0; border-top: 1px solid var(--border); }
 .object-row:first-child { border-top: 0; padding-top: 0; }
