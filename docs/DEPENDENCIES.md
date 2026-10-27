@@ -15,8 +15,9 @@ fails if another file starts using a wrapped library or tool directly.
 | numpy, scipy, Pillow | Show-through cleaning | `scripts/showthrough.py` | Wrapped (a script) |
 | zod | Data formats: page readings | `scripts/lib/schema.mjs` | Wrapped |
 | ajv | Checking the JSON files against `schema/` | `scripts/validate.mjs` | One file (standard JSON Schema) |
-| GitHub Pages and PR previews | Hosting the site and a preview per PR | `pages.yml`, `preview.yml` | Workflows only |
-| GitHub Actions forms and PRs | Import, Complete and Remove; a PR per change | `notebook-job.yml`, `scripts/sync-workflow.mjs` | Workflows only |
+| GitHub Pages and PR previews | Hosting the site and a preview per PR | `.github/actions/publish`, `preview.yml` | Wrapped (publishing); see GitHub below |
+| GitHub Actions forms and PRs | Import, Complete and Remove; a PR per change | `notebook-job.yml`, `.github/actions/open-pr`, `scripts/sync-workflow.mjs` | GitHub-only; see GitHub below |
+| Node, Python and poppler on the runners | Every workflow's setup | `.github/actions/setup` | Wrapped |
 | Private scans repo | Raw scans, kept out of this public repo | `scripts/lib/scans.mjs`; fetched by `notebook-job.yml` | Wrapped, except the fetch |
 | claude-code-action | The Docs check on PRs | `docs.yml` | Optional |
 | OpenStreetMap tiles | The Map tab's background | `TILES` in `site/map.js` | Wrapped (a constant) |
@@ -160,10 +161,39 @@ validator could take its place.
 - Skip a sheet when the fit between its two sides is weak.
 - Never touch the back matter.
 
-## Not wrapped yet
+## GitHub
 
-These are still called directly. Moving each one behind a module like the
-ones above is the rest of #49:
-- **Publishing and forms:** the build writes a plain static folder with
-  relative paths, so any static host works; the GitHub-specific parts are
-  the workflows and `scripts/sync-workflow.mjs`.
+The scripts don't depend on GitHub: they read and write files in the repo,
+and the site is a plain static folder with relative paths. What's
+GitHub-specific is in the workflows, and the steps several workflows share
+are actions in `.github/actions/`:
+- **`setup`:** Node 22 with `npm ci`, and when asked Python 3.13 with
+  `requirements.txt` and poppler. Every workflow's versions are here.
+- **`open-pr`:** commits paths to a branch and opens a pull request,
+  giving its address. Used by the Notebook job and Favorite.
+- **`publish`:** copies a built folder to the `gh-pages` branch, at the
+  top (keeping `pr-preview/` and `test/`) or in a folder. Used for the
+  live site and the test site.
+
+`tests/unit/wrapped.test.mjs` fails if a workflow uses one of those
+actions directly.
+
+**What moving off GitHub would take:**
+- **Hosting:** serve `npm run build`'s `dist/` (and a `TEST_SITE=1` build
+  under `test/`) from any static host. Replace `publish`. PR previews
+  (`preview.yml`, rossjrw/pr-preview-action) would need the new host's
+  equivalent.
+- **The forms:** Import, Complete notebook and Remove notebook are
+  `workflow_dispatch` forms whose dropdowns `scripts/sync-workflow.mjs`
+  rewrites. Elsewhere they'd be any way of running
+  `scripts/import-notebook.mjs`, `import-cover.mjs` or
+  `remove-notebook.mjs` with the same arguments.
+- **Review before publishing:** every change arrives as a pull request
+  (`open-pr`), which Kacy merges or auto-merge merges after the checks.
+  Another platform needs the same branch, review and merge steps.
+- **Favorites:** `favorite.yml` acts on issues Kacy opens from the site's
+  star; the star's link (`favoriteLink()` in `site/lib.js`) and that
+  workflow would change together.
+- **The scans:** see Scan source; only the fetch into `.scans/` is GitHub.
+- **The Docs check:** `docs.yml` runs claude-code-action on pull requests.
+  It's optional: nothing else depends on it.
