@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { open, readdir, stat } from "node:fs/promises";
 import { extname, join } from "node:path";
-import sharp from "sharp";
+import { image, size } from "./image.mjs";
 
 export const PAGE_HEIGHT = 1600;
 const IMAGE_EXT = new Set([".jpg", ".jpeg", ".png", ".tif", ".tiff"]);
@@ -63,9 +63,7 @@ const MIN_FOLD_SCORE = 0.2; // weaker detections fall back to the other spreads'
 // and the cut must not go through writing. Scanner placement moves it from
 // spread to spread, so it's found in each one.
 export async function findFold(upright) {
-  const { data, info } = await sharp(upright).grayscale().resize({ width: Math.round((await sharp(upright).metadata()).width / 2) })
-    .raw().toBuffer({ resolveWithObject: true });
-  const { width: w, height: h } = info;
+  const { data, width: w, height: h } = await image(upright).grey().resize({ width: Math.round((await size(upright)).width / 2) }).pixels();
   // Smooth along the fold's direction (a 9-row running mean).
   const g = new Float32Array(w * h);
   for (let x = 0; x < w; x++) {
@@ -100,18 +98,18 @@ export async function findFold(upright) {
 // pages. A spread whose fold can't be seen uses the median of the others',
 // or the notebook's usual position when none can be seen.
 export async function splitSpreads(files, { rotate = 90, split = 0.47 } = {}) {
-  const uprights = await Promise.all(files.map((f) => sharp(f).rotate(rotate).toBuffer()));
+  const uprights = await Promise.all(files.map((f) => image(f).rotate(rotate).buffer()));
   const found = await Promise.all(uprights.map(findFold));
   const sure = found.filter((f) => f.confident).map((f) => f.fold).sort((a, b) => a - b);
   const fallback = sure.length ? sure[Math.floor(sure.length / 2)] : split;
   const pages = [];
   for (const [i, upright] of uprights.entries()) {
-    const { width, height } = await sharp(upright).metadata();
+    const { width, height } = await size(upright);
     const fold = Math.round(width * (found[i].confident ? found[i].fold : fallback));
     pages.push(...await Promise.all([
       { left: 0, top: 0, width: fold, height },
       { left: fold, top: 0, width: width - fold, height },
-    ].map((half) => sharp(upright).extract(half).toBuffer())));
+    ].map((half) => image(upright).crop(half).buffer())));
   }
   return { pages, folds: found.map((f) => (f.confident ? f.fold : null)) };
 }
@@ -119,7 +117,7 @@ export async function splitSpreads(files, { rotate = 90, split = 0.47 } = {}) {
 // Blur each [x, y, w, h] box (fractions of the page) beyond recognition.
 export async function redact(page, boxes = []) {
   if (!boxes.length) return page;
-  const { width, height } = await sharp(page).metadata();
+  const { width, height } = await size(page);
   const patches = [];
   for (const [x, y, w, h] of boxes) {
     const left = Math.max(0, Math.round(x * width));
@@ -129,20 +127,20 @@ export async function redact(page, boxes = []) {
       width: Math.max(1, Math.min(width - left, Math.round(w * width))),
       height: Math.max(1, Math.min(height - top, Math.round(h * height))),
     };
-    const coarse = await sharp(page).extract(box)
-      .resize(Math.max(1, box.width >> 5), Math.max(1, box.height >> 5)).toBuffer();
-    const input = await sharp(coarse).resize(box.width, box.height).blur(12).toBuffer();
+    const coarse = await image(page).crop(box)
+      .resize({ width: Math.max(1, box.width >> 5), height: Math.max(1, box.height >> 5) }).buffer();
+    const input = await image(coarse).resize({ width: box.width, height: box.height }).blur(12).buffer();
     patches.push({ input, left: box.left, top: box.top });
   }
-  return sharp(page).composite(patches).toBuffer();
+  return image(page).overlay(patches).buffer();
 }
 
 // The published, web-sized JPEG for a page.
 export function webImage(page, height = PAGE_HEIGHT) {
-  return sharp(page)
+  return image(page)
     .resize({ height, withoutEnlargement: true })
     .jpeg({ quality: 80, mozjpeg: true })
-    .toBuffer();
+    .buffer();
 }
 
 // Remove stamp show-through from the sheets touching these page positions

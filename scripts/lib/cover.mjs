@@ -4,16 +4,15 @@
 // the rows and columns mostly unlike it. Sharp's trim doesn't do here: the
 // scanner's edges leave dark and light strips along the border. The cover
 // is then turned upright (portrait).
-import sharp from "sharp";
+import { image, size } from "./image.mjs";
 
 const W = 200; // measure at this width
 const DIFF = 40; // grey levels from the lid that count as cover
 
 export async function coverImage(file, rotate = 90) {
-  const scan = await sharp(file).rotate().toBuffer();
-  const { width, height } = await sharp(scan).metadata();
-  const { data, info } = await sharp(scan).greyscale().resize({ width: W }).raw().toBuffer({ resolveWithObject: true });
-  const w = info.width, h = info.height;
+  const scan = await image(file).rotate().buffer();
+  const { width, height } = await size(scan);
+  const { data, width: w, height: h } = await image(scan).grey().resize({ width: W }).pixels();
   // The lid's shade: the median of a patch inset from the corner, clear of
   // the edge strips.
   const patch = [];
@@ -42,10 +41,10 @@ export async function coverImage(file, rotate = 90) {
     const right = Math.min(width, Math.round((last(cols) + 1) * sx)), bottom = Math.min(height, Math.round((last(rows) + 1) * sy));
     // Keep the whole scan when what's left is too small to be the cover.
     if ((right - left) * (bottom - top) > width * height * 0.15) {
-      out = await sharp(scan).extract({ left, top, width: right - left, height: bottom - top }).toBuffer();
+      out = await image(scan).crop({ left, top, width: right - left, height: bottom - top }).buffer();
     }
   }
-  const size = await sharp(out).metadata();
-  if (size.width > size.height) out = await sharp(out).rotate(rotate).toBuffer();
+  const shape = await size(out);
+  if (shape.width > shape.height) out = await image(out).rotate(rotate).buffer();
   return out;
 }

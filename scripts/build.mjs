@@ -2,7 +2,7 @@
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import sharp from "sharp";
+import * as images from "./lib/image.mjs";
 import { category, isBack, ranks } from "./lib/categories.mjs";
 import { findCircle } from "./lib/circle.mjs";
 
@@ -35,11 +35,11 @@ const withTestData = (TEST_SITE || Boolean(process.env.PREVIEW_OF)) && existsSyn
 // <n>.jpg, each with a .clean.jpg, like the page images.
 async function cut(page, box, out) {
   const write = async (file, to) => {
-    const { width, height } = await sharp(file).metadata();
+    const { width, height } = await images.size(file);
     const [x, y, w, h] = box;
     const left = Math.round(x * width), top = Math.round(y * height);
     const rect = { left, top, width: Math.min(Math.round(w * width), width - left), height: Math.min(Math.round(h * height), height - top) };
-    await sharp(file).extract(rect).jpeg({ quality: 85 }).toFile(join(OUT, to));
+    await images.image(file).crop(rect).jpeg({ quality: 85 }).toFile(join(OUT, to));
     return { width: rect.width, height: rect.height };
   };
   const clean = out.replace(/\.jpg$/, ".clean.jpg");
@@ -54,15 +54,15 @@ async function thumbnail(sketch) {
   const out = {};
   for (const [key, file] of [["image", sketch.image], ["clean", sketch.clean]]) {
     out[key] = file.replace(/(\.clean)?\.jpg$/, ".thumb$1.jpg");
-    let img = sharp(join(OUT, file));
+    const img = images.image(join(OUT, file));
     if (circle) {
       const { width, height } = sketch;
-      img = img.extract({
+      img.crop({
         left: Math.round(circle.x * width), top: Math.round(circle.y * height),
         width: Math.round(circle.width * width), height: Math.round(circle.height * height),
       });
     }
-    await img.resize(240, 240, { fit: circle ? "fill" : "contain", background: "#ffffff" }).jpeg({ quality: 80 }).toFile(join(OUT, out[key]));
+    await img.resize({ width: 240, height: 240, fit: circle ? "fill" : "contain", background: "#ffffff" }).jpeg({ quality: 80 }).toFile(join(OUT, out[key]));
   }
   return out;
 }
@@ -95,16 +95,16 @@ async function buildData(dir, root) {
     const rank = ranks(nb.pages);
     // The outside front cover, scanned on its own.
     const cover = `${scansDir}/${nb.id}/cover-front.jpg`;
-    const front = nb.front_cover && existsSync(cover) ? await sharp(cover).metadata() : null;
+    const front = nb.front_cover && existsSync(cover) ? await images.size(cover) : null;
     // A small copy for the notebook's card on the home page.
     const thumb = cover.replace(/\.jpg$/, ".thumb.jpg");
-    if (front) await sharp(cover).resize({ height: 240 }).jpeg({ quality: 80 }).toFile(join(OUT, thumb));
+    if (front) await images.image(cover).resize({ height: 240 }).jpeg({ quality: 80 }).toFile(join(OUT, thumb));
     return {
       ...nb,
       front_cover: front && { label: "Front cover", slot: 0, sessions: [], image: cover, thumb, width: front.width, height: front.height },
       pages: await Promise.all(nb.pages.map(async ({ redact, ...page }, i) => {
         const image = `${scansDir}/${nb.id}/${String(i + 1).padStart(2, "0")}.jpg`;
-        const { width, height } = await sharp(image).metadata();
+        const { width, height } = await images.size(image);
         // Pages that will still change aren't published until they're final. An
         // unfinished notebook also leaves out its blank pages and the categories
         // not shown in progress. Hidden categories are never shown.
