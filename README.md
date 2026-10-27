@@ -219,15 +219,35 @@ dropdown per field (program, catalog, site, telescope, eyepiece, filter,
 observer, notebook, seeing, transparency) with the values on that page; a
 field with only one value there isn't shown. Sites are listed without
 their years (Okie-Tex 2026 and 2027 are both Okie-Tex); use the date range
-for one year. There's also a date range
-(with more than one night) and **Has to-dos** (when only some have
-them). Active filters show as chips: tap one to remove it, or **Clear
-all**. They're in the address too
-(`?site=Okie-Tex+2026&eyepiece=13mm+Ethos`), and links between pages keep
+for one year. There's also a date range (with more than one night),
+**Has to-dos** and **Favorites only** (each when only some have them).
+Active filters show as chips: tap one to remove it, or **Clear all**.
+They're in the address too
+(`?site=Okie-Tex&eyepiece=13mm+Ethos`), and links between pages keep
 them. The home page narrows its tabs; a session page dims the observations
 outside them; an object page shows only the matching observations and
 sketches; a notebook page dims the sessions in its contents with nothing
 matching.
+
+## Favorites
+
+Mark your favorite observation of an object in admin mode: each
+observation on an object page has a star (☆, or ★ for the favorite).
+Tapping it opens a ready-made GitHub issue ("Favorite: M31 on Oct 11,
+2026"); tap **Submit** and the **Favorite** workflow opens a pull request
+setting it and links it on the issue. The pull request merges itself once
+its checks pass (the workflow validates the data and refuses any change
+outside the session files, then the `preview` and `docs` checks run), and
+the issue closes with it. This needs **Settings → General → Allow
+auto-merge** on; without it, merge the pull request yourself.
+An object has one favorite: a new one replaces the old. Tap ★ to clear it
+the same way. Only issues you open are acted on. The favorite is stored as
+`"favorite": true` on the observation. Its sketch is shown first on the
+object page (★ on its session button, a **★ Favorite** tag on its card)
+and used for the object's thumbnail on the Sketches tab, and the Filters
+panel gets **Favorites only** once some observations are favorites and
+some aren't. By hand: `node scripts/favorite.mjs <session id>
+<observation number> [--off]`.
 
 ## Equipment
 
@@ -325,7 +345,7 @@ are left as written until the next import. Planets aren't in either and
 stay as written. The home page's Sketches tab shows one catalog at
 a time, picked with a toggle, and lists every observed object under each
 catalog it's in (M31 under Messier and NGC), in catalog order, with a
-thumbnail of its latest sketch (just the sketch circle, found
+thumbnail of its favorite or latest sketch (just the sketch circle, found
 automatically), its latest observation and a count when there are more.
 Tapping an object opens its page (`object.html?id=M31`): the catalog
 info, its sketch, shown as the session's NEW SESSION block and the entry,

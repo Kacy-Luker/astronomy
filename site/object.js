@@ -1,7 +1,7 @@
 // Object page: everything about one object (object.html?id=M31, or any of
 // its designations) and every observation of it, newest first.
 import {
-  editLink, el, formatDate, link, loadNotebooks, loadObjects, loadSessions, plural, scanToggle,
+  editLink, el, favoriteLink, formatDate, link, loadNotebooks, loadObjects, loadSessions, plural, scanToggle,
   sessionFile, sessionHref,
 } from "./lib.js";
 import { jointCard } from "./cards.js";
@@ -51,6 +51,8 @@ function renderSketches(obj) {
   section.append(el("h3", null, "Sketch"));
   const frame = el("div");
   const label = ({ s }) => `${formatDate(s.date)} · ${s.site.name}`;
+  // Kacy's favorite comes first and is shown to start with (#23).
+  seen.sort((a, b) => Boolean(b.o.favorite) - Boolean(a.o.favorite));
   const show = (i) => {
     const { o, s } = seen[i];
     // The joint card: the session's block and the entry, two images with a gap.
@@ -61,8 +63,8 @@ function renderSketches(obj) {
   const group = el("div", "toggle");
   group.setAttribute("role", "group");
   group.setAttribute("aria-label", "Session");
-  const buttons = seen.map(({ s }, i) => {
-    const b = el("button", null, formatDate(s.date));
+  const buttons = seen.map(({ o, s }, i) => {
+    const b = el("button", null, `${o.favorite ? "★ " : ""}${formatDate(s.date)}`);
     b.type = "button";
     b.addEventListener("click", () => show(i));
     return b;
@@ -85,7 +87,8 @@ function renderSighting({ o, s }, obj, notebooks) {
   if (s.program && s.program !== "N/A") head.append(el("span", "tag", s.program));
   // Written under another of its designations that night (e.g. NGC 224).
   if (o.catalog_id !== obj.ids[0]) head.append(el("span", "tag", `as ${o.catalog_id}`));
-  head.append(...[editLink(sessionFile(s.id))].filter(Boolean));
+  if (o.favorite) head.append(el("span", "tag favorite", "★ Favorite"));
+  head.append(...[favoriteLink(o, s, s.observations.indexOf(o) + 1), editLink(sessionFile(s.id))].filter(Boolean));
   card.append(head);
   card.append(observationFacts(o, notebooks.find((n) => n.id === s.notebook)), observationDescription(o));
   return card;
