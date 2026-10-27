@@ -124,7 +124,9 @@ test("search and filters narrow the observations", async ({ page }) => {
 test("the map groups sites by spot, and its Near link lists every session there", async ({ page }) => {
   const atSpot = sessions.filter((s) => Math.round(s.site.lat * 10) === 369 && Math.round(s.site.lon * 10) === -1030);
   await page.goto("#map");
-  await page.locator(".map-marker", { hasText: String(atSpot.reduce((n, s) => n + s.observations.length, 0)) }).click();
+  // Zoomed out to fit both hemispheres, nearby markers overlap, so the
+  // marker is clicked directly rather than at its spot on screen.
+  await page.locator(".map-marker", { hasText: String(atSpot.reduce((n, s) => n + s.observations.length, 0)) }).dispatchEvent("click");
   const popup = page.locator(".map-popup");
   await expect(popup).toContainText(`${atSpot.length} sessions`);
   // Site names without their years.
