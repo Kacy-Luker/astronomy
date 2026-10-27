@@ -15,10 +15,11 @@ const DEFAULT_TAB = "sessions";
 
 function renderNotebook(nb, sessions) {
   const item = el("li", "session notebook-card");
-  // The outside front cover, when it's been scanned, beside the title.
+  // The outside front cover, when it's been scanned, beside the title, in
+  // the viewer's chosen view (see applyView).
   if (nb.front_cover?.thumb) {
     const img = el("img", "cover-thumb");
-    img.src = nb.front_cover.thumb;
+    img.dataset.original = nb.front_cover.thumb;
     img.alt = "";
     img.loading = "lazy";
     item.append(img);
@@ -176,7 +177,9 @@ showTab();
 
 try {
   const [sessions, notebooks, catalog] = await Promise.all([loadSessions(), loadNotebooks(), loadObjects()]);
-  document.querySelector("#notebooks ul").append(...notebooks.map((nb) => renderNotebook(nb, sessions)));
+  const notebookList = document.querySelector("#notebooks ul");
+  notebookList.append(...notebooks.map((nb) => renderNotebook(nb, sessions)));
+  applyView(notebookList);
   document.querySelector("#sessions ol").append(...sessions.map(renderSession));
   const objects = observedObjects(sessions, catalog);
   renderObjects(document.getElementById("sketches"), objects);
