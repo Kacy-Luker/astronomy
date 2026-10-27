@@ -6,13 +6,16 @@
   "scripts": {
     "validate": "node scripts/validate.mjs && node scripts/sync-workflow.mjs --check",
     "build": "node scripts/build.mjs",
-    "serve": "npm run build && npx --yes serve dist"
+    "serve": "npm run build && npx --yes serve dist",
+    "test": "node --test \"tests/unit/*.test.mjs\" && npm run test:site",
+    "test:site": "TEST_SITE=1 node scripts/build.mjs && playwright test"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^1.2.0",
+    "@playwright/test": "1.63.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "sharp": "^0.35.5",
