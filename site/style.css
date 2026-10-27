@@ -203,6 +203,15 @@ a { color: var(--accent); }
   border-bottom: 1px solid var(--border);
 }
 
+/* The search box above the home page's tabs (site/search.js). */
+.search { margin: 0 0 1rem; }
+.search input {
+  width: 100%; box-sizing: border-box; font: inherit; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .6rem .8rem;
+}
+.search input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.no-match { list-style: none; padding: .5rem 0; }
+
 /* Home page tabs. */
 .tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
 .tabs [role="tab"] {
