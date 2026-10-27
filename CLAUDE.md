@@ -234,8 +234,9 @@ must match `PageReading` in `read-page.mjs`).
   with an Edit links toggle (also remembered; switching reloads the page).
   With it on, `editLink()` in `site/lib.js` (which also holds the repo URL)
   links to GitHub's web editor for the session, each observation, the
-  notebook and the mappings file. Never on PR previews (detected by the
-  preview banner). Anything only Kacy should see goes behind `adminMode`
+  notebook and the mappings file. On PR previews they open the PR branch
+  (`PREVIEW_BRANCH` from `preview.yml`, on the preview banner's
+  `data-branch`); the setting is shared with previews (same origin). Anything only Kacy should see goes behind `adminMode`
   (or `editMode` for Edit links).
 - `scripts/build.mjs` adds the icon and manifest links (`site/icons/`,
   `site/manifest.webmanifest`) to every page's `<head>`, so new pages
