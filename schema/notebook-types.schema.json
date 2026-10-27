@@ -30,7 +30,7 @@
             }
           },
           "numbering": { "description": "odd-printed-right: odd numbers printed on right-hand pages, even ones inferred.", "enum": ["odd-printed-right"] },
-          "form": { "description": "stamped: the rubber-stamped log form; free: handwritten notes (#109).", "enum": ["stamped", "free"] }
+          "form": { "description": "stamped: the rubber-stamped log form; free: free text, a session starting at a date heading (#109).", "enum": ["stamped", "free"] }
         }
       }
     }
