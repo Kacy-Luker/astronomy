@@ -3,7 +3,7 @@
 // nothing private. Any reader (scripts/lib/readers/) is held to these by
 // scripts/lib/reader.mjs, and the Claude reader also gives them to Claude
 // as the answer format.
-import { z } from "zod";
+import { z } from "./schema.mjs";
 import { READ_KINDS } from "./categories.mjs";
 
 const Box = z.object({
