@@ -229,6 +229,12 @@ must match `PageReading` in `read-page.mjs`).
   are `[x, y, width, height]` fractions; the reader returns them at import
   and Kacy can fix them by hand. `view.html` accepts `scans/` and
   `sketches/` images.
+- Edit mode (Kacy only): `?edit=on` on any page, remembered in
+  localStorage (`?edit=off` clears it), shows links to GitHub's web editor
+  (`editLink()` in `site/lib.js`, which also holds the repo URL) for the
+  session, each observation, the notebook and the mappings file, plus a
+  footer note. Never on PR previews (detected by the preview banner).
+  Anything only Kacy should see goes behind `editMode`.
 - `scripts/build.mjs` adds the icon and manifest links (`site/icons/`,
   `site/manifest.webmanifest`) to every page's `<head>`, so new pages
   don't need them; without them browsers show kacyluker.com's favicon.
