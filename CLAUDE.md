@@ -103,7 +103,8 @@ Transparent (`site/lib.js`). The key printed in the notebook isn't used.
 - The outside front cover (with the volume label: title, start and finish
   dates, owner) is saved to `scans/<id>/cover-front.jpg`, not a page
   position, so page images never shift for it, and shown on the home
-  page's notebook card. It's scanned closed, so the scanner's lid fills the
+  page's notebook card. The notebook view shows it first: beside the title
+  page while the inside front cover is hidden, otherwise on its own. It's scanned closed, so the scanner's lid fills the
   rest of the scan; `scripts/lib/cover.mjs` trims to the cover. The import
   finds a closed-notebook scan among the spreads (Claude reads one half as
   `front_cover`, the lid as blank) and keeps it apart from the pages; a
