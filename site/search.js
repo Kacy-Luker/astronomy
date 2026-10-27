@@ -116,6 +116,7 @@ export function writeFilters(state) {
 // filter itself (the Equipment tab's) keeps its own value for that one.
 export function keepFilters(root = document) {
   const state = readFilters();
+  const data = new URLSearchParams(location.search).get("data");
   for (const a of root.querySelectorAll("a[href]")) {
     a.dataset.href ??= a.getAttribute("href");
     const href = a.dataset.href;
@@ -126,6 +127,8 @@ export function keepFilters(root = document) {
       if (own.has(k)) continue;
       if (state[k]) url.searchParams.set(k, state[k]);
     }
+    // The test site's real/test data choice (site/lib.js) goes along too.
+    if (data && !own.has("data")) url.searchParams.set("data", data);
     a.setAttribute("href", (url.pathname.split("/").pop() || "./") + url.search + url.hash);
   }
 }
