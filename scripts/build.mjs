@@ -163,7 +163,7 @@ if (sources.length) {
 }
 if (mappings.length) {
   footerParts.push(`${anchor(`https://github.com/Kacy-Luker/astronomy/blob/main/${mappingsFile}`, "Kacy's object mappings")}` +
-    (credits.length ? `, following the ${andList(credits.map((c) => anchor(c.url, c.name)))}` : "") + ".");
+    (credits.length ? ` (sources: ${andList(credits.map((c) => anchor(c.url, c.name)))})` : "") + ".");
 }
 const footer = footerParts.length ? `  <footer class="site-footer muted">\n    ${footerParts.join("\n    ")}\n  </footer>\n` : "";
 

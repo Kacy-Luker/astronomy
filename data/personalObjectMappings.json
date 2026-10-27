@@ -1,5 +1,5 @@
 {
-  "description": "Kacy's own catalog mappings. An object written as `from` is looked up as `to`: its info and other designations come from the `to` object, and `from` is added to its designations. `credit` is the list or program the mapping follows, credited in the site's footer. Edit by hand; catalogs are Messier, NGC, IC, Caldwell, or another catalog's prefix (e.g. Sh2).",
+  "description": "Kacy's own catalog mappings. An object written as `from` is looked up as `to`: its info and other designations come from the `to` object, and `from` is added to its designations. `credit` (optional) is the list or program a mapping follows, credited in the site's footer; leave it out for your own call. Edit by hand; catalogs are Messier, NGC, IC, Caldwell, or another catalog's prefix (e.g. Sh2).",
   "mappings": [
     {
       "from": { "catalog": "Messier", "object": "102" },

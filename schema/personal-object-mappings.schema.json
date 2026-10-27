@@ -29,7 +29,7 @@
           "to": { "$ref": "#/$defs/object" },
           "why": { "type": "string" },
           "credit": {
-            "description": "The list or program the mapping follows.",
+            "description": "The list or program the mapping follows, if any; leave it out for your own call.",
             "type": "object",
             "required": ["name"],
             "additionalProperties": false,

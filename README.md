@@ -224,7 +224,8 @@ count is set in `site/todos.js`.
 **Your object mappings.** `data/personalObjectMappings.json` lists
 objects you take differently from the catalogs: each mapping has the
 catalog and object being remapped (`from`), the catalog and object it's
-mapped to (`to`), why, and the list or program it follows (`credit`). An
+mapped to (`to`), why, and the list or program it follows, if any
+(`credit`; leave it out when it's your own call). An
 object written as `from` is looked up as `to`, so its info and other
 designations come from the `to` object, and `from` is added to them. M102
 is mapped to NGC 5866 (the Spindle Galaxy), as in the Astronomical
@@ -232,7 +233,8 @@ League's Messier program, rather than OpenNGC's duplicate of M101. Catalogs
 are Messier, NGC, IC, Caldwell, or another catalog's prefix. Edit it on
 GitHub, then run `node scripts/enrich-ids.mjs` (or the next import) to
 update the sessions. Every page's footer credits the catalog databases the
-objects came from and links this file, with the lists it follows.
+objects came from and links this file, naming the lists its mappings
+cite.
 
 **Catalog info.** Each import looks the objects up in
 [OpenNGC](https://github.com/mattiaverga/OpenNGC) (a pinned release, CC
