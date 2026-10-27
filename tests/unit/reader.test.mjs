@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { loadReader } from "../../scripts/lib/reader.mjs";
-import { extractJSON } from "../../scripts/lib/readers/claude.mjs";
+import { extractJSON, system } from "../../scripts/lib/readers/claude.mjs";
 
 const blank = {
   kind: "blank", printed_number: null, label: null, will_change: false, notebook_label: null,
@@ -37,6 +37,18 @@ test("an answer in another shape is refused", async () => {
   `));
   await assert.rejects(reader.readPage(Buffer.from("")), /answered readPage\(\) in the wrong format/);
   await assert.rejects(reader.checkRedaction(Buffer.from("")), /answered checkRedaction\(\) in the wrong format/);
+});
+
+test("the reader is told what the notebook is written on (#109)", async () => {
+  const reader = await loadReader(fakeReader(`
+    export const readPage = async (image, { form }) => ({ ...${JSON.stringify(blank)}, label: form });
+    export const checkRedaction = async () => ({ legible: false, what: [] });
+  `));
+  assert.equal((await reader.readPage(Buffer.from(""), { form: "free" })).label, "free");
+  // Claude's instructions follow it: the stamped sheet's fields, or free text.
+  assert.match(system("stamped"), /NEW SESSION block:\nPROGRAM, DATE/);
+  assert.match(system("free"), /no printed form/);
+  assert.doesNotMatch(system("free"), /NEW SESSION block:\nPROGRAM/);
 });
 
 test("a reader missing a function isn't loaded", async () => {

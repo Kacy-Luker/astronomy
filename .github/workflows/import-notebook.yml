@@ -24,6 +24,7 @@ on:
           # Written by scripts/sync-workflow.mjs from data/notebook-types.json.
           # notebook-types:start
           - Stamped log, spreads
+          - Free-text log, spreads
           # notebook-types:end
       scan:
         description: "File in astronomy-scans, e.g. astronomy-001/2026-10-23.pdf. Empty = the newest in the notebook's folder (for a new notebook, the one folder without a notebook yet)"

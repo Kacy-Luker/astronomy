@@ -14,6 +14,5 @@ export const typeOf = (notebook) => (notebook?.type ? findType(notebook.type) : 
 // What the import can't do yet for a type, or null when it can do all of it.
 export function unsupported(type) {
   if (type.scan.pages !== 2) return "single-sheet scans";
-  if (type.form !== "stamped") return "notebooks without the stamped form (#109)";
   return null;
 }
