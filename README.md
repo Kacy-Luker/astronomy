@@ -241,7 +241,10 @@ counts follow the search and filters.
 ## Map
 
 The home page's **Map** tab shows a marker for each observing site, with
-how many observations were made there; tap one for the site's sessions.
+how many observations were made there. Tap one for a summary that stays
+small however often you observe there: the site, its observations and
+sessions, the first and last dates, and a link to the Sessions tab
+filtered to that site.
 It uses each session's lat/long, rounded to 0.1° (about 10 km) so the map
 never shows exactly where you observe from; session pages still show the
 coordinates as written. Sessions without coordinates are listed under the

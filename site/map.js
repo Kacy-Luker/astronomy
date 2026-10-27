@@ -58,16 +58,25 @@ function spots(docs) {
   }).sort((a, b) => b.count - a.count);
 }
 
+// A summary, so the popup stays small however many sessions a site has: the
+// site, its observations, sessions and date range, and a link to the Sessions
+// tab filtered to the site (one per name when a spot has several).
 function popup(spot) {
   const box = el("div", "map-popup");
-  box.append(el("strong", null, spot.names.join(" · ")), el("div", "muted", plural(spot.count, "observation")));
-  const list = el("ul");
-  for (const { s, count } of spot.sessions) {
-    const item = el("li");
-    item.append(link(sessionHref(s.id), formatDate(s.date)), ` · ${plural(count, "observation")}`);
-    list.append(item);
+  const dates = spot.sessions.map(({ s }) => s.date).sort();
+  const range = dates.length > 1 ? `${formatDate(dates[0])} – ${formatDate(dates.at(-1))}` : formatDate(dates[0]);
+  box.append(
+    el("strong", null, spot.names.join(" · ")),
+    el("div", "muted", `${plural(spot.count, "observation")} · ${plural(spot.sessions.length, "session")}`),
+    el("div", "muted", range),
+  );
+  for (const name of spot.names) {
+    const nights = spot.sessions.filter(({ s }) => s.site.name === name).length;
+    const text = spot.names.length > 1 ? `See ${plural(nights, "session")} at ${name}` : `See ${nights === 1 ? "the session" : `all ${nights} sessions`}`;
+    const row = el("div", "map-popup-link");
+    row.append(link(`./?${new URLSearchParams({ site: name })}#sessions`, text));
+    box.append(row);
   }
-  box.append(list);
   keepFilters(box);
   return box;
 }

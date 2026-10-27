@@ -258,7 +258,9 @@ must match `PageReading` in `read-page.mjs`).
   scrolls sideways on phones, with the open tab kept in view.
 - Map tab (`site/map.js`): markers per site from the search documents,
   coordinates rounded to 0.1° (Kacy's privacy choice; session pages keep
-  exact values), loaded on first open. Leaflet comes from npm
+  exact values), loaded on first open. A marker's popup is a summary
+  (observations, sessions, date range, a link to `?site=…#sessions`), never
+  a list, so it stays small at busy sites. Leaflet comes from npm
   (`leaflet`, exact version) and `scripts/build.mjs` copies it to
   `dist/vendor/leaflet/`; no CDN. The tile URL is the `TILES` constant,
   the one outside service, credited on the map.
