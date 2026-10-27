@@ -31,3 +31,7 @@ export function findObject(objects, id) {
   const want = squash(id);
   return objects.find((obj) => obj.key === id) ?? objects.find((obj) => obj.ids.some((x) => squash(x) === want));
 }
+
+// Whether a name is just the designation again (an object known by its
+// name, like Albireo), so it isn't shown twice.
+export const sameName = (name, id) => String(name).trim().toLowerCase() === String(id ?? "").trim().toLowerCase();
