@@ -63,7 +63,7 @@ needs to change things safely.
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
 | `site/` | Static pages: home (Notebooks, Sessions, Sketches, Equipment and Map tabs, `#notebooks`, `#sketches/ngc`, `#equipment`, `#map` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
 | `scripts/` | Build, validation, import, splitting, cleaning |
-| `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`) |
+| `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`), `favorite.yml` (favorites from issues) |
 
 On the sheet Kacy writes N/A where a field doesn't apply; that's stored
 as `"N/A"` (the schema allows it for numbers and times too). A blank field
@@ -213,9 +213,9 @@ must match `PageReading` in `read-page.mjs`).
   toggle (`#sketches/ngc`); an object is listed under every catalog it's
   in, in catalog order (`site/catalog.js`, shared with the import:
   Messier, NGC, IC, Caldwell, then others, by number). Each row has a
-  thumbnail of the latest sketch and links to the object page, which shows
-  one sketch at a time (a toggle picks the session) and every observation,
-  newest first. Both use `site/objects.js` for the grouping; the session
+  thumbnail of the favorite or latest sketch and links to the object
+  page, which shows one sketch at a time (a toggle picks the session) and
+  every observation, newest first. Both use `site/objects.js` for the grouping; the session
   and object pages share the entry fields (`site/observation.js`).
 - Sketch images: the build cuts each session's `header_box` (NEW SESSION
   block) and each observation's `box` from their pages, from the cleaned
@@ -262,6 +262,18 @@ must match `PageReading` in `read-page.mjs`).
   (`leaflet`, exact version) and `scripts/build.mjs` copies it to
   `dist/vendor/leaflet/`; no CDN. The tile URL is the `TILES` constant,
   the one outside service, credited on the map.
+- Favorites (#23): `favorite: true` on an observation, at most one per
+  object (validation; objects matched through `data/objects.json`). The
+  admin-mode star (`favoriteLink()` in `site/lib.js`, object page) opens a
+  pre-filled issue ("Favorite: …"/"Unfavorite: …" with `Session:` and
+  `Observation:` lines); `.github/workflows/favorite.yml` acts only on the
+  repo owner's issues, runs `scripts/favorite.mjs` (which clears the
+  object's other favorites), checks only `data/sessions/` changed, and
+  opens a PR that closes the issue, with auto-merge on (`gh pr merge
+  --auto --merge`, so it waits for the required checks; if the repo's
+  auto-merge setting is off, the issue comment says to merge by hand). The
+  favorite's sketch is first on the object page and is the Sketches
+  thumbnail; `fav=1` is the Favorites only filter.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in
   localStorage (`?admin=off` clears it), adds an admin bar across the top
   of the page (after `.preview-banner` when there is one) with a link to `help.html` (Kacy's phone how-to; keep it in step with

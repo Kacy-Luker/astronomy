@@ -162,6 +162,10 @@
         "box": {
           "description": "Where the entry (fields, sketch circle and description) is on its page.",
           "$ref": "#/$defs/box"
+        },
+        "favorite": {
+          "description": "Kacy's favorite observation of this object; at most one per object (scripts/favorite.mjs).",
+          "type": "boolean"
         }
       }
     },
