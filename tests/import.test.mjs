@@ -118,6 +118,8 @@ test("a new import records the pages, sessions and blur", async () => {
   assert.equal(nb.title, notebook.title);
   assert.equal(nb.owner, notebook.owner);
   assert.equal(nb.status, "in_progress");
+  assert.equal(nb.type, "stamped-spreads", "a new notebook without --type is the first type");
+  assert.deepEqual(nb.scan, { rotate: 90, split: 0.47 });
   assert.deepEqual(nb.pages, notebook.pages.slice(0, 8));
   for (let i = 0; i < 8; i++) assert.ok(existsSync(join(work, "scans", ID, `${String(i + 1).padStart(2, "0")}.jpg`)), `page image ${i + 1}`);
   // The title page went in readable and came out blurred where the details are.
@@ -128,6 +130,15 @@ test("a new import records the pages, sessions and blur", async () => {
   }
   assert.match(summary, /Created \*\*Test Notebook 2\*\*/);
   assert.match(summary, /blurred phone number and email/);
+});
+
+test("a notebook's type is checked, and kept once it's made", () => {
+  const refused = (args, problem) => assert.throws(
+    () => execFileSync("node", ["scripts/import-notebook.mjs", ...args], { cwd: work, encoding: "utf8", stdio: "pipe" }),
+    (err) => (assert.match(err.stderr, problem), true));
+  const upload = join(work, "uploads", "first");
+  refused(["another", upload, "--mode", "new", "--type", "Spiral"], /isn't a notebook type; pick one of Stamped log, spreads/);
+  refused([ID, upload, "--mode", "add", "--type", "Spiral"], /its type is chosen when it's created/);
 });
 
 test("an add import skips recorded pages and adds the new ones", async () => {
