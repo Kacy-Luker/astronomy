@@ -145,9 +145,12 @@ a { color: var(--accent); }
 }
 .object-id { margin: 0; font-size: 1.2rem; }
 .site-footer { padding-bottom: 2rem; font-size: .85rem; }
-/* Edit mode (Kacy only): links to GitHub's editor, at the end of a heading row. */
+/* Admin mode (Kacy only): the footer's admin bar, and Edit links to
+   GitHub's editor at the end of a heading row. */
 .edit-link { margin-left: auto; font-size: .9rem; }
-.edit-mode { margin: .5rem 0 0; }
+.admin-bar { margin: .5rem 0 0; }
+.admin-toggle { font: inherit; color: var(--accent); background: none; border: 1px solid var(--border); border-radius: 999px; padding: .1rem .6rem; cursor: pointer; }
+.admin-toggle[aria-pressed="true"] { border-color: var(--accent); }
 .catalog { margin: .25rem 0 0; font-size: .9rem; }
 .ids { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0 0; padding: 0; }
 .description { margin: .75rem 0 0; }
