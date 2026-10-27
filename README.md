@@ -199,6 +199,19 @@ On the site, scans have an **Inverted / Cleaned / Original** toggle.
 Inverted (the default) shows the cleaned page with light and dark swapped.
 Tapping a page opens it full size (`view.html`) in the same view.
 
+## Searching
+
+The home page's search box narrows every tab to the observations that
+match: every word has to appear somewhere in an observation or its
+session, ignoring case and accents. That covers the object's designations
+(`NGC 5194` or `ngc5194` finds M51), names, type and constellation, the
+date (`2026-10-11`, `Oct 11`, `october`), site and coordinates, telescope,
+eyepiece, filter, magnification, seeing and transparency, observers,
+program, notebook and page, and the description. Sessions list only their
+matching objects; their to-do count is still the whole session's. The
+search is kept in the address (`?q=andromeda`), so it can be bookmarked or
+shared and survives switching tabs.
+
 ## Session files
 
 **Admin mode.** Open any page of the site with `?admin=on` at the end of
