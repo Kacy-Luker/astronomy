@@ -201,16 +201,16 @@ Tapping a page opens it full size (`view.html`) in the same view.
 
 ## Session files
 
-**Edit mode.** To fix a file from your phone, open any page of the site
-with `?edit=on` at the end of the address (for example
-`kacyluker.com/astronomy/?edit=on`). The browser remembers it, and pages
-then show **Edit** links that open the file in GitHub's editor: **Edit
-session** and an **Edit** on each observation (the session's file),
-**Edit notebook**, and **Edit mappings** on object pages. The footer says
-edit mode is on, with links to a short phone how-to (`help.html`: adding
-a session, other imports, finishing and removing a notebook) and to turn
-it off (`?edit=off`). Visitors never see the links, and PR previews don't
-show them.
+**Admin mode.** Open any page of the site with `?admin=on` at the end of
+the address (for example `kacyluker.com/astronomy/?admin=on`); the
+browser remembers it. Every page's footer then has an admin bar with a
+short phone how-to (`help.html`: adding a session, other imports,
+finishing and removing a notebook), an **Edit links** toggle, and a link
+to leave admin mode (`?admin=off`). With
+Edit links on, pages show links that open the file in GitHub's editor:
+**Edit session** and an **Edit** on each observation (the session's
+file), **Edit notebook**, and **Edit mappings** on object pages. Visitors
+never see any of it, and PR previews don't show it.
 
 Name each file `<date>-<site>.json` and set its `id` to the same slug, for
 example `data/sessions/2026-10-11-okie-tex-2026.json` with `"id":
