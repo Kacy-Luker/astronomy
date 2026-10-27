@@ -1,0 +1,89 @@
+{
+  "id": "2025-06-21-backyard",
+  "program": "NGC",
+  "date": "2025-06-21",
+  "site": { "name": "Backyard", "lat": 35.47, "lon": -97.52 },
+  "sky": { "sqm": 18.9 },
+  "scope": {
+    "name": "Explore 102 refractor",
+    "type": "Refractor",
+    "aperture_mm": 102,
+    "focal_length_mm": 714,
+    "f_ratio": 7
+  },
+  "observers": ["Test Observer"],
+  "notebook": "test-001",
+  "pages": [3, 4],
+  "header_box": { "page": 3, "box": [0.03, 0.02, 0.94, 0.27] },
+  "observations": [
+    {
+      "catalog_id": "NGC 224",
+      "aka": null,
+      "ids": ["NGC 224", "M31"],
+      "page": 3,
+      "local_time": "23:40",
+      "seeing": 1,
+      "transparency": 1,
+      "eyepiece": "13mm Ethos",
+      "magnification": 55,
+      "filter": "N/A",
+      "description": "Core only from the city; still obvious",
+      "box": [0.03, 0.3, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "NGC 6826",
+      "aka": "Blinking Planetary",
+      "ids": ["NGC 6826", "C15"],
+      "page": 3,
+      "local_time": "23:55",
+      "seeing": 1,
+      "transparency": 2,
+      "eyepiece": "9mm Nagler",
+      "magnification": 79,
+      "filter": null,
+      "description": "Blue-green disk; looking at the central star makes the nebula vanish, looking away brings it back",
+      "box": [0.03, 0.62, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "C14",
+      "aka": "Double Cluster",
+      "ids": ["C14", "NGC 869", "NGC 884"],
+      "page": 4,
+      "local_time": "00:40",
+      "seeing": 2,
+      "transparency": 2,
+      "eyepiece": "32mm Plossl",
+      "magnification": 22,
+      "filter": "N/A",
+      "description": "Two rich clusters in one field; red giants in the middle of NGC 884",
+      "box": [0.03, 0.02, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "Albireo",
+      "aka": null,
+      "ids": [],
+      "page": 4,
+      "local_time": "00:50",
+      "seeing": 1,
+      "transparency": 2,
+      "eyepiece": "13mm Ethos",
+      "magnification": 55,
+      "filter": "N/A",
+      "description": "Gold and blue double, wide and easy",
+      "box": [0.03, 0.34, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "Saturn",
+      "aka": null,
+      "ids": [],
+      "page": 4,
+      "local_time": null,
+      "seeing": 1,
+      "transparency": null,
+      "eyepiece": null,
+      "filter": "N/A",
+      "description": "Rings wide open; Titan to the east. Cassini division seen in moments of steady air, then lost again as the seeing boiled. Cassini division seen in moments of steady air, then lost again as the seeing boiled. Cassini division seen in moments of steady air, then lost again as the seeing boiled. ",
+      "box": [0.03, 0.66, 0.94, 0.31]
+    }
+  ]
+}

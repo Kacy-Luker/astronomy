@@ -1,0 +1,48 @@
+{
+  "id": "2026-09-12-camp-billy-joe",
+  "program": "Caldwell",
+  "date": "2026-09-12",
+  "site": { "name": "Camp Billy Joe", "lat": 36.89, "lon": -102.96 },
+  "sky": { "sqm": "N/A" },
+  "scope": {
+    "name": "Orion XT8",
+    "type": "Dobsonian",
+    "aperture_mm": 203,
+    "focal_length_mm": 1200,
+    "f_ratio": 5.9
+  },
+  "observers": ["Test Observer"],
+  "notebook": "test-002",
+  "pages": [1, 2],
+  "header_box": { "page": 1, "box": [0.03, 0.02, 0.94, 0.27] },
+  "observations": [
+    {
+      "catalog_id": "C33",
+      "aka": "East Veil Nebula",
+      "ids": ["C33", "NGC 6992"],
+      "page": 1,
+      "local_time": "21:10",
+      "seeing": 3,
+      "transparency": 5,
+      "eyepiece": "32mm Plossl",
+      "magnification": 38,
+      "filter": "OIII",
+      "description": "Long bright arc with braided strands",
+      "box": [0.03, 0.3, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "C14",
+      "aka": "Double Cluster",
+      "ids": ["C14", "NGC 869", "NGC 884"],
+      "page": 2,
+      "local_time": "21:40",
+      "seeing": 3,
+      "transparency": 5,
+      "eyepiece": "32mm Plossl",
+      "magnification": 38,
+      "filter": "N/A",
+      "description": "Both clusters in one field again",
+      "box": [0.03, 0.02, 0.94, 0.31]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "test-002",
+  "title": "Test Notebook 2",
+  "owner": "Test Observer",
+  "status": "in_progress",
+  "started": "2026-09-01",
+  "finished": null,
+  "scan": { "rotate": 90, "split": 0.47 },
+  "front_cover": {},
+  "pages": [
+    { "kind": "inside_front_cover" },
+    { "kind": "title", "redact": [[0.12, 0.62, 0.76, 0.12]] },
+    { "kind": "contents", "open": true },
+    { "kind": "reference", "label": "Seeing and transparency key" },
+    { "kind": "session", "number": 1 },
+    { "kind": "session", "number": 2 },
+    { "kind": "session", "number": 3 },
+    { "kind": "session", "number": 4, "open": true },
+    { "kind": "blank", "number": 5, "open": true },
+    { "kind": "info" }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "id": "2025-03-29-messier-marathon-2025",
+  "program": "Messier",
+  "date": "2025-03-29",
+  "site": { "name": "Black Mesa", "lat": 36.94, "lon": -102.98 },
+  "sky": { "sqm": 21.8, "notes": "Clear and calm after sunset" },
+  "scope": {
+    "name": "Orion XT8",
+    "type": "Dobsonian",
+    "aperture_mm": 203,
+    "focal_length_mm": 1200,
+    "f_ratio": 5.9
+  },
+  "observers": ["Test Observer"],
+  "notebook": "test-001",
+  "pages": [1, 2],
+  "header_box": { "page": 1, "box": [0.03, 0.02, 0.94, 0.27] },
+  "observations": [
+    {
+      "catalog_id": "M1",
+      "aka": "Crab Nebula",
+      "ids": ["M1", "NGC 1952"],
+      "page": 1,
+      "local_time": "20:15",
+      "seeing": 2,
+      "transparency": 4,
+      "eyepiece": "25mm Plossl",
+      "magnification": 48,
+      "filter": "N/A",
+      "description": "Faint oval glow, brighter toward the middle; no filaments",
+      "box": [0.03, 0.3, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "M42",
+      "aka": "Orion Nebula",
+      "ids": ["M42", "NGC 1976"],
+      "page": 1,
+      "local_time": "20:30",
+      "seeing": 2,
+      "transparency": 4,
+      "eyepiece": "25mm Plossl",
+      "magnification": 48,
+      "filter": "N/A",
+      "description": "Bright wings of nebulosity; four Trapezium stars split cleanly",
+      "box": [0.03, 0.62, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "M31",
+      "aka": "Andromeda",
+      "ids": ["M31", "NGC 224"],
+      "page": 2,
+      "local_time": "20:05",
+      "seeing": 3,
+      "transparency": 3,
+      "eyepiece": "32mm Plossl",
+      "magnification": 38,
+      "filter": "N/A",
+      "description": "Low in the west; bright core only, halo lost in twilight",
+      "box": [0.03, 0.02, 0.94, 0.31]
+    },
+    {
+      "catalog_id": "M33",
+      "aka": "Triangulum Galaxy",
+      "ids": ["M33", "NGC 598"],
+      "page": 2,
+      "local_time": "20:10",
+      "seeing": 3,
+      "transparency": 3,
+      "eyepiece": "32mm Plossl",
+      "magnification": 38,
+      "filter": "N/A",
+      "description": "Large faint glow; averted vision shows a hint of an arm",
+      "box": [0.03, 0.34, 0.94, 0.31]
+    }
+  ]
+}
