@@ -10,6 +10,7 @@ Astronomy observations transcribed from paper notes, published at
 | `data/notebooks/` | One JSON file per paper notebook, listing every page |
 | `data/sessions/` | One JSON file per observing session |
 | `data/objects.json` | Catalog info for every observed object, from OpenNGC (generated) |
+| `data/personalObjectMappings.json` | Objects you take differently from the catalogs (edit by hand) |
 | `schema/` | The shape every notebook and session file must match |
 | `scans/<notebook>/` | One image per notebook page, in order (`01.jpg`, `02.jpg`, …) |
 | `site/` | Static site source (HTML, CSS, JS) |
@@ -220,29 +221,41 @@ to-do. The site marks to-dos with **To do** and shows a count on each
 session; an import's pull request lists the new ones. Which fields
 count is set in `site/todos.js`.
 
+**Your object mappings.** `data/personalObjectMappings.json` lists
+objects you take differently from the catalogs: each mapping has the
+catalog and object being remapped (`from`), the catalog and object it's
+mapped to (`to`), and `why`. An object written as `from` is looked up as
+`to`, so its info and other designations come from the `to` object, and
+`from` is added to them. M102 is mapped to NGC 5866 (the Spindle
+Galaxy), rather than OpenNGC's duplicate of M101. Catalogs are Messier,
+NGC, IC, Caldwell, or another catalog's prefix. Edit it on GitHub, then
+run `node scripts/enrich-ids.mjs` (or the next import) to update the
+sessions. Every page's footer credits the catalog databases the objects
+came from and links this file.
+
 **Catalog info.** Each import looks the objects up in
 [OpenNGC](https://github.com/mattiaverga/OpenNGC) (a pinned release, CC
-BY-SA 4.0, credited on the session page). It adds the object's Messier,
-NGC, IC and Caldwell designations to `ids` (M31 gets NGC 224, NGC 7000
-gets C 20) and writes `data/objects.json` with each object's common name,
+BY-SA 4.0), through `scripts/lib/catalog.mjs`: each catalog source is a
+module in `scripts/lib/catalogs/` with the same small interface, so one
+can be swapped or another added. It adds the object's Messier, NGC, IC
+and Caldwell designations to `ids` (M31 gets NGC 224, NGC 7000 gets
+C 20) and writes `data/objects.json` with each object's common name,
 type, constellation, magnitude and size. An object written by another
 catalog number OpenNGC knows (UGC, PGC, LBN, Sh2, …) is found too, but
-those numbers aren't added. M102 is taken as NGC 5866 (the Spindle
-Galaxy), as in the Astronomical League's Messier program, not OpenNGC's
-duplicate of M101. IDs already there stay, and `aka` stays as written; the
-site shows the catalog's common name when the sheet has none. Don't edit
-`data/objects.json` by hand. To fill in existing sessions, run `node
-scripts/enrich-ids.mjs`; it only adds. Objects OpenNGC doesn't cover
-(stars, planets, most Barnard and Abell objects) are left as written. The
-home page's Sketches tab shows one catalog at a time, picked with a
-toggle, and lists every observed object under each catalog it's in (M31
-under Messier and NGC), in catalog order, with a thumbnail of its latest
-sketch (just the sketch circle, found automatically), its latest
-observation and a count when there are more. Tapping an object opens its
-page (`object.html?id=M31`): the catalog info, its sketch, shown as the
-session's NEW SESSION block and the entry, two images with a gap (a toggle
-picks the session when there are several), and every observation of it,
-newest first.
+those numbers aren't added. IDs already there stay, and `aka` stays as
+written; the site shows the catalog's common name when the sheet has
+none. Don't edit `data/objects.json` by hand. To fill in existing
+sessions, run `node scripts/enrich-ids.mjs`; it only adds. Objects
+OpenNGC doesn't cover (stars, planets, most Barnard and Abell objects)
+are left as written. The home page's Sketches tab shows one catalog at
+a time, picked with a toggle, and lists every observed object under each
+catalog it's in (M31 under Messier and NGC), in catalog order, with a
+thumbnail of its latest sketch (just the sketch circle, found
+automatically), its latest observation and a count when there are more.
+Tapping an object opens its page (`object.html?id=M31`): the catalog
+info, its sketch, shown as the session's NEW SESSION block and the entry,
+two images with a gap (a toggle picks the session when there are
+several), and every observation of it, newest first.
 
 ## Hosting
 

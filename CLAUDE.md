@@ -56,7 +56,9 @@ needs to change things safely.
 | `data/notebooks/<id>.json` | Every scanned page in order: `kind`, `number`, `label`, `open`, `redact` (schema: `schema/notebook.schema.json`) |
 | `data/categories.json` | Page categories for every notebook, in book order, with `in_progress`, `hidden`, `rescan` and `single` (read by `scripts/lib/categories.mjs`) |
 | `data/sessions/<id>.json` | One observing night; `notebook`, `pages`, `header_box`, and `page` and `box` on each observation (schema: `schema/session.schema.json`) |
-| `data/objects.json` | Generated catalog info for observed objects, keyed by first designation (`scripts/lib/catalog.mjs`, OpenNGC pinned and cached in `.catalog-cache/`; schema: `schema/objects.schema.json`) |
+| `data/objects.json` | Generated catalog info for observed objects, keyed by first designation, with the `sources` they came from (`scripts/lib/catalog.mjs`; schema: `schema/objects.schema.json`) |
+| `data/personalObjectMappings.json` | Kacy's catalog mappings: `from` and `to` (each `{ catalog, object }`) and `why` (schema: `schema/personal-object-mappings.schema.json`) |
+| `scripts/lib/catalogs/` | Catalog sources behind one interface (`scripts/lib/catalog.mjs`): `openngc.mjs` (pinned, cached in `.catalog-cache/`) |
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
 | `site/` | Static pages: home (Notebooks, Sessions and Sketches tabs, `#notebooks`, `#sketches/ngc` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
@@ -68,6 +70,23 @@ as `"N/A"` (the schema allows it for numbers and times too). A blank field
 is `null` or missing and is a to-do. Every field but AKA counts; the list
 is `site/todos.js`, used by the site and the import summary. Keep the two
 apart in the reader prompt and importer.
+
+Catalog lookups go through `scripts/lib/catalog.mjs`, which tries each
+source in `scripts/lib/catalogs/` in order. A source exports `{ name,
+version, url, license, load() }`, and `load()` returns an async lookup
+from a designation to an entry (`ids`, name, type, constellation,
+magnitude, size, RA/Dec) or null; that is the whole contract, so a source
+can be swapped for another. Each object records its `source`, and
+`data/objects.json` lists the sources used, for the credits. Kacy's
+mappings (`data/personalObjectMappings.json`) are applied first: a mapped
+designation is looked up as its target, so info and other IDs come from
+the target, never the original, and the mapped designation is added to the
+target's `ids` however it's looked up (M102 is NGC 5866, not OpenNGC's
+duplicate of M101). Validation checks the file: each side is a catalog
+designation, nothing maps to itself, and each object is mapped once. The
+build adds a footer to every page crediting the databases in
+`data/objects.json` (only databases are credited) and linking the
+mappings file.
 
 Catalog lookups (import and `scripts/enrich-ids.mjs`) only add: they
 append designations to `ids` and regenerate `data/objects.json`, but never

@@ -482,7 +482,7 @@ for (const e of list) {
 // the import goes on without it.
 let objects = null;
 try {
-  const enriched = enrichSessions([...sessions.values()], await loadCatalog());
+  const enriched = await enrichSessions([...sessions.values()], await loadCatalog());
   objects = enriched.objects;
   for (const sid of enriched.changed) touched.add(sid);
 } catch (err) {

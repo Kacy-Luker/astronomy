@@ -9,7 +9,7 @@ import { formatJSON } from "./lib/format-json.mjs";
 const dir = join("data", "sessions");
 const files = (await readdir(dir)).filter((f) => f.endsWith(".json"));
 const sessions = await Promise.all(files.map(async (f) => JSON.parse(await readFile(join(dir, f), "utf8"))));
-const { objects, changed } = enrichSessions(sessions, await loadCatalog());
+const { objects, changed } = await enrichSessions(sessions, await loadCatalog());
 for (const s of sessions.filter((s) => changed.has(s.id))) {
   await writeFile(join(dir, `${s.id}.json`), formatJSON(s) + "\n");
 }
