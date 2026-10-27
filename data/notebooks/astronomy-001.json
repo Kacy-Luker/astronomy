@@ -6,10 +6,9 @@
   "started": "2026-08-12",
   "finished": null,
   "scan": { "rotate": 90, "split": 0.47 },
+  "front_cover": {},
   "pages": [
     { "kind": "inside_front_cover" },
-    { "kind": "volume_label", "open": true },
-    { "kind": "blank" },
     { "kind": "title", "redact": [[0.42, 0.485, 0.38, 0.06]] },
     { "kind": "contents", "open": true },
     { "kind": "contents", "open": true },
