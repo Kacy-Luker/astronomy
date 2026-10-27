@@ -1,7 +1,7 @@
-// Home page: Notebooks, Sessions, Sketches and Equipment tabs, under the
+// Home page: Notebooks, Sessions, Sketches, Equipment and Map tabs, under the
 // search and filter bar (site/filterbar.js) that narrows them all. The tab
 // is in the URL (#notebooks, #sessions, #sketches, #sketches/ngc for a
-// catalog, #equipment)
+// catalog, #equipment, #map)
 // and so are the search and filters (?q=&site=...), so links and the back
 // button keep them.
 import {
@@ -12,11 +12,12 @@ import { CATALOGS, catalogOf, compareIds } from "./catalog.js";
 import { observedObjects, sameName } from "./objects.js";
 import { renderEquipment } from "./equipment.js";
 import { filterBar } from "./filterbar.js";
+import { mapPanel } from "./map.js";
 import { activeFilters, keepFilters, matchesAll, searchDocuments } from "./search.js";
 import { todoCount } from "./todos.js";
 
 const summary = document.getElementById("summary");
-const TABS = ["notebooks", "sessions", "sketches", "equipment"];
+const TABS = ["notebooks", "sessions", "sketches", "equipment", "map"];
 const DEFAULT_TAB = "sessions";
 
 function renderNotebook(nb, sessions) {
@@ -202,6 +203,7 @@ try {
   const notebookList = document.querySelector("#notebooks ul");
   const sessionList = document.querySelector("#sessions ol");
   const updateObjects = objectsPanel(document.getElementById("sketches"));
+  const updateMap = mapPanel(document.getElementById("map"));
   const noMatch = (list, text) => list.replaceChildren(el("li", "muted no-match", text));
   // Every tab from the observations that match the search and filters: a
   // session lists only its matching objects, a notebook shows when any of
@@ -223,6 +225,7 @@ try {
     const equipment = document.getElementById("equipment");
     equipment.replaceChildren(...renderEquipment(docs.filter((d) => found.has(d.o))));
     keepFilters(equipment);
+    updateMap(docs.filter((d) => found.has(d.o)));
     summary.textContent = narrowed
       ? `${plural(found.size, "matching observation")} · ${plural(shown.length, "session")} · ${plural(objects.length, "object")}`
       : `${plural(sessions.length, "session")} · ${plural(found.size, "observation")} · ${plural(objects.length, "object")}`;

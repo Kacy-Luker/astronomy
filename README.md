@@ -238,6 +238,18 @@ count as one, shown in the spelling used most; the filters treat them as
 one too. Tap a name to see those observations on the Sessions tab. The
 counts follow the search and filters.
 
+## Map
+
+The home page's **Map** tab shows a marker for each observing site, with
+how many observations were made there; tap one for the site's sessions.
+It uses each session's lat/long, rounded to 0.1° (about 10 km) so the map
+never shows exactly where you observe from; session pages still show the
+coordinates as written. Sessions without coordinates are listed under the
+map. The counts follow the search and filters. The map is
+[Leaflet](https://leafletjs.com/) (installed from npm and served with the
+site) on [OpenStreetMap](https://www.openstreetmap.org/) tiles, credited
+on the map.
+
 ## Session files
 
 **Admin mode.** Open any page of the site with `?admin=on` at the end of
