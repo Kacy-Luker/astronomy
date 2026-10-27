@@ -8,6 +8,17 @@
     }
   ],
   "objects": {
+    "C106": {
+      "ids": ["C106", "NGC 104"],
+      "name": "47 Tucanae",
+      "type": "Globular cluster",
+      "constellation": "Tucana",
+      "magnitude": 4.1,
+      "size": "31′",
+      "ra": "00:24:05.36",
+      "dec": "-72:04:53.2",
+      "source": "OpenNGC"
+    },
     "C14": {
       "ids": ["C14", "NGC 869", "NGC 884"],
       "name": "Double Cluster",
@@ -28,6 +39,28 @@
       "size": "60′ × 8′",
       "ra": "20:56:24",
       "dec": "+31:43:00",
+      "source": "OpenNGC"
+    },
+    "C80": {
+      "ids": ["C80", "NGC 5139"],
+      "name": "Omega Centauri",
+      "type": "Globular cluster",
+      "constellation": "Centaurus",
+      "magnitude": 3.9,
+      "size": "36′",
+      "ra": "13:26:47.28",
+      "dec": "-47:28:46.1",
+      "source": "OpenNGC"
+    },
+    "C94": {
+      "ids": ["C94", "NGC 4755"],
+      "name": "Jewel Box",
+      "type": "Open cluster",
+      "constellation": "Crux",
+      "magnitude": 4.2,
+      "size": "10′",
+      "ra": "12:53:39",
+      "dec": "-60:21:42",
       "source": "OpenNGC"
     },
     "IC 434": {
