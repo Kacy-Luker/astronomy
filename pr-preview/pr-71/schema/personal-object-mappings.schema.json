@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Kacy's catalog mappings",
-  "description": "An object written as `from` is looked up as `to`, and takes its info and other designations from it. Read by scripts/lib/catalog.mjs; credited in the site's footer.",
+  "description": "An object written as `from` is looked up as `to`, and takes its info and other designations from it. Read by scripts/lib/catalog.mjs; linked from the site's footer.",
   "type": "object",
   "required": ["mappings"],
   "additionalProperties": false,
@@ -27,17 +27,7 @@
         "properties": {
           "from": { "$ref": "#/$defs/object" },
           "to": { "$ref": "#/$defs/object" },
-          "why": { "type": "string" },
-          "credit": {
-            "description": "The list or program the mapping follows, if any; leave it out for your own call.",
-            "type": "object",
-            "required": ["name"],
-            "additionalProperties": false,
-            "properties": {
-              "name": { "type": "string" },
-              "url": { "type": "string" }
-            }
-          }
+          "why": { "type": "string" }
         }
       }
     }
