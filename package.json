@@ -7,7 +7,7 @@
     "validate": "node scripts/validate.mjs && node scripts/sync-workflow.mjs --check",
     "build": "node scripts/build.mjs",
     "serve": "npm run build && npx --yes serve dist",
-    "test": "node --test \"tests/unit/*.test.mjs\" && npm run test:site",
+    "test": "node --test \"tests/unit/*.test.mjs\" tests/import.test.mjs && npm run test:site",
     "test:site": "TEST_SITE=1 node scripts/build.mjs && playwright test"
   },
   "engines": {

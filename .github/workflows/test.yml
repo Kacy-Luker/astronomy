@@ -1,7 +1,8 @@
 name: Test
 
 # npm test (#89): unit tests for the scripts and the title-page blur
-# (tests/unit/), then the site tests (tests/site.spec.mjs) in Chromium
+# (tests/unit/), the import end to end (tests/import.test.mjs, #99), then
+# the site tests (tests/site.spec.mjs) in Chromium
 # against the test site's build, at phone and desktop width. Runs on every
 # PR (a required check, alongside preview and docs) and on every push to
 # main, which the test site is deployed from.
@@ -24,6 +25,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # The import test runs the show-through cleaning (scripts/showthrough.py).
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
       - run: npx playwright install --with-deps chromium
       - run: npm test
       - name: Keep the failure screenshots
