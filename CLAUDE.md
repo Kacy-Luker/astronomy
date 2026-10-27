@@ -256,6 +256,12 @@ must match `PageReading` in `read-page.mjs`).
   N/A filters count as "No filter". Rows link to `?eyepiece=…#sessions`
   etc.; `keepFilters()` keeps a link's own filter value. The tab row
   scrolls sideways on phones, with the open tab kept in view.
+- Map tab (`site/map.js`): markers per site from the search documents,
+  coordinates rounded to 0.1° (Kacy's privacy choice; session pages keep
+  exact values), loaded on first open. Leaflet comes from npm
+  (`leaflet`, exact version) and `scripts/build.mjs` copies it to
+  `dist/vendor/leaflet/`; no CDN. The tile URL is the `TILES` constant,
+  the one outside service, credited on the map.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in
   localStorage (`?admin=off` clears it), adds an admin bar to the footer
   with a link to `help.html` (Kacy's phone how-to; keep it in step with
