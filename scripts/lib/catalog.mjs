@@ -26,7 +26,10 @@ import { simbad } from "./catalogs/simbad.mjs";
 export { normalize } from "./catalogs/common.mjs";
 
 // OpenNGC first; SIMBAD (over the network) only for what it doesn't know.
-export const SOURCES = [openngc, simbad];
+// CATALOG_SOURCES (names, comma-separated; empty for none) narrows them, so
+// the import test doesn't call SIMBAD.
+const ONLY = process.env.CATALOG_SOURCES?.split(",").map((x) => x.trim()).filter(Boolean);
+export const SOURCES = [openngc, simbad].filter((s) => !ONLY || ONLY.includes(s.name));
 export const MAPPINGS_FILE = "data/personalObjectMappings.json";
 
 // Kacy's mappings as { from, to } designations, with the rest of each entry.
