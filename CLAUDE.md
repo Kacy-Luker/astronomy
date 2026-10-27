@@ -229,6 +229,15 @@ must match `PageReading` in `read-page.mjs`).
   are `[x, y, width, height]` fractions; the reader returns them at import
   and Kacy can fix them by hand. `view.html` accepts `scans/` and
   `sketches/` images.
+- Admin mode (Kacy only): `?admin=on` on any page, remembered in
+  localStorage (`?admin=off` clears it), adds an admin bar to the footer
+  with an Edit links toggle (also remembered; switching reloads the page).
+  With it on, `editLink()` in `site/lib.js` (which also holds the repo URL)
+  links to GitHub's web editor for the session, each observation, the
+  notebook and the mappings file. On PR previews they open the PR branch
+  (`PREVIEW_BRANCH` from `preview.yml`, on the preview banner's
+  `data-branch`); the setting is shared with previews (same origin). Anything only Kacy should see goes behind `adminMode`
+  (or `editMode` for Edit links).
 - `scripts/build.mjs` adds the icon and manifest links (`site/icons/`,
   `site/manifest.webmanifest`) to every page's `<head>`, so new pages
   don't need them; without them browsers show kacyluker.com's favicon.

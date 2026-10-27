@@ -1,7 +1,7 @@
 // Session page: one night's header, notebook pages, and observations.
 import {
-  el, formatDate, link, loadNotebooks, loadSessions, notebookHref, objectHref, pageFigure, pageName,
-  catalogText, objectName, scanToggle,
+  el, editLink, formatDate, link, loadNotebooks, loadSessions, notebookHref, objectHref, pageFigure, pageName,
+  catalogText, objectName, scanToggle, sessionFile,
 } from "./lib.js";
 import { field, observationDescription, observationFacts, pageOf, scopeText, sheetField } from "./observation.js";
 import { isBlank, isNA, todoCount } from "./todos.js";
@@ -17,6 +17,7 @@ function renderHeader(s, notebook) {
   if (s.program && !isNA(s.program)) head.append(el("span", "tag", s.program));
   const todos = todoCount(s);
   if (todos) head.append(el("span", "tag todo", `${todos} to do`));
+  head.append(...[editLink(sessionFile(s.id), "Edit session")].filter(Boolean));
   header.append(head);
 
   const dl = el("dl", "facts");
@@ -55,7 +56,7 @@ function renderPages(s, notebook) {
   return section;
 }
 
-function renderObservation(o, notebook) {
+function renderObservation(o, notebook, s) {
   const card = el("article", "observation");
   const head = el("div", "session-head");
   const h = el("h3", "object-id");
@@ -63,6 +64,7 @@ function renderObservation(o, notebook) {
   head.append(h);
   const name = objectName(o);
   if (name) head.append(el("span", "muted", name));
+  head.append(...[editLink(sessionFile(s.id))].filter(Boolean));
   card.append(head);
   const about = catalogText(o.catalog);
   if (about) card.append(el("p", "catalog muted", about));
@@ -90,7 +92,7 @@ try {
     renderHeader(s, notebook),
     renderPages(s, notebook),
     el("h3", "section-title", "Observations"),
-    ...s.observations.map((o) => renderObservation(o, notebook)),
+    ...s.observations.map((o) => renderObservation(o, notebook, s)),
   );
 } catch (err) {
   main.replaceChildren(el("p", "summary", `Couldn't load this session (${err.message}).`));
