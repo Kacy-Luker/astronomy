@@ -6,6 +6,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { basename, join } from "node:path";
 import Ajv from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
+import { designation } from "./lib/catalogs/common.mjs";
 import { orderErrors } from "./lib/categories.mjs";
 
 const ajv = new Ajv({ allErrors: true });
@@ -106,6 +107,33 @@ if (existsSync(objectsPath)) {
   if (doc && !validate(doc)) report(objectsPath, validate.errors.map((e) => `${e.instancePath || "/"} ${e.message}`));
   else if (doc) {
     report(objectsPath, Object.entries(doc.objects).filter(([k, o]) => o.ids[0] !== k).map(([k]) => `/objects/${k} must be keyed by its first id`));
+  }
+}
+
+// Kacy's catalog mappings: schema, each side a designation, and each
+// object mapped once.
+const mappingsPath = join("data", "personalObjectMappings.json");
+if (existsSync(mappingsPath)) {
+  const validate = await compile("personal-object-mappings");
+  let doc;
+  try {
+    doc = JSON.parse(await readFile(mappingsPath, "utf8"));
+  } catch (err) {
+    report(mappingsPath, [`invalid JSON: ${err.message}`]);
+  }
+  if (doc && !validate(doc)) report(mappingsPath, validate.errors.map((e) => `${e.instancePath || "/"} ${e.message}`));
+  else if (doc) {
+    const errors = [];
+    const seen = new Set();
+    doc.mappings.forEach((m, i) => {
+      const [from, to] = [m.from, m.to].map(designation);
+      if (!from) errors.push(`/mappings/${i}/from isn't a catalog designation`);
+      if (!to) errors.push(`/mappings/${i}/to isn't a catalog designation`);
+      if (from && from === to) errors.push(`/mappings/${i} maps ${from} to itself`);
+      if (from && seen.has(from)) errors.push(`/mappings/${i}: ${from} is mapped more than once`);
+      seen.add(from);
+    });
+    report(mappingsPath, errors);
   }
 }
 

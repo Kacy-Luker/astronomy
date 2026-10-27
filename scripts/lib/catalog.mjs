@@ -12,22 +12,51 @@
 //
 // Sources are tried in order; the first that knows a designation wins, and
 // its name is kept on the entry for the credits.
+//
+// Kacy's own mappings (data/personalObjectMappings.json) come first: an
+// object mapped from one designation to another is looked up as the other,
+// so its info and other designations come from there, and the mapped
+// designation is added to its ids (M102 is NGC 5866, the Spindle Galaxy).
+import { existsSync, readFileSync } from "node:fs";
 import { compareIds } from "../../site/catalog.js";
+import { designation, keyOf } from "./catalogs/common.mjs";
 import { openngc } from "./catalogs/openngc.mjs";
 
 export { normalize } from "./catalogs/common.mjs";
 
 export const SOURCES = [openngc];
+export const MAPPINGS_FILE = "data/personalObjectMappings.json";
+
+// Kacy's mappings as { from, to } designations, with the rest of each entry.
+export function loadMappings(file = MAPPINGS_FILE) {
+  if (!existsSync(file)) return [];
+  return JSON.parse(readFileSync(file, "utf8")).mappings
+    .map((m) => ({ ...m, from: designation(m.from), to: designation(m.to) }));
+}
 
 // Loads the sources; returns an async lookup(designation) -> entry or null.
-export async function loadCatalog(sources = SOURCES) {
+export async function loadCatalog(sources = SOURCES, mappings = loadMappings()) {
   const lookups = await Promise.all(sources.map(async (source) => [source, await source.load()]));
-  return async (id) => {
-    for (const [source, lookup] of lookups) {
-      const found = await lookup(id);
+  async function lookup(id) {
+    for (const [source, find] of lookups) {
+      const found = await find(id);
       if (found) return { ...found, source: source.name };
     }
     return null;
+  }
+  // Where each mapped designation goes, and the designations each target
+  // object gains, by its first id, however it's looked up.
+  const target = new Map();
+  const gains = new Map();
+  for (const m of mappings) {
+    target.set(m.from, m.to);
+    const found = await lookup(m.to);
+    if (found) gains.set(found.ids[0], [...(gains.get(found.ids[0]) ?? []), m.from]);
+  }
+  return async (id) => {
+    const found = await lookup(target.get(keyOf(id)) ?? id);
+    const more = found && gains.get(found.ids[0]);
+    return more ? { ...found, ids: [...new Set([...found.ids, ...more])].sort(compareIds) } : found;
   };
 }
 

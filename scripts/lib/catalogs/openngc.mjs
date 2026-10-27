@@ -38,18 +38,12 @@ async function csv(file) {
 const list = (s) => (s ? s.split(",").map((x) => x.trim()).filter(Boolean) : []);
 const num = (s) => (s === "" || s == null ? null : Number(s));
 
-// Where we follow observing programs rather than OpenNGC. M102 is listed
-// there as a duplicate of M101; the Astronomical League's Messier program
-// and most lists take it as NGC 5866, the Spindle Galaxy.
-const MESSIER = { "NGC 5866": "M102" };
-
 // One object's reference data, keyed later by its first designation, and
 // the other catalog numbers it can be found by.
 function entry(row) {
   const ids = [];
   const own = normalize(row.Name) ?? row.Name;
-  const messier = row.M ? normalize(`M${row.M}`) : MESSIER[own];
-  if (messier) ids.push(messier);
+  if (row.M) ids.push(normalize(`M${row.M}`));
   ids.push(own);
   for (const n of list(row.NGC)) ids.push(normalize(`NGC${n}`));
   for (const n of list(row.IC)) ids.push(normalize(`IC${n}`));

@@ -1,4 +1,5 @@
 // Shared by the catalog sources: designations and constellation names.
+import { CATALOGS } from "../../../site/catalog.js";
 
 export const CONSTELLATIONS = Object.fromEntries(`And Andromeda|Ant Antlia|Aps Apus|Aqr Aquarius|Aql Aquila|Ara Ara|Ari Aries|Aur Auriga|Boo Boötes|Cae Caelum|Cam Camelopardalis|Cnc Cancer|CVn Canes Venatici|CMa Canis Major|CMi Canis Minor|Cap Capricornus|Car Carina|Cas Cassiopeia|Cen Centaurus|Cep Cepheus|Cet Cetus|Cha Chamaeleon|Cir Circinus|Col Columba|Com Coma Berenices|CrA Corona Australis|CrB Corona Borealis|Crv Corvus|Crt Crater|Cru Crux|Cyg Cygnus|Del Delphinus|Dor Dorado|Dra Draco|Equ Equuleus|Eri Eridanus|For Fornax|Gem Gemini|Gru Grus|Her Hercules|Hor Horologium|Hya Hydra|Hyi Hydrus|Ind Indus|Lac Lacerta|Leo Leo|LMi Leo Minor|Lep Lepus|Lib Libra|Lup Lupus|Lyn Lynx|Lyr Lyra|Men Mensa|Mic Microscopium|Mon Monoceros|Mus Musca|Nor Norma|Oct Octans|Oph Ophiuchus|Ori Orion|Pav Pavo|Peg Pegasus|Per Perseus|Phe Phoenix|Pic Pictor|Psc Pisces|PsA Piscis Austrinus|Pup Puppis|Pyx Pyxis|Ret Reticulum|Sge Sagitta|Sgr Sagittarius|Sco Scorpius|Scl Sculptor|Sct Scutum|Ser Serpens|Sex Sextans|Tau Taurus|Tel Telescopium|Tri Triangulum|TrA Triangulum Australe|Tuc Tucana|UMa Ursa Major|UMi Ursa Minor|Vel Vela|Vir Virgo|Vol Volans|Vul Vulpecula`
   .split("|").map((s) => [s.slice(0, s.indexOf(" ")), s.slice(s.indexOf(" ") + 1)]));
@@ -21,3 +22,11 @@ export function normalize(id) {
 // Lookup key for any designation, including ones normalize() doesn't parse
 // (e.g. "2MASX J00424433+4116074").
 export const keyOf = (id) => normalize(id) ?? String(id).toUpperCase().replace(/\s+/g, "");
+
+// { catalog: "Messier", object: "102" } -> "M102". The catalog is one of
+// site/catalog.js's names (Messier, NGC, IC, Caldwell) or a prefix (Sh2).
+export function designation({ catalog, object }) {
+  const prefix = CATALOGS.find((c) => c.name.toLowerCase() === catalog.trim().toLowerCase())?.prefix ?? catalog.trim();
+  // A prefix ending in a digit takes a hyphen: Sh2-155.
+  return normalize(`${prefix}${/\d$/.test(prefix) ? "-" : ""}${object.trim()}`);
+}
