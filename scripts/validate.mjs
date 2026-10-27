@@ -89,6 +89,14 @@ for (const { path, data: s } of sessions.values()) {
     if (o.box && (o.box[0] + o.box[2] > 1.001 || o.box[1] + o.box[3] > 1.001)) {
       errors.push(`/observations/${i}/box runs off the page`);
     }
+    // An entry comes after its own session's NEW SESSION block, so its
+    // sketch is paired with the right block even when one page holds two
+    // sessions (site/cards.js).
+    const hb = s.header_box;
+    if (hb && o.page != null && (o.page < hb.page || (o.page === hb.page && o.box && hb.box &&
+      o.box[1] < hb.box[1] + hb.box[3] - 0.02))) {
+      errors.push(`/observations/${i} comes before its session's NEW SESSION block (header_box)`);
+    }
   });
   report(path, errors);
 }
