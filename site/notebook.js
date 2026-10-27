@@ -1,6 +1,6 @@
 // Notebook page: the whole book as scanned spreads, with a contents table.
 import {
-  KIND_NAMES, el, formatDate, link, loadNotebooks, loadSessions, pageFigure, pageName,
+  KIND_NAMES, editLink, el, formatDate, link, loadNotebooks, loadSessions, pageFigure, pageName,
   plural, scanToggle, sessionHref,
 } from "./lib.js";
 
@@ -10,7 +10,8 @@ function renderHeader(nb, sessions) {
   const header = el("section", "session-header");
   const head = el("div", "session-head");
   head.append(el("h2", "session-title", nb.title),
-    el("span", `tag status ${nb.status ?? "in_progress"}`, nb.status === "completed" ? "Completed" : "In progress"));
+    el("span", `tag status ${nb.status ?? "in_progress"}`, nb.status === "completed" ? "Completed" : "In progress"),
+    ...[editLink(`data/notebooks/${nb.id}.json`, "Edit notebook")].filter(Boolean));
   header.append(head);
   const dates = nb.started && `${formatDate(nb.started)} – ${nb.finished ? formatDate(nb.finished) : "now"}`;
   const count = sessions.reduce((n, s) => n + s.observations.length, 0);

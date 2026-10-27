@@ -145,6 +145,9 @@ a { color: var(--accent); }
 }
 .object-id { margin: 0; font-size: 1.2rem; }
 .site-footer { padding-bottom: 2rem; font-size: .85rem; }
+/* Edit mode (Kacy only): links to GitHub's editor, at the end of a heading row. */
+.edit-link { margin-left: auto; font-size: .9rem; }
+.edit-mode { margin: .5rem 0 0; }
 .catalog { margin: .25rem 0 0; font-size: .9rem; }
 .ids { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0 0; padding: 0; }
 .description { margin: .75rem 0 0; }

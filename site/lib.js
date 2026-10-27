@@ -156,3 +156,39 @@ export function imageFigure(page, alt, caption) {
   }
   return figure;
 }
+
+// Edit links open a data file in GitHub's web editor. They're for Kacy
+// only: hidden until edit mode is turned on by opening any page with
+// ?edit=on (?edit=off turns it off), which this browser remembers, and never
+// shown on PR previews. The footer says when edit mode is on.
+const REPO = "https://github.com/Kacy-Luker/astronomy";
+const EDIT_KEY = "observing-log-edit";
+const editParam = new URLSearchParams(location.search).get("edit");
+try {
+  if (editParam === "on") localStorage.setItem(EDIT_KEY, "on");
+  if (editParam === "off") localStorage.removeItem(EDIT_KEY);
+} catch { /* not remembered */ }
+function storedEdit() {
+  try { return localStorage.getItem(EDIT_KEY) === "on"; } catch { return false; }
+}
+export const editMode = editParam !== "off" && (editParam === "on" || storedEdit()) &&
+  !document.querySelector(".preview-banner");
+
+// A link to edit a file in the repo (e.g. data/sessions/<id>.json), or null
+// outside edit mode.
+export const sessionFile = (id) => `data/sessions/${id}.json`;
+export function editLink(path, text = "Edit") {
+  if (!editMode) return null;
+  const a = link(`${REPO}/edit/main/${path}`, text, "edit-link");
+  a.title = `Edit ${path} on GitHub`;
+  return a;
+}
+
+if (editMode) {
+  const footer = document.querySelector(".site-footer") ?? document.body.appendChild(el("footer", "site-footer muted"));
+  const off = new URL(location.href);
+  off.searchParams.set("edit", "off");
+  const note = el("p", "edit-mode", "Edit mode is on. ");
+  note.append(link(off.href, "Turn it off"));
+  footer.append(note);
+}
