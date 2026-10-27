@@ -1,9 +1,10 @@
 // Object page: everything about one object (object.html?id=M31, or any of
 // its designations) and every observation of it, newest first.
 import {
-  editLink, el, formatDate, imageFigure, link, loadNotebooks, loadObjects, loadSessions, plural, scanToggle,
+  editLink, el, formatDate, link, loadNotebooks, loadObjects, loadSessions, plural, scanToggle,
   sessionFile, sessionHref,
 } from "./lib.js";
+import { jointCard } from "./cards.js";
 import { field, observationDescription, observationFacts } from "./observation.js";
 import { findObject, observedObjects, sameName } from "./objects.js";
 
@@ -46,15 +47,13 @@ function renderSketches(obj) {
   if (!seen.length) return [];
   const section = el("section", "scans sketches");
   section.append(el("h3", null, "Sketch"));
-  const frame = el("div", "sketch-frame");
+  const frame = el("div");
   const label = ({ s }) => `${formatDate(s.date)} · ${s.site.name}`;
   const show = (i) => {
     const { o, s } = seen[i];
-    // The session's header and the entry, as two images with a gap.
-    frame.replaceChildren(
-      imageFigure(o.sketch.header, `Session header, ${label(seen[i])}`),
-      imageFigure(o.sketch, `${o.catalog_id}, ${label(seen[i])}`, link(sessionHref(s.id), label(seen[i]))),
-    );
+    // The joint card: the session's block and the entry, two images with a gap.
+    frame.replaceChildren(jointCard(o.sketch, `Session header, ${label(seen[i])}`,
+      `${o.catalog_id}, ${label(seen[i])}`, link(sessionHref(s.id), label(seen[i]))));
     for (const [j, b] of buttons.entries()) b.setAttribute("aria-pressed", String(j === i));
   };
   const group = el("div", "toggle");

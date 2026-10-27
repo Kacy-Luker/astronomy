@@ -125,6 +125,8 @@ for (const s of sessions) {
   if (!headerPage?.image) continue;
   await mkdir(join(OUT, "sketches", s.id), { recursive: true });
   const header = await cut(headerPage, s.header_box.box, `sketches/${s.id}/header.jpg`);
+  // The session card (site/cards.js) on the session page.
+  s.header_sketch = header;
   for (const [i, o] of (s.observations ?? []).entries()) {
     const page = o.box && pageAt(o.page);
     if (!page?.image) continue;

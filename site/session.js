@@ -3,6 +3,7 @@ import {
   el, editLink, formatDate, link, loadNotebooks, loadSessions, notebookHref, objectHref, pageFigure, pageName,
   catalogText, objectName, scanToggle, sessionFile,
 } from "./lib.js";
+import { objectCard, sessionCard } from "./cards.js";
 import { field, observationDescription, observationFacts, pageOf, scopeText, sheetField } from "./observation.js";
 import { isBlank, isNA, todoCount } from "./todos.js";
 
@@ -19,6 +20,8 @@ function renderHeader(s, notebook) {
   if (todos) head.append(el("span", "tag todo", `${todos} to do`));
   head.append(...[editLink(sessionFile(s.id), "Edit session")].filter(Boolean));
   header.append(head);
+  // The NEW SESSION block as written.
+  if (s.header_sketch) header.append(sessionCard(s.header_sketch, `New session block, ${formatDate(s.date)}`));
 
   const dl = el("dl", "facts");
   if (isBlank(s.program) || isNA(s.program)) sheetField(dl, "Program", s.program);
@@ -47,7 +50,8 @@ function renderPages(s, notebook) {
     section.append(el("p", "muted", "No scans for this session yet."));
     return section;
   }
-  section.append(scanToggle(section));
+  // The view applies to the whole page: these pages and the sketch cards.
+  section.append(scanToggle(main));
   const grid = el("div", "pages");
   grid.append(...pages.map((p) => pageFigure(p,
     `${pageName(p)} of ${notebook.title}, ${s.date}`,
@@ -76,6 +80,8 @@ function renderObservation(o, notebook, s) {
     card.append(ids);
   }
 
+  // The entry as written; its session's block is shown once, at the top.
+  if (o.sketch) card.append(objectCard(o.sketch, `${o.catalog_id} entry, ${formatDate(s.date)}`));
   card.append(observationFacts(o, notebook), observationDescription(o));
   return card;
 }
