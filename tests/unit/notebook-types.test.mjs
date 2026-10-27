@@ -18,6 +18,6 @@ test("types are found by id or by the label the form shows", () => {
 
 test("only what the import can handle is supported", () => {
   assert.equal(unsupported(TYPES[0]), null);
+  assert.equal(unsupported(findType("free-spreads")), null, "free text (#109)");
   assert.match(unsupported({ scan: { pages: 1 }, form: "stamped" }), /single-sheet/);
-  assert.match(unsupported({ scan: { pages: 2 }, form: "free" }), /#109/);
 });

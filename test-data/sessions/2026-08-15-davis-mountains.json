@@ -1,0 +1,61 @@
+{
+  "id": "2026-08-15-davis-mountains",
+  "date": "2026-08-15",
+  "site": { "name": "Davis Mountains", "lat": 30.6, "lon": -103.93 },
+  "sky": { "sqm": 21.6, "notes": "Dry, a little wind" },
+  "scope": {
+    "name": "Explore 102 refractor",
+    "type": "Refractor",
+    "aperture_mm": 102,
+    "focal_length_mm": 714,
+    "f_ratio": 7
+  },
+  "observers": ["Test Observer"],
+  "notebook": "test-003",
+  "pages": [1, 2],
+  "header_box": { "page": 1, "box": [0.03, 0.02, 0.94, 0.14] },
+  "observations": [
+    {
+      "catalog_id": "M8",
+      "aka": "Lagoon Nebula",
+      "ids": ["M8", "NGC 6523"],
+      "page": 1,
+      "local_time": "22:10",
+      "seeing": 3,
+      "transparency": 4,
+      "eyepiece": "24mm Panoptic",
+      "magnification": 30,
+      "filter": "UHC",
+      "description": "Dark lane splits the glow; the cluster on the east side is easy",
+      "box": [0.03, 0.17, 0.94, 0.22]
+    },
+    {
+      "catalog_id": "M20",
+      "aka": "Trifid Nebula",
+      "ids": ["M20", "NGC 6514"],
+      "page": 1,
+      "local_time": "22:25",
+      "seeing": null,
+      "transparency": 4,
+      "eyepiece": "24mm Panoptic",
+      "magnification": 30,
+      "filter": "UHC",
+      "description": "Seeing good, steady. Three dark lanes with averted vision; the blue half to the north is faint",
+      "box": [0.03, 0.4, 0.94, 0.22]
+    },
+    {
+      "catalog_id": "NGC 6543",
+      "aka": "Cat's Eye Nebula",
+      "ids": ["NGC 6543", "C6"],
+      "page": 2,
+      "local_time": "23:05",
+      "seeing": 2,
+      "transparency": 4,
+      "eyepiece": "9mm Nagler",
+      "magnification": 79,
+      "filter": "N/A",
+      "description": "Small bright blue-green oval; the central star shows now and then",
+      "box": [0.03, 0.02, 0.94, 0.22]
+    }
+  ]
+}

@@ -8,6 +8,14 @@
       "scan": { "pages": 2, "rotate": 90, "split": 0.47 },
       "numbering": "odd-printed-right",
       "form": "stamped"
+    },
+    {
+      "id": "free-spreads",
+      "label": "Free-text log, spreads",
+      "describe": "A bound notebook scanned open, two pages at a time and sideways, written in free text with no stamped form (#109): each session starts at a date heading, and each object is a paragraph, with or without a sketch.",
+      "scan": { "pages": 2, "rotate": 90, "split": 0.47 },
+      "numbering": "odd-printed-right",
+      "form": "free"
     }
   ]
 }

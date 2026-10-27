@@ -153,7 +153,7 @@ const readings = new Map(); // upload index -> reading
 async function read(us) {
   const missing = us.filter((u) => !readings.has(u));
   await inBatches(missing, async (u) => {
-    const r = await cached(nn(u), PageReading, async (c) => c.readPage(await webImage(uploaded[u], READ_HEIGHT)));
+    const r = await cached(nn(u), PageReading, async (c) => c.readPage(await webImage(uploaded[u], READ_HEIGHT), { form: type.form }));
     console.log(`  read uploaded page ${nn(u)}: ${r.kind}${r.printed_number ? ` #${r.printed_number}` : ""}`);
     readings.set(u, r);
   });
@@ -412,7 +412,9 @@ for (let i = list.length; i < (existing?.pages.length ?? 0); i++) {
   await rm(pageImage(id, i).replace(/\.jpg$/, ".clean.jpg"), { force: true });
 }
 // New and moved pages may complete a sheet whose other side was scanned before.
-if (changed.length) cleanShowThrough(id, changed);
+// The cleaner fits the stamp's ink, so a notebook without the stamp keeps
+// its pages as scanned.
+if (changed.length && type.form === "stamped") cleanShowThrough(id, changed);
 
 // 8. Summarize for the pull request (scripts/lib/import/summary.mjs).
 const summary = summarize({

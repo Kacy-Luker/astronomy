@@ -1,12 +1,14 @@
 // The Sketches tab's thumbnails crop each entry to its sketch circle
 // (scripts/lib/circle.mjs, #94): every entry with a box, real and test, has
-// its circle found, also when the scan is fainter.
+// its circle found, also when the scan is fainter. Free-text notebooks
+// (#109) have no stamped circle and aren't searched.
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import sharp from "sharp";
 import { findCircle } from "../../scripts/lib/circle.mjs";
+import { typeOf } from "../../scripts/lib/notebook-types.mjs";
 
 // Each observation's entry, cut from its page as the build does.
 function entries(data, scans) {
@@ -17,6 +19,7 @@ function entries(data, scans) {
   return readdirSync(join(data, "sessions")).flatMap((f) => {
     const s = JSON.parse(readFileSync(join(data, "sessions", f), "utf8"));
     const nb = notebooks[s.notebook];
+    if (typeOf(nb)?.form !== "stamped") return [];
     return s.observations.filter((o) => o.box && nb).map((o) => {
       const at = nb.pages.findIndex((p) => p.number === o.page);
       return { name: `${s.id} ${o.catalog_id}`, page: join(scans, nb.id, `${String(at + 1).padStart(2, "0")}.jpg`), box: o.box };

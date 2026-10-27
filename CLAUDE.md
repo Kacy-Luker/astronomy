@@ -136,13 +136,21 @@ Transparent (`site/lib.js`). The key printed in the notebook isn't used.
 ## The notebook
 
 - Each scan is a two-page spread, scanned sideways (`scan.rotate: 90`).
-  That's the **Stamped log, spreads** type in `data/notebook-types.json`,
-  the only one so far. A new notebook takes its type from the Import
+  That's the **Stamped log, spreads** type in `data/notebook-types.json`;
+  **Free-text log, spreads** (`form: "free"`, #109) is the same book
+  without the stamp. A new notebook takes its type from the Import
   form's **notebook type** (`--type`, only for `new`; an existing notebook
   keeps its own and the import refuses another) and its `scan` defaults
   from the type. `unsupported()` names what the import can't do yet
-  (single sheets, free text #109); those types are refused and left out
-  of the form's dropdown.
+  (single sheets); those types are refused and left out of the form's
+  dropdown. The type's `form` goes to the page reader
+  (`readPage(image, { form })`): the Claude reader's instructions
+  (`system()` in `scripts/lib/readers/claude.mjs`) describe the stamped
+  sheet or free text, and the reading format is the same for both (a free
+  session's date heading is its `header`). Free-text pages skip
+  show-through cleaning, which fits the stamp's ink. Test Notebook 3
+  (`test-003`) is the test data's free-text notebook;
+  `scripts/make-test-pages.mjs` draws it without the stamp.
 - Odd page numbers are printed top outer corner on right-hand pages; even
   ones are inferred. Front matter (covers, title, table of contents, key) is
   unnumbered and labeled instead.
@@ -285,7 +293,8 @@ any that don't).
   applies to the whole page (pages and cards). The Sketches tab's thumbnails
   (`<n>.thumb.jpg`, `.thumb.clean.jpg`, 240 px, shown at 96 px) show just
   the sketch circle, which `scripts/lib/circle.mjs` finds with a Hough
-  search over the entry's ink (the whole entry if none is found). Ink is
+  search over the entry's ink (the whole entry if none is found, and
+  always for free-text notebooks, which have no stamped circle). Ink is
   found at full size, darker than 60% of the entry's paper (its median),
   then mapped onto the 240 px search grid, so thin or faint rings survive
   (#94; `tests/unit/circle.test.mjs` checks every entry, also faded). Boxes

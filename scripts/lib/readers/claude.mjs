@@ -9,13 +9,30 @@ import { asJSONSchema, check } from "../schema.mjs";
 export const name = "claude";
 const MODEL = "claude-opus-5-5";
 
-const SYSTEM = `You transcribe pages from a handwritten astronomy observing notebook.
-
-The notebook uses a printed log sheet. A session starts with a NEW SESSION block:
+// What the pages are written on (form in data/notebook-types.json); system()
+// is the instructions for one.
+const FORMS = {
+  stamped: `The notebook uses a printed log sheet. A session starts with a NEW SESSION block:
 PROGRAM, DATE, SITE, LAT/LONG, SKY/SQM, SCOPE, OBSERVER. Each object entry has
 CAT #, AKA, LT (local time), UT, SEE I-V and TR I-V (the observer circles one
 numeral each), EP/MAG (eyepiece and magnification), FILTER, a sketch circle, and
-DESCRIPTION lines that often run past the printed lines.
+DESCRIPTION lines that often run past the printed lines.`,
+  free: `The notebook has no printed form: it's written in free text. A session starts
+at a date heading, usually followed by where, the sky and the telescope; give
+those as "header" (the format's NEW SESSION block), with its box around the
+heading and those lines. Each object written about after it is an entry: pick
+out its catalog designation, any other name, the times, seeing, transparency,
+eyepiece, magnification and filter where the text gives them, and the rest of
+what's written about it as the description. Its box covers all the writing for
+that object and any sketch beside it. Seeing and transparency are 1-5 only when
+written as a numeral (I-V or 1-5); words like "good" stay in the description
+and the field is null. A field the text doesn't give is null, never inferred
+from other entries or the session.`,
+};
+
+export const system = (form) => `You transcribe pages from a handwritten astronomy observing notebook.
+
+${FORMS[form] ?? FORMS.stamped}
 
 Each page is in one category ("kind"), in the order they come in the notebook:
 ${CATEGORIES.map((c) => `- ${c.kind}: ${c.describe}`).join("\n")}
@@ -64,7 +81,7 @@ export function extractJSON(text) {
 // The answer format is given as a JSON Schema in the prompt and checked here.
 // (Enforcing it in the API instead fails: the schema is too large to compile.)
 // A reply that doesn't fit goes back once with what was wrong.
-async function ask(image, prompt, schema, maxTokens) {
+async function ask(image, prompt, schema, maxTokens, form) {
   const format = JSON.stringify(asJSONSchema(schema));
   const messages = [{
     role: "user",
@@ -81,7 +98,7 @@ async function ask(image, prompt, schema, maxTokens) {
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
       output_config: { effort: "high" },
-      system: SYSTEM,
+      system: system(form),
       messages,
     });
     if (response.stop_reason === "refusal") {
@@ -100,8 +117,9 @@ async function ask(image, prompt, schema, maxTokens) {
   }
 }
 
-export function readPage(image) {
-  return ask(image, "Transcribe this notebook page.", PageReading, 16000);
+// form is what the notebook is written on: "stamped" (the default) or "free".
+export function readPage(image, { form = "stamped" } = {}) {
+  return ask(image, "Transcribe this notebook page.", PageReading, 16000, form);
 }
 
 // Second look at a page after blurring, so nothing private slips through.

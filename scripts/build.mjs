@@ -5,6 +5,7 @@ import { join } from "node:path";
 import * as images from "./lib/image.mjs";
 import { category, isBack, ranks } from "./lib/categories.mjs";
 import { findCircle } from "./lib/circle.mjs";
+import { typeOf } from "./lib/notebook-types.mjs";
 
 const OUT = "dist";
 
@@ -48,9 +49,11 @@ async function cut(page, box, out) {
   return { image: out, clean, ...size };
 }
 // The Sketches tab's thumbnail: just the sketch circle (scripts/lib/circle.mjs
-// finds it), small; the whole entry when no circle is found.
-async function thumbnail(sketch) {
-  const circle = await findCircle(join(OUT, sketch.image));
+// finds it), small; the whole entry when no circle is found, or when the
+// notebook has no stamped circle to find (free text, #109), where the
+// writing could pass for one.
+async function thumbnail(sketch, stamped) {
+  const circle = stamped ? await findCircle(join(OUT, sketch.image)) : null;
   const out = {};
   for (const [key, file] of [["image", sketch.image], ["clean", sketch.clean]]) {
     out[key] = file.replace(/(\.clean)?\.jpg$/, ".thumb$1.jpg");
@@ -148,7 +151,7 @@ async function buildData(dir, root) {
       const page = o.box && pageAt(o.page);
       if (!page?.image) continue;
       o.sketch = { ...(await cut(page, o.box, `${root}sketches/${s.id}/${i + 1}.jpg`)), header };
-      o.sketch.thumb = await thumbnail(o.sketch);
+      o.sketch.thumb = await thumbnail(o.sketch, typeOf(nb)?.form === "stamped");
     }
   }
 

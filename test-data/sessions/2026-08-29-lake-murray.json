@@ -1,0 +1,60 @@
+{
+  "id": "2026-08-29-lake-murray",
+  "date": "2026-08-29",
+  "site": { "name": "Lake Murray", "lat": 34.06, "lon": -97.09 },
+  "sky": { "sqm": 20.8 },
+  "scope": {
+    "name": "Explore 102 refractor",
+    "type": "Refractor",
+    "aperture_mm": 102,
+    "focal_length_mm": 714,
+    "f_ratio": 7
+  },
+  "observers": ["Test Observer", "Test Friend"],
+  "notebook": "test-003",
+  "pages": [2, 3],
+  "header_box": { "page": 2, "box": [0.03, 0.25, 0.94, 0.14] },
+  "observations": [
+    {
+      "catalog_id": "NGC 7000",
+      "aka": "North America Nebula",
+      "ids": ["NGC 7000", "C20"],
+      "page": 2,
+      "local_time": "21:40",
+      "seeing": 3,
+      "transparency": 3,
+      "eyepiece": "32mm Plossl",
+      "filter": "OIII",
+      "description": "Gulf of Mexico edge is sharp; the rest is a broad glow",
+      "box": [0.03, 0.4, 0.94, 0.22]
+    },
+    {
+      "catalog_id": "M31",
+      "aka": "Andromeda Galaxy",
+      "ids": ["M31", "NGC 224"],
+      "page": 3,
+      "local_time": "22:30",
+      "seeing": 3,
+      "transparency": 3,
+      "eyepiece": "32mm Plossl",
+      "magnification": 22,
+      "filter": "N/A",
+      "description": "Fills the field; M32 close by, M110 faint",
+      "box": [0.03, 0.02, 0.94, 0.22]
+    },
+    {
+      "catalog_id": "M57",
+      "aka": "Ring Nebula",
+      "ids": ["M57", "NGC 6720"],
+      "page": 3,
+      "local_time": "22:50",
+      "seeing": 2,
+      "transparency": null,
+      "eyepiece": "9mm Nagler",
+      "magnification": 79,
+      "filter": null,
+      "description": "Smoke ring, darker middle",
+      "box": [0.03, 0.25, 0.94, 0.22]
+    }
+  ]
+}

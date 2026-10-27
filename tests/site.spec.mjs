@@ -131,7 +131,9 @@ test("the map groups sites by spot, and its Near link lists every session there"
   await expect(popup).toContainText(`${atSpot.length} sessions`);
   // Site names without their years.
   await expect(popup.locator("strong")).toHaveText("Okie-Tex · Camp Billy Joe + 1 more");
-  await popup.getByRole("link", { name: /here$/ }).click();
+  // Followed by its address: a click can miss while the map is still
+  // panning to fit the popup.
+  await page.goto(await popup.getByRole("link", { name: /here$/ }).getAttribute("href"));
   await expect(page.locator(".chip").first()).toContainText("Near: Okie-Tex");
   await expect(page.locator(".summary").first()).toContainText(`${atSpot.length} sessions`);
   // The session without coordinates is listed under the map.

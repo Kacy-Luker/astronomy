@@ -30,14 +30,18 @@ fails if another file starts using a wrapped library or tool directly.
 at a path.
 
 **A reader exports:**
-- `readPage(image)`: `image` is one notebook page as a JPEG buffer, about
-  2000 px tall. It returns the page's reading in the `PageReading` format
+- `readPage(image, { form })`: `image` is one notebook page as a JPEG
+  buffer, about 2000 px tall. `form` is what the notebook is written on
+  (from its type in `data/notebook-types.json`): `"stamped"`, the printed
+  log sheet, or `"free"`, free text where a session starts at a date
+  heading (#109). It returns the page's reading in the `PageReading` format
   of `scripts/lib/reading.mjs`:
   - the page's category from `data/categories.json`
   - its printed page number, if any
   - the notebook label (front cover and title page)
   - boxes around any phone number, email or street address
-  - the NEW SESSION block and each object entry, with their boxes
+  - the NEW SESSION block (in free text, the date heading and the lines
+    about the night) and each object entry, with their boxes
   - anything it was unsure of
 - `checkRedaction(image)`: `image` is the same page after blurring. It
   returns `{ legible, what }`, saying whether any personal detail can
