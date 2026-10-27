@@ -271,7 +271,9 @@ automatically), its latest observation and a count when there are more.
 Tapping an object opens its page (`object.html?id=M31`): the catalog
 info, its sketch, shown as the session's NEW SESSION block and the entry,
 two images with a gap (a toggle picks the session when there are
-several), and every observation of it, newest first.
+several), and every observation of it, newest first. A session page
+shows its NEW SESSION block at the top and each observation's entry on
+its card, in the same view as the pages.
 
 ## Hosting
 
