@@ -42,7 +42,6 @@ Pages belong to categories, listed once for every notebook in
 | --- | --- | --- | --- | --- |
 | Front cover (outside) | `front_cover` | shown | rescanned | yes |
 | Inside front cover | `inside_front_cover` | hidden | | yes |
-| Volume label | `volume_label` | hidden | | yes |
 | Title page | `title` | shown | | yes |
 | Table of contents | `contents` | hidden | rescanned | |
 | Scales | `reference` | shown | | |
@@ -95,13 +94,13 @@ form:
 | To | Pick | Scan |
 | --- | --- | --- |
 | Add a session | the notebook | The spreads you wrote on, including the one you started on. Only new pages and pages still being written on are read |
-| Start a notebook | **new-notebook** | From the inside front cover through any sessions so far, in a new folder named for the notebook, e.g. `astronomy-002/`. The folder name becomes the notebook's id |
+| Start a notebook | **new-notebook** | The closed notebook (its front cover), then the inside front cover through any sessions so far, in a new folder named for the notebook, e.g. `astronomy-002/`. The folder name becomes the notebook's id |
 | Re-read pages | the notebook, and tick **reread** | The spreads to re-read, for a misread page or a rescan. What was recorded for those pages is replaced |
-| Add the front cover | the notebook, and **Front cover** as the category | The closed notebook on the scanner, on its own. The scanner bed is trimmed off and the cover turned upright; run it again to replace it |
+| Add the front cover | the notebook, and **Front cover** as the category | The closed notebook on the scanner, on its own. The scanner lid is trimmed off and the cover turned upright; run it again to replace it. A scan of the closed notebook among the spreads of any import is found and used as the cover too |
 
 | Form | When | Scan |
 | --- | --- | --- |
-| **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the rescan checklist; then scan the spreads it lists, in any order, into one file and run it again with that file. Rescan the front cover with **Import** and **Front cover** |
+| **Complete notebook** | The notebook is full | Run once with no scan to mark it completed and get the rescan checklist; then scan the spreads it lists, in any order, into one file and run it again with that file. Scan the closed notebook in the same file, or on its own with **Import** and **Front cover** |
 | **Remove notebook** | Taking a notebook off the site | No scan. Type the notebook's id in **confirm**; it opens a pull request deleting the notebook, its page images and its sessions (the scans in astronomy-scans are kept) |
 
 The scan field can be left empty to use the newest file in the notebook's
@@ -123,10 +122,10 @@ noted in the pull request. A start page makes an import read every page
 in the scan.
 
 **Open pages.** Pages that will still change are marked `"open": true`:
-the table of contents, a volume label with no finish date, blank pages
-after the last one written on, and session pages with room for another
-entry. Open pages are re-read by the next import, and all but session
-pages are left off the site until the notebook is completed.
+the table of contents, blank pages after the last one written on, and
+session pages with room for another entry. Open pages are re-read by the
+next import, and all but session pages are left off the site until the
+notebook is completed.
 
 **Completing.** **Complete notebook** marks the categories that are
 rescanned (front cover, table of contents, index) as waiting, and its pull
