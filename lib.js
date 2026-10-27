@@ -156,3 +156,50 @@ export function imageFigure(page, alt, caption) {
   }
   return figure;
 }
+
+// Admin mode is for Kacy: turned on by opening any page with ?admin=on
+// (?admin=off turns it off), which this browser remembers (previews share
+// the setting, being on the same site). It adds an admin bar to the footer with a toggle for the Edit
+// links, which open a data file in GitHub's web editor.
+const REPO = "https://github.com/Kacy-Luker/astronomy";
+const ADMIN_KEY = "observing-log-admin";
+const EDIT_KEY = "observing-log-edit";
+function stored(key) {
+  try { return localStorage.getItem(key) === "on"; } catch { return false; }
+}
+function store(key, on) {
+  try {
+    if (on) localStorage.setItem(key, "on");
+    else localStorage.removeItem(key);
+  } catch { /* not remembered */ }
+}
+const adminParam = new URLSearchParams(location.search).get("admin");
+if (adminParam === "on" || adminParam === "off") store(ADMIN_KEY, adminParam === "on");
+export const adminMode = adminParam !== "off" && (adminParam === "on" || stored(ADMIN_KEY));
+// On a PR preview the Edit links open the PR branch's files, not main's.
+const branch = document.querySelector(".preview-banner")?.dataset.branch ?? "main";
+export const editMode = adminMode && stored(EDIT_KEY);
+
+// A link to edit a file in the repo (e.g. data/sessions/<id>.json), or null
+// when the Edit links are off.
+export const sessionFile = (id) => `data/sessions/${id}.json`;
+export function editLink(path, text = "Edit") {
+  if (!editMode) return null;
+  const a = link(`${REPO}/edit/${branch}/${path}`, text, "edit-link");
+  a.title = `Edit ${path} on GitHub`;
+  return a;
+}
+
+if (adminMode) {
+  const footer = document.querySelector(".site-footer") ?? document.body.appendChild(el("footer", "site-footer muted"));
+  const bar = el("p", "admin-bar", "Admin · ");
+  // The Edit links are drawn as the page loads, so switching reloads it.
+  const toggle = el("button", "admin-toggle", `Edit links: ${editMode ? "on" : "off"}`);
+  toggle.type = "button";
+  toggle.setAttribute("aria-pressed", String(editMode));
+  toggle.addEventListener("click", () => { store(EDIT_KEY, !editMode); location.reload(); });
+  const off = new URL(location.href);
+  off.searchParams.set("admin", "off");
+  bar.append(toggle, " · ", link(off.href, "Leave admin mode"));
+  footer.append(bar);
+}

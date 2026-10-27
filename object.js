@@ -1,8 +1,8 @@
 // Object page: everything about one object (object.html?id=M31, or any of
 // its designations) and every observation of it, newest first.
 import {
-  el, formatDate, imageFigure, link, loadNotebooks, loadObjects, loadSessions, plural, scanToggle,
-  sessionHref,
+  editLink, el, formatDate, imageFigure, link, loadNotebooks, loadObjects, loadSessions, plural, scanToggle,
+  sessionFile, sessionHref,
 } from "./lib.js";
 import { field, observationDescription, observationFacts } from "./observation.js";
 import { findObject, observedObjects, sameName } from "./objects.js";
@@ -15,6 +15,8 @@ function renderHeader(obj, info) {
   head.append(el("h2", "session-title", obj.ids[0] ?? obj.key));
   // An object known by its name (Albireo) isn't named twice.
   if (obj.name && !sameName(obj.name, obj.ids[0] ?? obj.key)) head.append(el("span", "muted", obj.name));
+  // Kacy's own catalog mappings decide which object a designation is.
+  head.append(...[editLink("data/personalObjectMappings.json", "Edit mappings")].filter(Boolean));
   header.append(head);
   const others = obj.ids.slice(1);
   if (others.length) {
@@ -82,6 +84,7 @@ function renderSighting({ o, s }, obj, notebooks) {
   if (s.program && s.program !== "N/A") head.append(el("span", "tag", s.program));
   // Written under another of its designations that night (e.g. NGC 224).
   if (o.catalog_id !== obj.ids[0]) head.append(el("span", "tag", `as ${o.catalog_id}`));
+  head.append(...[editLink(sessionFile(s.id))].filter(Boolean));
   card.append(head);
   card.append(observationFacts(o, notebooks.find((n) => n.id === s.notebook)), observationDescription(o));
   return card;
