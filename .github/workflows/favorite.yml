@@ -1,0 +1,63 @@
+# Favorites (#23): the site's star (admin mode, object page) opens a new
+# issue titled "Favorite: ..." or "Unfavorite: ..." whose body names the
+# session and the observation. When Kacy submits it, this sets or clears
+# the favorite with scripts/favorite.mjs, opens a pull request, links it on
+# the issue and closes the issue. Only issues Kacy (the repo owner) opens
+# are acted on.
+name: Favorite
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  favorite:
+    if: >-
+      github.event.issue.user.login == github.repository_owner &&
+      (startsWith(github.event.issue.title, 'Favorite:') || startsWith(github.event.issue.title, 'Unfavorite:'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TITLE: ${{ github.event.issue.title }}
+      BODY: ${{ github.event.issue.body }}
+      ISSUE: ${{ github.event.issue.number }}
+    steps:
+      - name: Read the issue
+        run: |
+          SESSION=$(printf '%s\n' "$BODY" | sed -n 's/^Session: *\([a-z0-9-]*\) *\r\{0,1\}$/\1/p' | head -1)
+          NUMBER=$(printf '%s\n' "$BODY" | sed -n 's/^Observation: *\([0-9]*\) *\r\{0,1\}$/\1/p' | head -1)
+          [ -n "$SESSION" ] && [ -n "$NUMBER" ] || { echo "::error::The issue needs 'Session: <id>' and 'Observation: <n>' lines"; exit 1; }
+          case "$TITLE" in Unfavorite:*) OFF=--off ;; *) OFF= ;; esac
+          echo "SESSION=$SESSION" >> "$GITHUB_ENV"
+          echo "NUMBER=$NUMBER" >> "$GITHUB_ENV"
+          echo "OFF=$OFF" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Set the favorite
+        run: |
+          node scripts/favorite.mjs "$SESSION" "$NUMBER" $OFF --summary "$RUNNER_TEMP/summary.md"
+          printf '\nCloses #%s\n' "$ISSUE" >> "$RUNNER_TEMP/summary.md"
+      - run: npm run validate
+      - id: pr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.ASTRONOMY_TOKEN }}
+          branch: favorite/${{ env.SESSION }}-${{ env.NUMBER }}
+          title: ${{ env.TITLE }}
+          commit-message: ${{ env.TITLE }}
+          body-path: ${{ runner.temp }}/summary.md
+          add-paths: data/sessions
+      - name: Link the pull request on the issue
+        if: steps.pr.outputs.pull-request-url
+        env:
+          GH_TOKEN: ${{ github.token }}
+          URL: ${{ steps.pr.outputs.pull-request-url }}
+        run: gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "Pull request: $URL. Merge it to update the site."
