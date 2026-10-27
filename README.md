@@ -231,8 +231,8 @@ matching.
 
 **Admin mode.** Open any page of the site with `?admin=on` at the end of
 the address (for example `kacyluker.com/astronomy/?admin=on`); the
-browser remembers it. Every page's footer then has an admin bar with a
-short phone how-to (`help.html`: adding a session, other imports,
+browser remembers it. Every page then has an admin bar across the top
+(under the preview bar on a PR preview) with a short phone how-to (`help.html`: adding a session, other imports,
 finishing and removing a notebook), an **Edit links** toggle, and a link
 to leave admin mode (`?admin=off`). With
 Edit links on, pages show links that open the file in GitHub's editor:
