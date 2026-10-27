@@ -58,7 +58,7 @@ needs to change things safely.
 | `data/sessions/<id>.json` | One observing night; `notebook`, `pages`, `header_box`, and `page` and `box` on each observation (schema: `schema/session.schema.json`) |
 | `data/objects.json` | Generated catalog info for observed objects, keyed by first designation, with the `sources` they came from (`scripts/lib/catalog.mjs`; schema: `schema/objects.schema.json`) |
 | `data/personalObjectMappings.json` | Kacy's catalog mappings: `from` and `to` (each `{ catalog, object }`) and `why` (schema: `schema/personal-object-mappings.schema.json`) |
-| `scripts/lib/catalogs/` | Catalog sources behind one interface (`scripts/lib/catalog.mjs`): `openngc.mjs` (pinned, cached in `.catalog-cache/`) |
+| `scripts/lib/catalogs/` | Catalog sources behind one interface (`scripts/lib/catalog.mjs`): `openngc.mjs` (pinned, cached in `.catalog-cache/`), then `simbad.mjs` (network, only for what OpenNGC misses; answers cached in `.catalog-cache/simbad/`, a failed request is a miss) |
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
 | `site/` | Static pages: home (Notebooks, Sessions and Sketches tabs, `#notebooks`, `#sketches/ngc` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
@@ -77,7 +77,11 @@ version, url, license, load() }`, and `load()` returns an async lookup
 from a designation to an entry (`ids`, name, type, constellation,
 magnitude, size, RA/Dec) or null; that is the whole contract, so a source
 can be swapped for another. Each object records its `source`, and
-`data/objects.json` lists the sources used, for the credits. Kacy's
+`data/objects.json` lists the sources used, for the credits. SIMBAD is
+reached over the network: `sim-id` resolves a designation the way its
+search box does, then TAP gives the data. In cloud sessions Node's fetch
+needs `NODE_USE_ENV_PROXY=1` to go through the proxy (Actions needs
+nothing). Kacy's
 mappings (`data/personalObjectMappings.json`) are applied first: a mapped
 designation is looked up as its target, so info and other IDs come from
 the target, never the original, and the mapped designation is added to the
