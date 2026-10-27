@@ -5,15 +5,12 @@ import { join } from "node:path";
 import * as images from "./lib/image.mjs";
 import { category, isBack, ranks } from "./lib/categories.mjs";
 import { findCircle } from "./lib/circle.mjs";
+import { objectKeys, pageName, readJSON, readJSONDir } from "./lib/files.mjs";
 import { typeOf } from "./lib/notebook-types.mjs";
 
 const OUT = "dist";
 
-async function readAll(dir) {
-  if (!existsSync(dir)) return [];
-  const files = (await readdir(dir)).filter((f) => f.endsWith(".json")).sort();
-  return Promise.all(files.map(async (f) => JSON.parse(await readFile(join(dir, f), "utf8"))));
-}
+const readAll = async (dir) => (await readJSONDir(dir)).map((f) => f.data);
 
 await rm(OUT, { recursive: true, force: true });
 await cp("site", OUT, { recursive: true });
@@ -82,10 +79,10 @@ async function buildData(dir, root) {
   // Catalog info (data/objects.json, from OpenNGC) goes with each observation
   // whose designation it knows, under its key in the objects file.
   const objectsFile = join(dir, "objects.json");
-  const objects = existsSync(objectsFile) ? JSON.parse(await readFile(objectsFile, "utf8")).objects : {};
-  const objectOf = new Map(Object.entries(objects).flatMap(([key, o]) => o.ids.map((id) => [id, key])));
+  const { objects } = await readJSON(objectsFile, { objects: {} });
+  const objectOf = objectKeys(objects);
   for (const o of sessions.flatMap((s) => s.observations ?? [])) {
-    const key = [o.catalog_id, ...(o.ids ?? [])].map((id) => objectOf.get(id)).find(Boolean);
+    const key = objectOf(o);
     if (key) {
       const { name, type, constellation, magnitude, size } = objects[key];
       o.catalog = { key, name, type, constellation, magnitude, size };
@@ -106,7 +103,7 @@ async function buildData(dir, root) {
       ...nb,
       front_cover: front && { label: "Front cover", slot: 0, sessions: [], image: cover, thumb, width: front.width, height: front.height },
       pages: await Promise.all(nb.pages.map(async ({ redact, ...page }, i) => {
-        const image = `${scansDir}/${nb.id}/${String(i + 1).padStart(2, "0")}.jpg`;
+        const image = `${scansDir}/${nb.id}/${pageName(i)}.jpg`;
         const { width, height } = await images.size(image);
         // Pages that will still change aren't published until they're final. An
         // unfinished notebook also leaves out its blank pages and the categories
@@ -182,9 +179,9 @@ const icons = [
 const escape = (text) => String(text).replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 const anchor = (url, text) => (url ? `<a href="${escape(url)}">${escape(text)}</a>` : escape(text));
 const andList = (items) => (items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`);
-const sources = existsSync("data/objects.json") ? JSON.parse(await readFile("data/objects.json", "utf8")).sources : [];
+const { sources } = await readJSON("data/objects.json", { sources: [] });
 const mappingsFile = "data/personalObjectMappings.json";
-const mappings = existsSync(mappingsFile) ? JSON.parse(await readFile(mappingsFile, "utf8")).mappings : [];
+const { mappings } = await readJSON(mappingsFile, { mappings: [] });
 const footerParts = [];
 if (sources.length) {
   const about = (s) => [s.by, s.license].filter(Boolean).map(escape).join(", ");

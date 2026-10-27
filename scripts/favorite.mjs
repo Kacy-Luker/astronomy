@@ -7,11 +7,10 @@
 // session (objects are matched through data/objects.json, so M31 and
 // NGC 224 are one). Run by .github/workflows/favorite.yml from the issue
 // the site's star opens.
-import { existsSync } from "node:fs";
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { formatJSON } from "./lib/format-json.mjs";
+import { objectKeys, readJSON, readJSONDir, writeJSON } from "./lib/files.mjs";
 
 const { positionals: [id, number], values: opts } = parseArgs({
   allowPositionals: true,
@@ -23,8 +22,7 @@ if (!/^[a-z0-9-]+$/.test(id ?? "") || !/^\d+$/.test(number ?? "")) {
 }
 
 const dir = join("data", "sessions");
-const sessions = await Promise.all((await readdir(dir)).filter((f) => f.endsWith(".json"))
-  .map(async (f) => ({ path: join(dir, f), data: JSON.parse(await readFile(join(dir, f), "utf8")) })));
+const sessions = await readJSONDir(dir);
 const session = sessions.find((s) => s.data.id === id);
 if (!session) throw new Error(`there is no session ${id}`);
 const chosen = session.data.observations[Number(number) - 1];
@@ -32,9 +30,8 @@ if (!chosen) throw new Error(`session ${id} has no observation ${number}`);
 
 // The object an observation is of: its key in data/objects.json, else the
 // designation as written.
-const objects = existsSync("data/objects.json") ? JSON.parse(await readFile("data/objects.json", "utf8")).objects : {};
-const keyOf = new Map(Object.entries(objects).flatMap(([key, o]) => o.ids.map((x) => [x, key])));
-const objectOf = (o) => [o.catalog_id, ...(o.ids ?? [])].map((x) => keyOf.get(x)).find(Boolean) ?? o.catalog_id;
+const keyOf = objectKeys((await readJSON("data/objects.json", { objects: {} })).objects);
+const objectOf = (o) => keyOf(o) ?? o.catalog_id;
 const object = objectOf(chosen);
 
 const changed = new Set();
@@ -50,7 +47,7 @@ for (const s of sessions) {
 if (opts.off) delete chosen.favorite;
 else chosen.favorite = true;
 changed.add(session);
-for (const s of changed) await writeFile(s.path, formatJSON(s.data) + "\n");
+for (const s of changed) await writeJSON(s.path, s.data);
 
 const lines = [
   opts.off

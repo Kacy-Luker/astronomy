@@ -29,14 +29,14 @@
 // Readings are cached in .import-cache/ so a rerun doesn't pay for the same
 // page twice.
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { parseArgs } from "node:util";
 import { CATEGORIES, SESSION_RANK, category, ranks } from "./lib/categories.mjs";
 import { enrichSessions, loadCatalog, objectsFile } from "./lib/catalog.mjs";
 import { coverImage } from "./lib/cover.mjs";
-import { formatJSON } from "./lib/format-json.mjs";
+import { pageName as nn, readJSON, readJSONDir, writeJSON } from "./lib/files.mjs";
 import { numberPages } from "./lib/import/numbering.mjs";
 import { present, recordSessions } from "./lib/import/sessions.mjs";
 import { nameOf, summarize } from "./lib/import/summary.mjs";
@@ -75,7 +75,7 @@ const PARALLEL = 4;
 const PAD = 0.02; // margin added around each personal-info box
 
 const notebookPath = join("data", "notebooks", `${id}.json`);
-const existing = existsSync(notebookPath) ? JSON.parse(await readFile(notebookPath, "utf8")) : null;
+const existing = await readJSON(notebookPath, null);
 if (mode === "new" && existing) throw new Error(`notebook ${id} already exists; pick it in the notebook dropdown instead of new-notebook`);
 if (mode !== "new" && !existing) throw new Error(`there is no notebook ${id}; import its first scan with new-notebook picked`);
 const type = mode === "new" && opts.type ? findType(opts.type) : typeOf(existing);
@@ -86,7 +86,6 @@ if (existing && opts.type && findType(opts.type) !== type) {
 if (unsupported(type)) throw new Error(`${type.label} notebooks can't be imported yet: ${unsupported(type)} aren't supported`);
 const scan = existing?.scan ?? { rotate: type.scan.rotate, split: type.scan.split };
 const notes = []; // lines for the PR summary
-const nn = (i) => String(i + 1).padStart(2, "0");
 
 // A category chosen for every page, when Claude's would be wrong.
 const named = opts.category ? CATEGORIES.find((c) => [c.kind, c.label].includes(opts.category)) : null;
@@ -133,7 +132,7 @@ let reader; // loaded only when a page isn't cached, so cached runs need no API 
 async function cached(name, format, compute) {
   const path = join(cacheDir, `${name}.json`);
   if (existsSync(path)) {
-    const answer = check(format, JSON.parse(await readFile(path, "utf8")));
+    const answer = check(format, await readJSON(path));
     if (!answer.ok) throw new Error(`${path} isn't in the reading format: ${answer.problem}`);
     return answer.data;
   }
@@ -305,13 +304,7 @@ await inBatches(placed, async (entry) => {
 });
 
 // 5. Sessions from the session pages placed (scripts/lib/import/sessions.mjs).
-async function loadSessions() {
-  const dir = join("data", "sessions");
-  if (!existsSync(dir)) return [];
-  const files = (await readdir(dir)).filter((f) => f.endsWith(".json"));
-  return Promise.all(files.map(async (f) => JSON.parse(await readFile(join(dir, f), "utf8"))));
-}
-const sessions = new Map((await loadSessions()).map((s) => [s.id, s]));
+const sessions = new Map((await readJSONDir(join("data", "sessions"))).map(({ data: s }) => [s.id, s]));
 const { touched, removed, notes: sessionNotes } = recordSessions({
   sessions,
   notebook: id,
@@ -388,13 +381,13 @@ const notebook = {
   pages: list.map((e) => e.page),
 };
 await mkdir(join("data", "notebooks"), { recursive: true });
-await writeFile(notebookPath, formatJSON(notebook) + "\n");
+await writeJSON(notebookPath, notebook);
 await mkdir(join("data", "sessions"), { recursive: true });
 for (const sid of touched) {
-  await writeFile(join("data", "sessions", `${sid}.json`), formatJSON(sessions.get(sid)) + "\n");
+  await writeJSON(join("data", "sessions", `${sid}.json`), sessions.get(sid));
 }
 for (const sid of removed) await rm(join("data", "sessions", `${sid}.json`), { force: true });
-if (objects) await writeFile(join("data", "objects.json"), formatJSON(objectsFile(objects)) + "\n");
+if (objects) await writeJSON(join("data", "objects.json"), objectsFile(objects));
 // Images are named by position, so pages after an inserted one move along.
 await mkdir(join("scans", id), { recursive: true });
 if (coverScan) await writeFile(join("scans", id, "cover-front.jpg"), await webImage(coverScan));

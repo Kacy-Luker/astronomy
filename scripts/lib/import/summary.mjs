@@ -10,9 +10,9 @@
 // from scripts/lib/import/sessions.mjs; frontCover: the notebook's
 // front_cover; notes: lines for "Check these".
 import { CATEGORIES, category } from "../categories.mjs";
+import { pageName as nn } from "../files.mjs";
 import { sessionTodos } from "../../../site/todos.js";
 
-const nn = (i) => String(i + 1).padStart(2, "0");
 export const nameOf = (page) => (page.number != null ? `page ${page.number}` : (page.label ?? category(page.kind)?.label ?? page.kind).toLowerCase());
 
 export function summarize({ mode, notebook, scanName = null, uploadedCount = 0, recorded = [], cover = false, sessions, touched, removed, frontCover, notes = [] }) {

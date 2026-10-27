@@ -2,12 +2,12 @@
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { pageName } from "./files.mjs";
 import { image, size } from "./image.mjs";
 
 export const PAGE_HEIGHT = 1600;
 
-export const pageImage = (notebookId, index) =>
-  join("scans", notebookId, `${String(index + 1).padStart(2, "0")}.jpg`);
+export const pageImage = (notebookId, index) => join("scans", notebookId, `${pageName(index)}.jpg`);
 
 const FOLD_RANGE = [0.40, 0.56]; // where the fold can be, as a share of the spread's width
 const MIN_FOLD_SCORE = 0.2; // weaker detections fall back to the other spreads' fold

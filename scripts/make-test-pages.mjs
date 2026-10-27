@@ -9,10 +9,10 @@
 //
 // Run it after changing test-data/notebooks or test-data/sessions; the
 // images are committed, so the build doesn't depend on fonts.
-import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
-import { formatJSON } from "./lib/format-json.mjs";
+import { pageName, readJSON, readJSONDir, writeJSON } from "./lib/files.mjs";
 import { typeOf } from "./lib/notebook-types.mjs";
 import { redact } from "./lib/pages.mjs";
 
@@ -21,10 +21,8 @@ const W = 1000, H = 1600;
 const PAPER = "#f4f1e8", STAMP = "#5b4b9c", PENCIL = "#3a3a3a";
 const ROMAN = ["I", "II", "III", "IV", "V"];
 
-const readAll = async (dir) => Promise.all((await readdir(dir)).filter((f) => f.endsWith(".json")).sort()
-  .map(async (f) => ({ file: join(dir, f), data: JSON.parse(await readFile(join(dir, f), "utf8")) })));
-const notebooks = await readAll(join(DIR, "notebooks"));
-const sessions = (await readAll(join(DIR, "sessions"))).sort((a, b) => a.data.date.localeCompare(b.data.date));
+const notebooks = await readJSONDir(join(DIR, "notebooks"));
+const sessions = (await readJSONDir(join(DIR, "sessions"))).sort((a, b) => a.data.date.localeCompare(b.data.date));
 
 const xml = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 const shown = (v) => (v == null ? "" : v);
@@ -190,7 +188,7 @@ function frontMatter(nb, p, i) {
   }
 }
 
-for (const { file, data: nb } of notebooks) {
+for (const { path: file, data: nb } of notebooks) {
   const out = join(DIR, "scans", nb.id);
   await rm(out, { recursive: true, force: true });
   await mkdir(out, { recursive: true });
@@ -199,7 +197,7 @@ for (const { file, data: nb } of notebooks) {
   const byPage = free ? layout(nb.id, FREE) : layout(nb.id);
   const draw = free ? { header: freeHeader, entry: freeEntry } : { header, entry };
   for (const [i, p] of nb.pages.entries()) {
-    const name = join(out, `${String(i + 1).padStart(2, "0")}.jpg`);
+    const name = join(out, `${pageName(i)}.jpg`);
     let svg;
     if (p.kind === "session" || p.kind === "unused" || p.kind === "blank") {
       const items = byPage.get(p.number) ?? [];
@@ -212,7 +210,7 @@ for (const { file, data: nb } of notebooks) {
     // The import test (tests/import.test.mjs) feeds the unblurred title page
     // to the import, which must blur it; kept outside scans/, so it isn't
     // published. Its contact details are made up.
-    if (p.redact) await sharp(drawn).jpeg({ quality: 70, mozjpeg: true }).toFile(join(DIR, "unblurred", `${nb.id}-${String(i + 1).padStart(2, "0")}.jpg`));
+    if (p.redact) await sharp(drawn).jpeg({ quality: 70, mozjpeg: true }).toFile(join(DIR, "unblurred", `${nb.id}-${pageName(i)}.jpg`));
     const image = await redact(drawn, p.redact ?? []);
     await sharp(image).jpeg({ quality: 70, mozjpeg: true }).toFile(name);
     if (nb.id === "test-001" && p.kind === "session") await sharp(image).jpeg({ quality: 70, mozjpeg: true }).toFile(name.replace(/\.jpg$/, ".clean.jpg"));
@@ -227,6 +225,6 @@ for (const { file, data: nb } of notebooks) {
   console.log(`${file}: ${nb.pages.length} pages`);
 }
 // header_box goes before the observations, as in real session files.
-for (const { file, data: { observations, ...s } } of sessions) await writeFile(file, formatJSON({ ...s, observations }) + "\n");
-for (const { file, data } of notebooks) await writeFile(file, formatJSON(data) + "\n");
-await writeFile(join(DIR, "objects.json"), formatJSON(JSON.parse(await readFile(join(DIR, "objects.json"), "utf8"))) + "\n");
+for (const { path, data: { observations, ...s } } of sessions) await writeJSON(path, { ...s, observations });
+for (const { path, data } of notebooks) await writeJSON(path, data);
+await writeJSON(join(DIR, "objects.json"), await readJSON(join(DIR, "objects.json")));

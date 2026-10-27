@@ -88,7 +88,7 @@ change things safely.
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
 | `test-data/` | The test site's made-up data, laid out like `data/`, with drawn page images in `test-data/scans/` |
 | `site/` | Static pages: home (Notebooks, Sessions, Sketches, Equipment and Map tabs, `#notebooks`, `#sketches/ngc`, `#equipment`, `#map` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
-| `scripts/` | Build, validation, import, splitting, cleaning; every outside library or tool goes through one module (`docs/DEPENDENCIES.md`; `tests/unit/wrapped.test.mjs` checks it): images `scripts/lib/image.mjs`, page reading `scripts/lib/reader.mjs`, data formats `scripts/lib/schema.mjs`, scans and PDFs `scripts/lib/scans.mjs` (with `scripts/pick-scan.mjs`, the Notebook job's notebook and scan picker) |
+| `scripts/` | Build, validation, import, splitting, cleaning; data files are read and written, and page images named, through `scripts/lib/files.mjs` (`readJSON`, `readJSONDir`, `writeJSON`, `pageName`, `objectKeys`); every outside library or tool goes through one module (`docs/DEPENDENCIES.md`; `tests/unit/wrapped.test.mjs` checks it): images `scripts/lib/image.mjs`, page reading `scripts/lib/reader.mjs`, data formats `scripts/lib/schema.mjs`, scans and PDFs `scripts/lib/scans.mjs` (with `scripts/pick-scan.mjs`, the Notebook job's notebook and scan picker) |
 | `tests/` | `npm test`: `tests/unit/*.test.mjs` (node --test) and `tests/site.spec.mjs` (Playwright) |
 | `.github/actions/` | Steps the workflows share (`docs/DEPENDENCIES.md`): `setup` (Node, `npm ci`, optional Python and poppler), `open-pr`, `publish`; workflows don't use those actions directly |
 | `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`), `favorite.yml` (favorites from issues), `test.yml` (`npm test`) |
@@ -127,10 +127,10 @@ change `catalog_id`, `aka` or IDs already there (M51's NGC 5195 was added
 by hand). The build attaches each object's catalog info to its
 observations, and the site prefers `aka` over the catalog name.
 
-JSON files are hand-edited by Kacy; write them with
-`scripts/lib/format-json.mjs` so diffs stay small. Seeing and transparency
-are stored 1–5 for the sheet's I–V and shown with the Clear Sky Chart's
-words: seeing I is Excellent and V Bad, transparency I is Poor and V
+JSON files are hand-edited by Kacy; write them with `writeJSON` in
+`scripts/lib/files.mjs` (laid out by `scripts/lib/format-json.mjs`) so
+diffs stay small. Seeing and transparency are stored 1–5 for the sheet's
+I–V and shown with the Clear Sky Chart's words: seeing I is Excellent and V Bad, transparency I is Poor and V
 Transparent (`site/lib.js`). The key printed in the notebook isn't used.
 
 ## The notebook

@@ -165,6 +165,15 @@ validator could take its place.
 - Skip a sheet when the fit between its two sides is weak.
 - Never touch the back matter.
 
+**Why Python here only (#27):** the rest is Node: the import, the build,
+validation and the site. Show-through cleaning is the one job where
+Python's numpy and scipy do much better than hand-written loops: it
+best-fits one side of a sheet onto the other over a wide window. The other
+image work stays in Node because it's light (the fold finder, the rescan
+matcher), or because the site build runs it (the circle finder), and the
+build and its checks shouldn't need Python. Python is only set up for the
+Notebook job's imports.
+
 ## GitHub
 
 The scripts don't depend on GitHub: they read and write files in the repo,
