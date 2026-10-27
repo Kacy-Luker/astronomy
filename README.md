@@ -227,6 +227,22 @@ outside them; an object page shows only the matching observations and
 sketches; a notebook page dims the sessions in its contents with nothing
 matching.
 
+## Favorites
+
+Mark your favorite observation of an object in admin mode: each
+observation on an object page has a star (☆, or ★ for the favorite).
+Tapping it opens a ready-made GitHub issue ("Favorite: M31 on Oct 11,
+2026"); tap **Submit** and the **Favorite** workflow opens a pull request
+setting it, links it on the issue, and the issue closes when you merge.
+An object has one favorite: a new one replaces the old. Tap ★ to clear it
+the same way. Only issues you open are acted on. The favorite is stored as
+`"favorite": true` on the observation. Its sketch is shown first on the
+object page (★ on its session button, a **★ Favorite** tag on its card)
+and used for the object's thumbnail on the Sketches tab, and the Filters
+panel gets **Favorites only** once some observations are favorites and
+some aren't. By hand: `node scripts/favorite.mjs <session id>
+<observation number> [--off]`.
+
 ## Equipment
 
 The home page's **Equipment** tab lists every telescope (with its type,
