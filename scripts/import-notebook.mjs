@@ -34,7 +34,9 @@ import { CATEGORIES, SESSION_RANK, category, ranks } from "./lib/categories.mjs"
 import { enrichSessions, loadCatalog, objectsFile } from "./lib/catalog.mjs";
 import { coverImage } from "./lib/cover.mjs";
 import { formatJSON } from "./lib/format-json.mjs";
-import { sessionTodos } from "../site/todos.js";
+import { numberPages } from "./lib/import/numbering.mjs";
+import { present, recordSessions } from "./lib/import/sessions.mjs";
+import { nameOf, summarize } from "./lib/import/summary.mjs";
 import { matchPosition } from "./lib/match.mjs";
 import { cleanShowThrough, listSpreads, pageImage, redact, splitSpreads, webImage } from "./lib/pages.mjs";
 
@@ -70,7 +72,6 @@ if (mode !== "new" && !existing) throw new Error(`there is no notebook ${id}; im
 const scan = existing?.scan ?? { rotate: 90, split: 0.47 };
 const notes = []; // lines for the PR summary
 const nn = (i) => String(i + 1).padStart(2, "0");
-const nameOf = (page) => (page.number != null ? `page ${page.number}` : (page.label ?? category(page.kind)?.label ?? page.kind).toLowerCase());
 
 // A category chosen for every page, when Claude's would be wrong.
 const named = opts.category ? CATEGORIES.find((c) => [c.kind, c.label].includes(opts.category)) : null;
@@ -167,44 +168,11 @@ if (coverAt.length) {
   toRead = toRead.filter((u) => u >> 1 !== spread && !coverAt.includes(u));
 }
 
-// 3. What each page read is, and its page number. Odd pages carry printed
-// numbers, which always win; the others follow from them by where they are
-// in the upload. Only when no printed number was read does the start page
-// number the session pages, in scan order (a printed number can be missed
-// while scanning). A blank page only gets a number when it comes before a
-// session page, or faces one.
+// 3. What each page read is, and its page number (scripts/lib/import/numbering.mjs).
 const kindOf = (u) => (named && readings.get(u).kind !== "blank" ? named.kind : readings.get(u).kind);
-const votes = new Map();
-for (const u of toRead) {
-  const n = readings.get(u).printed_number;
-  if (n % 2 === 1) votes.set(n - u, (votes.get(n - u) ?? 0) + 1);
-}
-const isSession = (u) => readings.has(u) && ["session", "unused"].includes(kindOf(u));
-const firstSession = toRead.find(isSession);
-let offset = [...votes].sort((a, b) => b[1] - a[1])[0]?.[0];
-if (startPage != null) {
-  if (firstSession == null) notes.push(`- A start page (${startPage}) was given, but the scan has no session pages, so it wasn't used.`);
-  else if (offset != null) {
-    const printed = firstSession + offset;
-    notes.push(`- Printed page numbers were read, so the start page wasn't needed` +
-      (printed !== startPage ? `: they make the first session page ${printed}, not ${startPage}. Check the scan.` : "."));
-  } else {
-    offset = startPage - firstSession;
-    notes.push(`- No printed page numbers were read, so session pages were numbered from ${startPage}, the start page given, in scan order.`);
-  }
-}
-const sessionArea = (u) => isSession(u) || (readings.has(u) && readings.get(u).printed_number != null);
-function numberOf(u) {
-  const r = readings.get(u);
-  if (r.printed_number != null) return r.printed_number;
-  if (offset == null || u + offset < 1) return null;
-  if (kindOf(u) === "blank" && !isSession(u + 1) && !sessionArea(u ^ 1)) return null;
-  return ["session", "unused", "blank"].includes(kindOf(u)) ? u + offset : null;
-}
-for (const u of toRead) {
-  const n = readings.get(u).printed_number, want = offset != null ? u + offset : null;
-  if (n != null && want != null && n !== want) notes.push(`- Uploaded page ${nn(u)} shows number ${n}, out of step with the pages around it. Check the page order.`);
-}
+const numbering = numberPages({ uploads: toRead, readingOf: (u) => readings.get(u), kindOf, startPage });
+notes.push(...numbering.notes);
+const { numberOf } = numbering;
 
 // 4. Place each page: replace what's there when it may be (re-reading, or a
 // page still open), skip it when it's already recorded, or insert it where
@@ -315,9 +283,7 @@ await inBatches(placed, async (entry) => {
   entry.clean = null;
 });
 
-// 5. Sessions. A header starts a session; entries without one continue the
-// latest session. On a page that already has entries, only entries beyond
-// those are added (counted, not matched, so a misread can't duplicate one).
+// 5. Sessions from the session pages placed (scripts/lib/import/sessions.mjs).
 async function loadSessions() {
   const dir = join("data", "sessions");
   if (!existsSync(dir)) return [];
@@ -325,135 +291,15 @@ async function loadSessions() {
   return Promise.all(files.map(async (f) => JSON.parse(await readFile(join(dir, f), "utf8"))));
 }
 const sessions = new Map((await loadSessions()).map((s) => [s.id, s]));
+const { touched, removed, notes: sessionNotes } = recordSessions({
+  sessions,
+  notebook: id,
+  pages: [...placed].sort((a, b) => list.indexOf(a) - list.indexOf(b))
+    .map(({ u, page }) => ({ name: `Uploaded page ${nn(u)}`, number: page.number ?? null, reading: readings.get(u) })),
+  mode,
+});
+notes.push(...sessionNotes);
 const mine = () => [...sessions.values()].filter((s) => s.notebook === id);
-const touched = new Set();
-const removed = new Set();
-const slug = (text) => text.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-const present = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v != null));
-// A reading's box as stored: [x, y, width, height], clamped to the page.
-const boxOf = (b) => {
-  if (!b) return null;
-  const c = (v) => Math.round(Math.min(1, Math.max(0, v)) * 1000) / 1000;
-  const [x, y] = [c(b.x), c(b.y)];
-  return [x, y, c(Math.min(b.width, 1 - x)), c(Math.min(b.height, 1 - y))];
-};
-const lastPage = (s) => Math.max(0, ...(s.pages ?? []));
-const headerFields = (h) => {
-  const sky = present({ sqm: h.sqm, notes: h.sky_notes });
-  return present({
-    program: h.program,
-    date: h.date,
-    site: present({ name: h.site, lat: h.lat, lon: h.lon }),
-    sky: Object.keys(sky).length ? sky : null,
-    scope: h.scope && present(h.scope),
-    observers: h.observers,
-  });
-};
-
-// Replacing pages starts them from scratch: forget their entries first.
-const processedNumbers = new Set(placed.map((e) => e.page.number).filter((n) => n != null));
-const startedOn = new Map(mine().map((s) => [Math.min(...(s.pages ?? [Infinity])), s]));
-if (mode === "replace") {
-  for (const s of mine()) {
-    const kept = s.observations.filter((o) => !processedNumbers.has(o.page));
-    if (kept.length === s.observations.length) continue;
-    s.observations = kept;
-    s.pages = s.pages.filter((n) => !processedNumbers.has(n) || n === Math.min(...s.pages));
-    touched.add(s.id);
-  }
-}
-
-// Adds a page's entries to a session, noting the page.
-function addEntries(session, entries, number, withHeader = false) {
-  if (number != null && !session.pages.includes(number) && (entries.length || withHeader)) {
-    session.pages.push(number);
-    session.pages.sort((a, b) => a - b);
-  }
-  for (const e of entries) {
-    // Same field order as hand-written files; UT and magnification only when written.
-    session.observations.push({
-      catalog_id: e.catalog_id,
-      aka: e.aka,
-      ids: [e.catalog_id],
-      page: number,
-      local_time: e.local_time,
-      ...present({ ut: e.ut }),
-      seeing: e.seeing,
-      transparency: e.transparency,
-      eyepiece: e.eyepiece,
-      ...present({ magnification: e.magnification }),
-      filter: e.filter,
-      description: e.description,
-      ...present({ box: boxOf(e.box) }),
-    });
-  }
-  if (entries.length) {
-    session.observations.sort((a, b) => (a.page ?? 0) - (b.page ?? 0));
-    touched.add(session.id);
-  }
-}
-
-let current = null;
-for (const { u, page } of [...placed].sort((a, b) => list.indexOf(a) - list.indexOf(b))) {
-  const r = readings.get(u);
-  const number = page.number ?? null;
-  if (r.kind !== "session" || (!r.header && !r.entries.length)) continue;
-  const recorded = mine().flatMap((s) => s.observations).filter((o) => number != null && o.page === number).length;
-  const added = r.entries.slice(recorded);
-  // When a session starts partway down a page, the entries above its NEW
-  // SESSION block continue the session before it.
-  const above = r.header?.box ? added.filter((e) => e.box && e.box.y < r.header.box.y) : [];
-  if (above.length) {
-    const before = current ?? mine()
-      .filter((s) => number == null || Math.min(...(s.pages ?? [Infinity])) < number)
-      .sort((a, b) => lastPage(a) - lastPage(b))
-      .at(-1);
-    if (before) addEntries(before, above, number);
-    else notes.push(`- Uploaded page ${nn(u)} has entries above its NEW SESSION block but no earlier session to belong to. They were skipped.`);
-  }
-
-  if (r.header) {
-    current = number != null ? startedOn.get(number) : null;
-    if (current && mode === "replace") {
-      const { id: sid, notebook, pages: ps, observations, header_box: oldBox, ...old } = current;
-      const fresh = headerFields(r.header);
-      const box = r.header.box ? { page: number, box: boxOf(r.header.box) } : oldBox;
-      if (JSON.stringify(old) !== JSON.stringify(fresh) || JSON.stringify(box) !== JSON.stringify(oldBox)) {
-        sessions.set(sid, { id: sid, ...fresh, notebook, pages: ps, ...present({ header_box: box }), observations });
-        current = sessions.get(sid);
-        touched.add(sid);
-      }
-    }
-    if (!current) {
-      const h = r.header;
-      let sid = slug(`${h.date}-${h.site}`);
-      for (let n = 2; sessions.has(sid); n++) sid = slug(`${h.date}-${h.site}-${n}`);
-      const box = number != null && h.box ? { header_box: { page: number, box: boxOf(h.box) } } : {};
-      current = { id: sid, ...headerFields(h), notebook: id, pages: [], ...box, observations: [] };
-      sessions.set(sid, current);
-      touched.add(sid);
-    }
-  } else {
-    current ??= mine()
-      .filter((s) => number == null || lastPage(s) <= number)
-      .sort((a, b) => lastPage(a) - lastPage(b))
-      .at(-1) ?? null;
-    if (!current) {
-      notes.push(`- Uploaded page ${nn(u)} has entries but no session to belong to. They were skipped.`);
-      continue;
-    }
-  }
-  addEntries(current, added.filter((e) => !above.includes(e)), number, Boolean(r.header));
-  if (added.length) for (const note of r.uncertain) notes.push(`- ${current.id}, page ${number ?? "?"}: ${note}`);
-}
-for (const s of mine()) {
-  if (touched.has(s.id) && !s.observations.length) {
-    sessions.delete(s.id);
-    touched.delete(s.id);
-    removed.add(s.id);
-  }
-}
-
 
 // 6. Which pages are still open. Completing without a scan asks for the
 // categories marked rescan (and other pages still waiting) to be rescanned;
@@ -546,64 +392,19 @@ for (let i = list.length; i < (existing?.pages.length ?? 0); i++) {
 // New and moved pages may complete a sheet whose other side was scanned before.
 if (changed.length) cleanShowThrough(id, changed);
 
-// 8. Summarize for the pull request.
-const what = {
-  new: "Created", add: "Added to", replace: "Replaced pages in", complete: "Completed",
-}[mode];
-const recorded = placed.map((e) => list.indexOf(e)).sort((a, b) => a - b).map((i) => nameOf(list[i].page));
-const lines = [
-  `${what} **${notebook.title}**` + (source
-    ? ` from \`${basename(source)}\`: ${placed.length} of ${uploaded.length} uploaded pages recorded` +
-      (recorded.length ? ` (${[...new Set(recorded)].join(", ")})` : "") + "."
-    : "."),
-  ...(coverScan ? ["The scan of the closed notebook is the front cover; check it's upright and trimmed in the preview."] : []),
-  `Status: **${status === "completed" ? "completed" : "in progress"}**.`,
-  "",
-];
-if (touched.size || removed.size) {
-  lines.push("Before merging, compare each session with its pages in the notebook view, and fix",
-    "any misread field by editing the session's JSON file on this branch.", "");
-  for (const sid of touched) {
-    const s = sessions.get(sid);
-    lines.push(`- \`${sid}\`: ${s.observations.map((o) => o.catalog_id).join(", ")} (pages ${s.pages.join(", ")})`);
-    // Blank fields are to-dos (N/A means the field doesn't apply).
-    for (const t of sessionTodos(s)) {
-      lines.push(`  - To do, ${t.where}${t.page ? ` (page ${t.page})` : ""}: ${t.fields.join(", ")}`);
-    }
-  }
-  for (const sid of removed) lines.push(`- \`${sid}\`: removed (no entries left)`);
-} else {
-  lines.push("No session entries changed.");
-}
-if (status === "completed") {
-  // What completing asks to be rescanned, and whether it has been.
-  const todo = CATEGORIES.filter((c) => c.rescan).map((c) => {
-    if (c.kind === "front_cover") return { c, todo: !frontCover ? "not scanned yet" : frontCover.open ? "rescan it" : null };
-    const ps = notebook.pages.filter((p) => p.kind === c.kind);
-    return { c, todo: !ps.length ? "not scanned yet" : ps.some((p) => p.open) ? "rescan it" : null };
-  });
-  // Other pages still waiting, like ones Claude said would still change.
-  const others = [...new Set(notebook.pages.filter((p) => p.open && !category(p.kind)?.rescan).map(nameOf))];
-  lines.push("", "### Rescan checklist", "",
-    ...todo.map(({ c, todo: t }) => `- [${t ? " " : "x"}] ${c.label}${t ? `: ${t}` : ""}`),
-    ...others.map((name) => `- [ ] ${name[0].toUpperCase()}${name.slice(1)}: rescan it`));
-  if (todo.some((t) => t.todo && t.c.kind !== "front_cover") || others.length) {
-    lines.push("", "Scan those pages (whole spreads, in any order) into one file, upload it, and run",
-      "**Complete notebook** again with that file. Each page goes back where its category belongs.");
-  }
-  if (todo.some((t) => t.todo && t.c.kind === "front_cover")) {
-    lines.push("", "Scan the closed notebook's front cover too: in the same file, or on its own with **Front cover** picked as the category in **Import**.");
-  }
-  // Blank pages are confirmed by hand, and categories never scanned are listed.
-  const blanks = notebook.pages.flatMap((p, i) => (p.kind === "blank" ? [p.number != null ? `page ${p.number}` : `scan position ${nn(i)}`] : []));
-  if (blanks.length) {
-    lines.push("", "### Blank pages", "", "These pages were read as blank. Check each is meant to be blank before merging:", "",
-      ...blanks.map((b) => `- ${b}`));
-  }
-  const missing = CATEGORIES.filter((c) => !c.rescan && !notebook.pages.some((p) => p.kind === c.kind));
-  if (missing.length) lines.push("", "### Not scanned", "", ...missing.map((c) => `- ${c.label}`));
-}
-if (notes.length) lines.push("", "### Check these", "", ...notes);
-const summary = lines.join("\n") + "\n";
+// 8. Summarize for the pull request (scripts/lib/import/summary.mjs).
+const summary = summarize({
+  mode,
+  notebook,
+  scanName: source ? basename(source) : null,
+  uploadedCount: uploaded.length,
+  recorded: placed.map((e) => list.indexOf(e)).sort((a, b) => a - b).map((i) => nameOf(list[i].page)),
+  cover: Boolean(coverScan),
+  sessions,
+  touched,
+  removed,
+  frontCover,
+  notes,
+});
 if (opts.summary) await writeFile(opts.summary, summary);
 console.log(summary);
