@@ -191,6 +191,29 @@ export function editLink(path, text = "Edit") {
   return a;
 }
 
+// The admin star for setting Kacy's favorite observation of an object
+// (#23), or null outside admin mode. The site can't save a tap, so it opens
+// a ready-made GitHub issue; submitting it runs .github/workflows/
+// favorite.yml, which opens a pull request. n counts the observation from 1
+// in its session's file.
+export function favoriteLink(o, s, n) {
+  if (!adminMode) return null;
+  const verb = o.favorite ? "Unfavorite" : "Favorite";
+  const what = `${o.catalog_id} on ${formatDate(s.date)}`;
+  const body = [
+    o.favorite
+      ? `Tap Submit to stop this being your favorite observation of ${o.catalog_id}. A pull request will follow.`
+      : `Tap Submit to make this your favorite observation of ${o.catalog_id}, replacing any other. A pull request will follow.`,
+    "",
+    `Session: ${s.id}`,
+    `Observation: ${n}`,
+  ].join("\n");
+  const a = link(`${REPO}/issues/new?${new URLSearchParams({ title: `${verb}: ${what}`, body })}`, o.favorite ? "★" : "☆", "favorite-link");
+  a.title = o.favorite ? `Stop ${what} being the favorite` : `Make ${what} the favorite`;
+  a.setAttribute("aria-label", a.title);
+  return a;
+}
+
 // The admin bar runs across the top of the page, under the preview banner
 // on a PR preview, and scrolls away with the page.
 if (adminMode) {

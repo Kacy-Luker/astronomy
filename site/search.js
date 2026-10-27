@@ -74,9 +74,10 @@ export const FILTERS = [
   { key: "seeing", label: "Seeing", values: (o) => [Number.isInteger(o.seeing) ? seeingText(o.seeing) : null] },
   { key: "transparency", label: "Transparency", values: (o) => [Number.isInteger(o.transparency) ? transparencyText(o.transparency) : null] },
 ];
-// Also: a date range (from, to) and "has to-dos" (todo=1).
+// Also: a date range (from, to), "has to-dos" (todo=1) and "favorites
+// only" (fav=1).
 const RANGE = ["from", "to"];
-export const FILTER_KEYS = ["q", ...FILTERS.map((f) => f.key), ...RANGE, "todo"];
+export const FILTER_KEYS = ["q", ...FILTERS.map((f) => f.key), ...RANGE, "todo", "fav"];
 
 // A blank field on the observation or its NEW SESSION block (site/todos.js).
 export const hasTodo = (o, s) => [...entryFields(o), ...headerFields(s)].some(([, v]) => isBlank(v));
@@ -97,6 +98,7 @@ export function matchesAll(doc, state) {
   if (state.from && doc.s.date < state.from) return false;
   if (state.to && doc.s.date > state.to) return false;
   if (state.todo && !hasTodo(doc.o, doc.s)) return false;
+  if (state.fav && !doc.o.favorite) return false;
   return true;
 }
 

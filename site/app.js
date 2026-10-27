@@ -74,8 +74,8 @@ function renderSession(s) {
 // more).
 function renderObjectRow(id, obj) {
   const item = el("li", "object-row");
-  // The latest sketch's circle, small, in the viewer's chosen view (see applyView).
-  const sketch = obj.seen.find(({ o }) => o.sketch)?.o.sketch;
+  // The favorite's sketch circle (else the latest's), small, in the viewer's chosen view (see applyView).
+  const sketch = (obj.seen.find(({ o }) => o.favorite && o.sketch) ?? obj.seen.find(({ o }) => o.sketch))?.o.sketch;
   if (sketch) {
     const thumb = link(objectHref(id), null, "sketch-thumb");
     const img = el("img");
