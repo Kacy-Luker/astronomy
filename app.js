@@ -1,6 +1,7 @@
-// Home page: Notebooks, Sessions and Sketches tabs, under the search and
-// filter bar (site/filterbar.js) that narrows them all. The tab is in the
-// URL (#notebooks, #sessions, #sketches, and #sketches/ngc for a catalog)
+// Home page: Notebooks, Sessions, Sketches and Equipment tabs, under the
+// search and filter bar (site/filterbar.js) that narrows them all. The tab
+// is in the URL (#notebooks, #sessions, #sketches, #sketches/ngc for a
+// catalog, #equipment)
 // and so are the search and filters (?q=&site=...), so links and the back
 // button keep them.
 import {
@@ -9,12 +10,13 @@ import {
 } from "./lib.js";
 import { CATALOGS, catalogOf, compareIds } from "./catalog.js";
 import { observedObjects, sameName } from "./objects.js";
+import { renderEquipment } from "./equipment.js";
 import { filterBar } from "./filterbar.js";
 import { activeFilters, keepFilters, matchesAll, searchDocuments } from "./search.js";
 import { todoCount } from "./todos.js";
 
 const summary = document.getElementById("summary");
-const TABS = ["notebooks", "sessions", "sketches"];
+const TABS = ["notebooks", "sessions", "sketches", "equipment"];
 const DEFAULT_TAB = "sessions";
 
 function renderNotebook(nb, sessions) {
@@ -172,6 +174,9 @@ function showTab() {
     tabs[i].tabIndex = on ? 0 : -1;
     document.getElementById(t).hidden = !on;
   });
+  // On a phone the tab row scrolls; keep the open tab in view.
+  const open = tabs[TABS.indexOf(current)];
+  open.parentElement.scrollLeft = Math.max(0, open.offsetLeft + open.offsetWidth - open.parentElement.clientWidth + 16);
 }
 for (const tab of tabs) {
   // Swap the hash without jumping down to the panel.
@@ -215,6 +220,9 @@ try {
     if (!shown.length) noMatch(sessionList, "No sessions match.");
     const objects = observedObjects(shown, catalog);
     updateObjects(objects, "No objects match.");
+    const equipment = document.getElementById("equipment");
+    equipment.replaceChildren(...renderEquipment(docs.filter((d) => found.has(d.o))));
+    keepFilters(equipment);
     summary.textContent = narrowed
       ? `${plural(found.size, "matching observation")} · ${plural(shown.length, "session")} · ${plural(objects.length, "object")}`
       : `${plural(sessions.length, "session")} · ${plural(found.size, "observation")} · ${plural(objects.length, "object")}`;
