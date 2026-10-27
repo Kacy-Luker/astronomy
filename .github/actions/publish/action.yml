@@ -1,0 +1,32 @@
+name: Publish
+description: >-
+  Copies a built site folder to the gh-pages branch, which GitHub Pages
+  serves: at the top, or in a folder under it. The one place that uses
+  JamesIves/github-pages-deploy-action (docs/DEPENDENCIES.md).
+inputs:
+  folder:
+    description: The built site, e.g. dist
+    required: true
+  target-folder:
+    description: A folder in gh-pages to publish into; empty for the top
+    default: ""
+  keep:
+    description: Folders in gh-pages to leave alone when publishing at the top, one per line
+    default: ""
+runs:
+  using: composite
+  steps:
+    - if: inputs.target-folder == ''
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: ${{ inputs.folder }}
+        branch: gh-pages
+        clean-exclude: ${{ inputs.keep }}
+        force: false
+    - if: inputs.target-folder != ''
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: ${{ inputs.folder }}
+        branch: gh-pages
+        target-folder: ${{ inputs.target-folder }}
+        force: false
