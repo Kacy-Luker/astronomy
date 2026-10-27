@@ -14,15 +14,25 @@ const TABS = ["notebooks", "sessions", "sketches"];
 const DEFAULT_TAB = "sessions";
 
 function renderNotebook(nb, sessions) {
-  const item = el("li", "session");
+  const item = el("li", "session notebook-card");
+  // The outside front cover, when it's been scanned, beside the title.
+  if (nb.front_cover?.thumb) {
+    const img = el("img", "cover-thumb");
+    img.src = nb.front_cover.thumb;
+    img.alt = "";
+    img.loading = "lazy";
+    item.append(img);
+  }
+  const text = el("div", "object-text");
+  item.append(text);
   const head = el("div", "session-head");
   head.append(link(notebookHref(nb.id), nb.title, "session-link session-date"));
   head.append(el("span", "tag", nb.status === "completed" ? "Completed" : "In progress"));
-  item.append(head);
+  text.append(head);
   const mine = sessions.filter((s) => s.notebook === nb.id);
   const dates = nb.started && `${formatDate(nb.started)} – ${nb.finished ? formatDate(nb.finished) : "now"}`;
   const meta = [dates, plural(mine.length, "session"), plural(nb.pages.length, "scanned page")];
-  item.append(el("p", "session-meta", meta.filter(Boolean).join(" · ")));
+  text.append(el("p", "session-meta", meta.filter(Boolean).join(" · ")));
   return item;
 }
 
