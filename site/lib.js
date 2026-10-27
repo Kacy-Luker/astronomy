@@ -197,10 +197,13 @@ export function imageFigure(page, alt, caption) {
 // (?admin=off turns it off), which this browser remembers (previews share
 // the setting, being on the same site). It adds an admin bar at the top
 // of the page with the how-to page (help.html) and a toggle for the Edit links, which
-// open a data file in GitHub's web editor.
+// open a data file in GitHub's web editor. The installed app has no address
+// bar, so a device that has been in admin mode also gets an "Admin mode"
+// link in the footer to turn it back on (#112); visitors never see it.
 const REPO = "https://github.com/Kacy-Luker/astronomy";
 const ADMIN_KEY = "observing-log-admin";
 const EDIT_KEY = "observing-log-edit";
+const ADMIN_SEEN_KEY = "observing-log-admin-seen";
 function stored(key) {
   try { return localStorage.getItem(key) === "on"; } catch { return false; }
 }
@@ -213,6 +216,7 @@ function store(key, on) {
 const adminParam = new URLSearchParams(location.search).get("admin");
 if (adminParam === "on" || adminParam === "off") store(ADMIN_KEY, adminParam === "on");
 export const adminMode = adminParam !== "off" && (adminParam === "on" || stored(ADMIN_KEY));
+if (adminMode) store(ADMIN_SEEN_KEY, true);
 // On a PR preview the Edit links open the PR branch's files, not main's.
 const branch = document.querySelector(".preview-banner")?.dataset.branch ?? "main";
 export const editMode = adminMode && stored(EDIT_KEY);
@@ -267,4 +271,12 @@ if (adminMode) {
   const banner = document.querySelector(".preview-banner");
   if (banner) banner.after(bar);
   else document.body.prepend(bar);
+}
+
+// Back into admin mode, on a device that has used it (#112).
+if (!adminMode && stored(ADMIN_SEEN_KEY)) {
+  const on = new URL(location.href);
+  on.searchParams.set("admin", "on");
+  const footer = document.querySelector(".site-footer") ?? document.body.appendChild(el("footer", "site-footer muted"));
+  footer.append(" ", link(on.href, "Admin mode", "admin-on"));
 }

@@ -355,7 +355,11 @@ any that don't).
   localStorage (`?admin=off` clears it), adds an admin bar across the top
   of the page (after `.preview-banner` when there is one) with a link to `help.html` (Kacy's phone how-to; keep it in step with
   the forms and the README's Importing section) and an Edit links toggle
-  (also remembered; switching reloads the page).
+  (also remembered; switching reloads the page). The installed app has
+  no address bar, so a device that has been in admin mode
+  (`observing-log-admin-seen` in localStorage) gets an "Admin mode" link
+  in the footer while it's off (#112); on Android the app shares Chrome's
+  storage, so `?admin=on` in Chrome turns it on in the app.
   With it on, `editLink()` in `site/lib.js` (which also holds the repo URL)
   links to GitHub's web editor for the session, each observation, the
   notebook and the mappings file. On PR previews they open the PR branch
