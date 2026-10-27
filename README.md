@@ -10,6 +10,7 @@ Astronomy observations transcribed from paper notes, published at
 | `data/notebooks/` | One JSON file per paper notebook, listing every page |
 | `data/sessions/` | One JSON file per observing session |
 | `data/objects.json` | Catalog info for every observed object, from OpenNGC (generated) |
+| `data/personalObjectMappings.json` | Objects you take differently from the catalogs (edit by hand) |
 | `schema/` | The shape every notebook and session file must match |
 | `scans/<notebook>/` | One image per notebook page, in order (`01.jpg`, `02.jpg`, …) |
 | `site/` | Static site source (HTML, CSS, JS) |
@@ -225,16 +226,15 @@ count is set in `site/todos.js`.
 objects you take differently from the catalogs: each mapping has the
 catalog and object being remapped (`from`), the catalog and object it's
 mapped to (`to`), why, and the list or program it follows, if any
-(`credit`; leave it out when it's your own call). An
-object written as `from` is looked up as `to`, so its info and other
-designations come from the `to` object, and `from` is added to them. M102
-is mapped to NGC 5866 (the Spindle Galaxy), as in the Astronomical
-League's Messier program, rather than OpenNGC's duplicate of M101. Catalogs
-are Messier, NGC, IC, Caldwell, or another catalog's prefix. Edit it on
-GitHub, then run `node scripts/enrich-ids.mjs` (or the next import) to
-update the sessions. Every page's footer credits the catalog databases the
-objects came from and links this file, naming the lists its mappings
-cite.
+(`credit`; leave it out when it's your own call). An object written as
+`from` is looked up as `to`, so its info and other designations come
+from the `to` object, and `from` is added to them. M102 is mapped to
+NGC 5866 (the Spindle Galaxy), as in the Astronomical League's Messier
+program, rather than OpenNGC's duplicate of M101. Catalogs are Messier,
+NGC, IC, Caldwell, or another catalog's prefix. Edit it on GitHub, then
+run `node scripts/enrich-ids.mjs` (or the next import) to update the
+sessions. Every page's footer credits the catalog databases the objects
+came from and links this file, naming the lists its mappings cite.
 
 **Catalog info.** Each import looks the objects up in
 [OpenNGC](https://github.com/mattiaverga/OpenNGC) (a pinned release, CC
