@@ -63,7 +63,9 @@ function header(s, top, h) {
 }
 function entry(o, top, h, crossed = false) {
   const at = (row) => top + 40 + row * 44;
-  const r = 105, cx = W - 60 - r - 20, cy = top + 20 + r;
+  // The stamp's sketch circle: about 14% of the entry's width in radius, as
+  // on the real sheets, so scripts/lib/circle.mjs finds it for the thumbnails.
+  const r = 130, cx = W - 60 - r - 20, cy = top + 20 + r;
   const rand = random(`${o.catalog_id}${o.local_time}`);
   const stars = Array.from({ length: 40 }, () => {
     const a = rand() * 2 * Math.PI, d = Math.sqrt(rand()) * (r - 8);
@@ -76,8 +78,8 @@ function entry(o, top, h, crossed = false) {
     label(50, at(2), "LT / UT") + text(150, at(2), [o.local_time, o.ut].map(shown).join(" / ")) +
     label(50, at(3), "SEEING") + circled(190, at(3), o.seeing) +
     label(50, at(4), "TRANS") + circled(190, at(4), o.transparency) +
-    label(50, at(5), "EP / MAG") + text(160, at(5), ep) + label(470, at(5), "FILTER") + text(560, at(5), shown(o.filter)) +
-    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${STAMP}" stroke-width="2"/>` + stars +
+    label(50, at(5), "EP / MAG") + text(160, at(5), ep) + label(400, at(5), "FILTER") + text(480, at(5), shown(o.filter)) +
+    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${STAMP}" stroke-width="4"/>` + stars +
     lines.map((l, i) => text(50, at(6) + i * 30, l, { size: 22 })).join("") +
     (crossed ? `<path d="M40 ${top + 10} L${W - 40} ${top + h - 10} M${W - 40} ${top + 10} L40 ${top + h - 10}" stroke="${PENCIL}" stroke-width="5"/>` : "");
 }
