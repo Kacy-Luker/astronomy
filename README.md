@@ -215,9 +215,11 @@ shared and survives switching tabs.
 **Filters** sit beside the search box on every page that lists more than
 one thing to narrow (a session with one observation, a notebook with one
 session or an object seen once has no bar). Tap **Filters** for a
-dropdown per field (program, catalog, site, telescope, eyepiece, filter,
-observer, notebook, seeing, transparency) with the values on that page; a
-field with only one value there isn't shown. There's also a date range
+dropdown per field (program, catalog, site, event, telescope, eyepiece,
+filter, observer, notebook, seeing, transparency) with the values on that
+page; a field with only one value there isn't shown. **Event** is the site
+without its year (Okie-Tex 2026 and 2027 are both Okie-Tex), shown once
+some site name has a year. There's also a date range
 (with more than one night) and **Has to-dos** (when only some have
 them). Active filters show as chips: tap one to remove it, or **Clear
 all**. They're in the address too
@@ -242,9 +244,11 @@ counts follow the search and filters.
 
 The home page's **Map** tab shows a marker for each observing site, with
 how many observations were made there. Tap one for a summary that stays
-small however often you observe there: the site, its observations and
-sessions, the first and last dates, and a link to the Sessions tab
-filtered to that site.
+small however often you observe there: the event (the site name without
+its year, so Okie-Tex 2026 and 2027 are both Okie-Tex), its observations
+and sessions, the first and last dates, and a link to the Sessions tab
+filtered to that event. When several events share a spot, the newest two
+get a link each and the rest are counted ("+ 2 more events here").
 It uses each session's lat/long, rounded to 0.1° (about 10 km) so the map
 never shows exactly where you observe from; session pages still show the
 coordinates as written. Sessions without coordinates are listed under the

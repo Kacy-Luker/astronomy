@@ -9,7 +9,7 @@
 // build) and loaded the first time the tab opens. The map tiles are the one
 // outside service; their address is TILES, credited on the map.
 import { el, formatDate, link, plural, sessionHref } from "./lib.js";
-import { keepFilters } from "./search.js";
+import { eventName, keepFilters } from "./search.js";
 
 const TILES = {
   url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -35,8 +35,9 @@ function loadLeaflet() {
   return leaflet;
 }
 
-// [{ lat, lon, names, sessions: [{ s, count }], count }] for the matching
-// observations, one per rounded spot, most observations first.
+// [{ lat, lon, events, sessions: [{ s, count }], count }] for the matching
+// observations, one per rounded spot, most observations first. events are
+// the site names without their years (eventName()), newest first.
 function spots(docs) {
   const bySpot = new Map();
   for (const { s } of docs) {
@@ -52,31 +53,36 @@ function spots(docs) {
     return {
       ...spot,
       sessions,
-      names: [...new Set(sessions.map(({ s }) => s.site.name))],
+      events: [...new Set(sessions.map(({ s }) => eventName(s.site.name)))],
       count: sessions.reduce((n, x) => n + x.count, 0),
     };
   }).sort((a, b) => b.count - a.count);
 }
 
 // A summary, so the popup stays small however many sessions a site has: the
-// site, its observations, sessions and date range, and a link to the Sessions
-// tab filtered to the site (one per name when a spot has several).
+// site without its year, its observations, sessions and date range, and a
+// link to the Sessions tab filtered to the event. When events share a spot,
+// the newest two get a link each and the rest are counted.
+const SHOWN_EVENTS = 2;
 function popup(spot) {
   const box = el("div", "map-popup");
   const dates = spot.sessions.map(({ s }) => s.date).sort();
   const range = dates.length > 1 ? `${formatDate(dates[0])} – ${formatDate(dates.at(-1))}` : formatDate(dates[0]);
+  const shown = spot.events.slice(0, SHOWN_EVENTS);
+  const more = spot.events.length - shown.length;
   box.append(
-    el("strong", null, spot.names.join(" · ")),
+    el("strong", null, shown.join(" · ") + (more ? ` + ${more} more` : "")),
     el("div", "muted", `${plural(spot.count, "observation")} · ${plural(spot.sessions.length, "session")}`),
     el("div", "muted", range),
   );
-  for (const name of spot.names) {
-    const nights = spot.sessions.filter(({ s }) => s.site.name === name).length;
-    const text = spot.names.length > 1 ? `See ${plural(nights, "session")} at ${name}` : `See ${nights === 1 ? "the session" : `all ${nights} sessions`}`;
+  for (const event of shown) {
+    const sessions = spot.sessions.filter(({ s }) => eventName(s.site.name) === event).length;
+    const text = spot.events.length > 1 ? `See ${plural(sessions, "session")} at ${event}` : `See ${sessions === 1 ? "the session" : `all ${sessions} sessions`}`;
     const row = el("div", "map-popup-link");
-    row.append(link(`./?${new URLSearchParams({ site: name })}#sessions`, text));
+    row.append(link(`./?${new URLSearchParams({ event })}#sessions`, text));
     box.append(row);
   }
+  if (more) box.append(el("div", "muted map-popup-link", `+ ${plural(more, "more event")} here`));
   keepFilters(box);
   return box;
 }
@@ -111,7 +117,7 @@ export function mapPanel(panel) {
     const found = spots(latest);
     for (const spot of found) {
       const icon = L.divIcon({ className: "map-marker", html: `<span>${spot.count}</span>`, iconSize: [34, 34] });
-      L.marker([spot.lat, spot.lon], { icon, title: spot.names.join(", ") }).bindPopup(() => popup(spot)).addTo(layer);
+      L.marker([spot.lat, spot.lon], { icon, title: spot.events.join(", ") }).bindPopup(() => popup(spot)).addTo(layer);
     }
     if (found.length) map.fitBounds(L.latLngBounds(found.map((x) => [x.lat, x.lon])).pad(0.5), { maxZoom: 7 });
     else map.setView([39, -98], 3);

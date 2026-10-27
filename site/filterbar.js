@@ -60,12 +60,15 @@ export function filterBar(docs, onChange, { placeholder = "Search", count = docs
     return label;
   };
   const controls = {};
+  // One option per name however it's written, in its most used spelling.
+  const choices = (key) => mostUsed(docs.flatMap((d) => d.values[key]));
   for (const f of FILTERS) {
-    // One option per name however it's written, in its most used spelling.
-    const values = mostUsed(docs.flatMap((d) => d.values[f.key]))
+    const values = choices(f.key)
       .sort((a, b) => (f.key === "catalog" ? CATALOG_ORDER.indexOf(a) - CATALOG_ORDER.indexOf(b) : a.localeCompare(b)));
-    // A filter with only one choice wouldn't narrow anything.
+    // A filter with only one choice wouldn't narrow anything, and one with
+    // as many as the filter it groups would repeat it.
     if (values.length < 2 && !state[f.key]) continue;
+    if (f.sameAs && values.length === choices(f.sameAs).length && !state[f.key]) continue;
     const select = el("select");
     select.append(new Option("Any", ""), ...values.map((v) => new Option(v, v)));
     controls[f.key] = select;

@@ -259,8 +259,11 @@ must match `PageReading` in `read-page.mjs`).
 - Map tab (`site/map.js`): markers per site from the search documents,
   coordinates rounded to 0.1° (Kacy's privacy choice; session pages keep
   exact values), loaded on first open. A marker's popup is a summary
-  (observations, sessions, date range, a link to `?site=…#sessions`), never
-  a list, so it stays small at busy sites. Leaflet comes from npm
+  (events, observations, sessions, date range, a link to
+  `?event=…#sessions` for each of the newest two events), never a list,
+  so it stays small at busy sites. An event is the site name without its
+  year (`eventName()` in `site/search.js`); the Event filter is hidden
+  while it would repeat Site (`sameAs`). Leaflet comes from npm
   (`leaflet`, exact version) and `scripts/build.mjs` copies it to
   `dist/vendor/leaflet/`; no CDN. The tile URL is the `TILES` constant,
   the one outside service, credited on the map.
