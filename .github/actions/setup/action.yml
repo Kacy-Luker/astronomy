@@ -1,0 +1,33 @@
+name: Set up
+description: >-
+  Node with the npm packages, and when asked Python with requirements.txt
+  (show-through cleaning) and poppler (opening PDF scans). Run after
+  actions/checkout. One place for the versions every workflow uses
+  (docs/DEPENDENCIES.md).
+inputs:
+  python:
+    description: Also set up Python with requirements.txt ("true" or "false")
+    default: "false"
+  pdf:
+    description: Also install poppler's pdfimages ("true" or "false")
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 22
+        cache: npm
+    - if: inputs.pdf == 'true'
+      shell: bash
+      run: command -v pdfimages || (sudo apt-get update && sudo apt-get install -y poppler-utils)
+    - shell: bash
+      run: npm ci
+    - if: inputs.python == 'true'
+      uses: actions/setup-python@v7
+      with:
+        python-version: "3.13"
+        cache: pip
+    - if: inputs.python == 'true'
+      shell: bash
+      run: pip install -r requirements.txt

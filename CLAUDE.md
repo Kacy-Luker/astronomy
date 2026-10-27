@@ -89,6 +89,7 @@ change things safely.
 | `site/` | Static pages: home (Notebooks, Sessions, Sketches, Equipment and Map tabs, `#notebooks`, `#sketches/ngc`, `#equipment`, `#map` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
 | `scripts/` | Build, validation, import, splitting, cleaning; every outside library or tool goes through one module (`docs/DEPENDENCIES.md`; `tests/unit/wrapped.test.mjs` checks it): images `scripts/lib/image.mjs`, page reading `scripts/lib/reader.mjs`, data formats `scripts/lib/schema.mjs`, scans and PDFs `scripts/lib/scans.mjs` (with `scripts/pick-scan.mjs`, the Notebook job's notebook and scan picker) |
 | `tests/` | `npm test`: `tests/unit/*.test.mjs` (node --test) and `tests/site.spec.mjs` (Playwright) |
+| `.github/actions/` | Steps the workflows share (`docs/DEPENDENCIES.md`): `setup` (Node, `npm ci`, optional Python and poppler), `open-pr`, `publish`; workflows don't use those actions directly |
 | `.github/workflows/` | `pages.yml` (deploy), `preview.yml` (PR previews + checks), `docs.yml` (Claude updates README/CLAUDE.md on code PRs), `import-notebook.yml`, `complete-notebook.yml`, `remove-notebook.yml` (the three forms, all calling `notebook-job.yml`), `favorite.yml` (favorites from issues), `test.yml` (`npm test`) |
 
 On the sheet Kacy writes N/A where a field doesn't apply; that's stored

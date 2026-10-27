@@ -90,24 +90,15 @@ jobs:
           repository: ${{ github.repository_owner }}/astronomy-scans
           token: ${{ secrets.ASTRONOMY_TOKEN }}
           path: .scans
-      - uses: actions/setup-node@v7
+      # Stamp show-through is removed by scripts/showthrough.py; PDF scans are
+      # opened with poppler. Removing a notebook needs neither.
+      - uses: ./.github/actions/setup
         with:
-          node-version: 22
-          cache: npm
+          python: ${{ env.MODE != 'remove' }}
+          pdf: ${{ env.MODE != 'remove' }}
       - name: Pick the notebook and scan
         if: env.MODE != 'remove'
         run: node scripts/pick-scan.mjs
-      - if: env.MODE != 'remove'
-        run: command -v pdfimages || (sudo apt-get update && sudo apt-get install -y poppler-utils)
-      - run: npm ci
-      # Stamp show-through is removed by scripts/showthrough.py.
-      - if: env.MODE != 'remove'
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.13"
-          cache: pip
-      - if: env.MODE != 'remove'
-        run: pip install -r requirements.txt
       - name: Import
         if: env.MODE != 'remove' && env.MODE != 'cover'
         env:
@@ -133,7 +124,7 @@ jobs:
         run: rm -rf .scans
       # ASTRONOMY_TOKEN also has write access to this repo: pushing a change to
       # the forms' dropdowns isn't allowed with the built-in token.
-      - uses: peter-evans/create-pull-request@v8
+      - uses: ./.github/actions/open-pr
         with:
           token: ${{ secrets.ASTRONOMY_TOKEN }}
           branch: ${{ env.BRANCH }}

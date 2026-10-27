@@ -1,0 +1,37 @@
+name: Open a pull request
+description: >-
+  Commits the given paths to a branch and opens (or updates) a pull request
+  for it. The one place that uses peter-evans/create-pull-request
+  (docs/DEPENDENCIES.md).
+inputs:
+  token:
+    description: A token that can push and open pull requests (ASTRONOMY_TOKEN)
+    required: true
+  branch:
+    required: true
+  title:
+    required: true
+  commit-message:
+    required: true
+  body-path:
+    description: A file with the pull request's description
+    required: true
+  add-paths:
+    description: The paths to commit, one per line
+    required: true
+outputs:
+  pull-request-url:
+    description: The pull request's address, when one was opened or updated
+    value: ${{ steps.pr.outputs.pull-request-url }}
+runs:
+  using: composite
+  steps:
+    - id: pr
+      uses: peter-evans/create-pull-request@v8
+      with:
+        token: ${{ inputs.token }}
+        branch: ${{ inputs.branch }}
+        title: ${{ inputs.title }}
+        commit-message: ${{ inputs.commit-message }}
+        body-path: ${{ inputs.body-path }}
+        add-paths: ${{ inputs.add-paths }}
