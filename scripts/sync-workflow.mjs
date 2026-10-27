@@ -1,12 +1,14 @@
 // Keep the dropdowns on the Import, Complete notebook and Remove notebook
-// forms in step with the data: notebooks from data/notebooks/, and
-// categories from data/categories.json.
+// forms in step with the data: notebooks from data/notebooks/, categories
+// from data/categories.json, and the notebook types the import can handle
+// from data/notebook-types.json.
 //
 //   node scripts/sync-workflow.mjs          rewrite the lists
 //   node scripts/sync-workflow.mjs --check  exit 1 if one is out of date
 import { existsSync } from "node:fs";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import { CATEGORIES } from "./lib/categories.mjs";
+import { TYPES, unsupported } from "./lib/notebook-types.mjs";
 
 const WORKFLOWS = ["import-notebook", "complete-notebook", "remove-notebook"]
   .map((name) => `.github/workflows/${name}.yml`);
@@ -26,6 +28,7 @@ const lists = {
   notebooks: [...ids, NEW],
   "existing-notebooks": ids.length ? ids : ["none"],
   categories,
+  "notebook-types": TYPES.filter((t) => !unsupported(t)).map((t) => t.label),
 };
 let stale = [];
 for (const workflow of WORKFLOWS) {

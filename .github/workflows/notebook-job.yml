@@ -14,6 +14,9 @@ on:
       notebook:
         type: string
         required: true
+      notebook_type:
+        type: string
+        default: ""
       scan:
         type: string
         default: ""
@@ -42,6 +45,7 @@ jobs:
       PICKED: ${{ inputs.notebook }}
       SCAN: ${{ inputs.scan }}
       START_PAGE: ${{ inputs.start_page }}
+      NOTEBOOK_TYPE: ${{ inputs.notebook_type }}
       CATEGORY: ${{ inputs.category != 'Detect automatically' && inputs.category || '' }}
     steps:
       - name: Check inputs
@@ -81,6 +85,8 @@ jobs:
           echo "MODE=$MODE" >> "$GITHUB_ENV"
           echo "TITLE=$TITLE" >> "$GITHUB_ENV"
           [ "$MODE" = new ] || echo "NOTEBOOK=$PICKED" >> "$GITHUB_ENV"
+          # The type is only for a new notebook; an existing one keeps its own.
+          [ "$MODE" = new ] || echo "NOTEBOOK_TYPE=" >> "$GITHUB_ENV"
           [ "$MODE" != remove ] || echo "BRANCH=remove/$PICKED" >> "$GITHUB_ENV"
       - uses: actions/checkout@v7
       - name: Fetch the private scans
@@ -105,7 +111,8 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           node scripts/import-notebook.mjs "$NOTEBOOK" ${SCAN:+".scans/$SCAN"} --mode "$MODE" \
-            ${CATEGORY:+--category "$CATEGORY"} ${START_PAGE:+--start "$START_PAGE"} --summary "$RUNNER_TEMP/summary.md"
+            ${CATEGORY:+--category "$CATEGORY"} ${START_PAGE:+--start "$START_PAGE"} \
+            ${NOTEBOOK_TYPE:+--type "$NOTEBOOK_TYPE"} --summary "$RUNNER_TEMP/summary.md"
           cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Import the front cover
         if: env.MODE == 'cover'
