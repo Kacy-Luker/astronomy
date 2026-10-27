@@ -118,6 +118,24 @@ if (existsSync(objectsPath)) {
   }
 }
 
+// Favorites (scripts/favorite.mjs): at most one per object, matched through
+// data/objects.json so M31 and NGC 224 are one.
+{
+  const objectsDoc = existsSync(objectsPath) ? JSON.parse(await readFile(objectsPath, "utf8")) : { objects: {} };
+  const keyOf = new Map(Object.entries(objectsDoc.objects).flatMap(([key, o]) => o.ids.map((x) => [x, key])));
+  const favorites = new Map();
+  for (const { path, data: s } of sessions.values()) {
+    for (const o of s.observations ?? []) {
+      if (!o.favorite) continue;
+      const key = [o.catalog_id, ...(o.ids ?? [])].map((x) => keyOf.get(x)).find(Boolean) ?? o.catalog_id;
+      favorites.set(key, [...(favorites.get(key) ?? []), `${path} (${o.catalog_id})`]);
+    }
+  }
+  for (const [key, where] of favorites) {
+    if (where.length > 1) report("data/sessions", [`${key} has ${where.length} favorites; keep one: ${where.join(", ")}`]);
+  }
+}
+
 // Kacy's catalog mappings: schema, each side a designation, and each
 // object mapped once.
 const mappingsPath = join("data", "personalObjectMappings.json");
