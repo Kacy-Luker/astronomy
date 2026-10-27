@@ -9,7 +9,8 @@ export const CATALOGS = [
 ];
 
 function parse(id) {
-  const m = id.match(/^([A-Za-z]+)\s?(\d+)(.*)$/);
+  // A catalog whose name ends in a digit (Sh2-155) is numbered after the hyphen.
+  const m = id.match(/^([A-Za-z]+\d)-(\d+)(.*)$/) ?? id.match(/^([A-Za-z]+)\s?(\d+)(.*)$/);
   if (!m) return [CATALOGS.length + 1, id, 0, ""];
   const rank = CATALOGS.findIndex((c) => c.prefix === m[1]);
   return [rank < 0 ? CATALOGS.length : rank, m[1], Number(m[2]), m[3]];
