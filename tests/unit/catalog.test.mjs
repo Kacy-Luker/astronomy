@@ -11,11 +11,16 @@ test("normalize writes designations the notebook's way", () => {
   assert.equal(normalize("NGC0224"), "NGC 224");
   assert.equal(normalize("ngc 224"), "NGC 224");
   assert.equal(normalize("Saturn"), null);
+  // A catalog whose name ends in a digit keeps it (#92).
+  assert.equal(normalize("Sh2-155"), "Sh2-155");
+  assert.equal(normalize("SH 2-155"), "Sh2-155");
+  assert.equal(normalize("sh2 155"), "Sh2-155");
 });
 
 test("designation reads a mapping's catalog and object", () => {
   assert.equal(designation({ catalog: "Messier", object: "102" }), "M102");
   assert.equal(designation({ catalog: "NGC", object: "5866" }), "NGC 5866");
+  assert.equal(designation({ catalog: "Sh2", object: "155" }), "Sh2-155");
 });
 
 // Two sources: the first knows NGC 5866, the second only M1.

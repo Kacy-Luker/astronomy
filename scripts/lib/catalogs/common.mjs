@@ -6,13 +6,18 @@ export const CONSTELLATIONS = Object.fromEntries(`And Andromeda|Ant Antlia|Aps A
 
 const ALIASES = { MESSIER: "M", CALDWELL: "C", MELOTTE: "MEL", COLLINDER: "CR" };
 const PREFIXES = { M: "M", NGC: "NGC", IC: "IC", C: "C", MEL: "Mel", CR: "Cr", B: "B", H: "H" };
+// Catalogs whose name ends in a digit, written with a hyphen before the
+// number (Sh2-155), so the name's digit isn't read as the number.
+const NUMBERED = { SH2: "Sh2" };
 
-// "m 31", "Messier31", "NGC0224", "ngc 224" -> "M31", "NGC 224". Messier
-// keeps no space, as written in the notebook; other catalogs get one. Null
-// for anything that isn't a catalog designation.
+// "m 31", "Messier31", "NGC0224", "ngc 224" -> "M31", "NGC 224"; "Sh 2-155"
+// -> "Sh2-155". Messier keeps no space, as written in the notebook; other
+// catalogs get one. Null for anything that isn't a catalog designation.
 export function normalize(id) {
-  const m = String(id).trim().toUpperCase().replace(/\s+/g, "")
-    .match(/^([A-Z]+?)0*(\d+)([A-Z]?)(-\d+)?$/);
+  const squashed = String(id).trim().toUpperCase().replace(/\s+/g, "");
+  const numbered = squashed.match(/^([A-Z]+\d)-?0*(\d+)([A-Z]?)$/);
+  if (numbered && NUMBERED[numbered[1]]) return `${NUMBERED[numbered[1]]}-${Number(numbered[2])}${numbered[3]}`;
+  const m = squashed.match(/^([A-Z]+?)0*(\d+)([A-Z]?)(-\d+)?$/);
   if (!m) return null;
   const letters = ALIASES[m[1]] ?? m[1];
   const prefix = PREFIXES[letters] ?? letters;
