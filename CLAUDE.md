@@ -127,10 +127,10 @@ change `catalog_id`, `aka` or IDs already there (M51's NGC 5195 was added
 by hand). The build attaches each object's catalog info to its
 observations, and the site prefers `aka` over the catalog name.
 
-JSON files are hand-edited by Kacy; write them with
-`scripts/lib/format-json.mjs` so diffs stay small. Seeing and transparency
-are stored 1–5 for the sheet's I–V and shown with the Clear Sky Chart's
-words: seeing I is Excellent and V Bad, transparency I is Poor and V
+JSON files are hand-edited by Kacy; write them with `writeJSON` in
+`scripts/lib/files.mjs` (laid out by `scripts/lib/format-json.mjs`) so
+diffs stay small. Seeing and transparency are stored 1–5 for the sheet's
+I–V and shown with the Clear Sky Chart's words: seeing I is Excellent and V Bad, transparency I is Poor and V
 Transparent (`site/lib.js`). The key printed in the notebook isn't used.
 
 ## The notebook

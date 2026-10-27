@@ -68,12 +68,13 @@ goes in that category. The dropdown is generated from
 `data/categories.json` by `scripts/sync-workflow.mjs`.
 
 The import (below) turns each scan, a PDF of two-page spreads or a folder
-of images, into page images: it rotates each spread upright, cuts it at the
-fold, blurs any `redact` boxes, and writes `scans/astronomy-001/01.jpg`,
-`02.jpg`, and so on. The fold is found in each spread (a faint crease that runs the page's height,
-cut where it won't go through writing), since scanner placement moves it;
-a spread with no visible fold uses the median of the others, or the
-notebook file's `scan.split` when none can be seen.
+of images, into page images: it rotates each spread upright, cuts it at
+the fold, blurs any `redact` boxes, and writes
+`scans/astronomy-001/01.jpg`, `02.jpg`, and so on. The fold is found in
+each spread (a faint crease that runs the page's height, cut where it
+won't go through writing), since scanner placement moves it; a spread
+with no visible fold uses the median of the others, or the notebook
+file's `scan.split` when none can be seen.
 Use `redact` on a page to blur personal details such as a phone number.
 Keep unredacted scans out of the repo, since it's public.
 
