@@ -221,8 +221,14 @@ must match `PageReading` in `read-page.mjs`).
   block) and each observation's `box` from their pages, from the cleaned
   and original page images in `scans/` only (already redacted), into
   `sketches/<session>/header.jpg` and `<n>.jpg`, each with a `.clean.jpg`.
-  The object page shows the header and the entry as two images with a gap
-  (Kacy didn't want them merged into one); the Sketches tab's thumbnails
+  They're shown as cards from `site/cards.js`, so they look the same
+  everywhere: a session card (the block alone, top of the session page),
+  an object card (the entry alone, on each of the session page's
+  observations), and a joint card (block and entry as two images with a
+  gap, never merged into one; the object page). An entry is always paired
+  with its own session's block, and validation checks each entry comes
+  after its session's `header_box`. On the session page the view toggle
+  applies to the whole page (pages and cards). The Sketches tab's thumbnails
   (`<n>.thumb.jpg`, `.thumb.clean.jpg`, 240 px, shown at 96 px) show just
   the sketch circle, which `scripts/lib/circle.mjs` finds with a Hough
   search over the entry's ink (the whole entry if none is found). Boxes
