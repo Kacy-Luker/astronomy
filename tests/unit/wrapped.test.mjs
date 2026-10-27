@@ -27,3 +27,20 @@ for (const [what, pattern, allowed] of WRAPPED) {
     assert.deepEqual(users(pattern), allowed);
   });
 }
+
+// GitHub Actions steps used by more than one workflow go through a shared
+// action in .github/actions/, which holds their versions and settings.
+const workflows = readdirSync(".github/workflows").map((f) => [`.github/workflows/${f}`, readFileSync(`.github/workflows/${f}`, "utf8")]);
+const actions = readdirSync(".github/actions").map((d) => [`.github/actions/${d}/action.yml`, readFileSync(`.github/actions/${d}/action.yml`, "utf8")]);
+const SHARED = [
+  ["actions/setup-node", ".github/actions/setup"],
+  ["actions/setup-python", ".github/actions/setup"],
+  ["peter-evans/create-pull-request", ".github/actions/open-pr"],
+  ["JamesIves/github-pages-deploy-action", ".github/actions/publish"],
+];
+for (const [action, shared] of SHARED) {
+  test(`workflows use ${action} only through ${shared}`, () => {
+    const uses = [...workflows, ...actions].filter(([, text]) => text.includes(`uses: ${action}@`)).map(([f]) => f);
+    assert.deepEqual(uses, [`${shared}/action.yml`]);
+  });
+}
