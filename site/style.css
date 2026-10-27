@@ -172,7 +172,7 @@ a { color: var(--accent); }
 .toggle button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
 
 /* Swap light and dark; the hue turn keeps ink colors recognizable. */
-.scans.inverted img, .viewer .inverted img { filter: invert(1) hue-rotate(180deg); }
+.scans.inverted img, .viewer .inverted img, .object-rows.inverted img, .sketch-frame.inverted img { filter: invert(1) hue-rotate(180deg); }
 
 /* view.html: one page, as large as the screen allows. */
 .viewer main { max-width: 72rem; }
@@ -210,3 +210,12 @@ a { color: var(--accent); }
 .object-row:first-child { border-top: 0; padding-top: 0; }
 .object-row .object-id { font-weight: 600; }
 .object-row .session-meta { margin: .15rem 0 0; }
+
+/* Sketches: a small thumbnail beside each row; the object page shows one
+   sketch at a time. */
+.object-row { display: flex; gap: .75rem; align-items: flex-start; }
+.object-text { min-width: 0; flex: 1; }
+.sketch-thumb { flex: none; width: 96px; }
+.sketch-thumb img { display: block; width: 96px; height: 96px; border-radius: 50%; }
+.sketch-frame { display: flex; flex-direction: column; gap: .75rem; }
+.sketch-frame .page img { width: 100%; height: auto; max-width: 36rem; }

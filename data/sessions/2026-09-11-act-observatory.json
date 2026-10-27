@@ -14,6 +14,7 @@
   "observers": ["Kacy Luker"],
   "notebook": "astronomy-001",
   "pages": [2],
+  "header_box": { "page": 2, "box": [0.03, 0.03, 0.94, 0.27] },
   "observations": [
     {
       "catalog_id": "M51",
@@ -25,7 +26,8 @@
       "transparency": 4,
       "eyepiece": "21mm Ethos",
       "filter": "N/A",
-      "description": "2 bright cores with a dimmer halo; halos overlap; larger is top right of eyepiece"
+      "description": "2 bright cores with a dimmer halo; halos overlap; larger is top right of eyepiece",
+      "box": [0.03, 0.3, 0.94, 0.325]
     },
     {
       "catalog_id": "M28",
@@ -37,7 +39,8 @@
       "transparency": 4,
       "eyepiece": "21mm Ethos",
       "filter": "N/A",
-      "description": "Bright core with a few distinct stars; dim halo with less dusty star distribution than core"
+      "description": "Bright core with a few distinct stars; dim halo with less dusty star distribution than core",
+      "box": [0.03, 0.62, 0.94, 0.335]
     }
   ]
 }

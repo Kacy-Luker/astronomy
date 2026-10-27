@@ -310,6 +310,13 @@ const touched = new Set();
 const removed = new Set();
 const slug = (text) => text.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const present = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v != null));
+// A reading's box as stored: [x, y, width, height], clamped to the page.
+const boxOf = (b) => {
+  if (!b) return null;
+  const c = (v) => Math.round(Math.min(1, Math.max(0, v)) * 1000) / 1000;
+  const [x, y] = [c(b.x), c(b.y)];
+  return [x, y, c(Math.min(b.width, 1 - x)), c(Math.min(b.height, 1 - y))];
+};
 const lastPage = (s) => Math.max(0, ...(s.pages ?? []));
 const headerFields = (h) => {
   const sky = present({ sqm: h.sqm, notes: h.sky_notes });
@@ -346,10 +353,11 @@ for (const { u, page } of [...placed].sort((a, b) => list.indexOf(a) - list.inde
   if (r.header) {
     current = number != null ? startedOn.get(number) : null;
     if (current && mode === "replace") {
-      const { id: sid, notebook, pages: ps, observations, ...old } = current;
+      const { id: sid, notebook, pages: ps, observations, header_box: oldBox, ...old } = current;
       const fresh = headerFields(r.header);
-      if (JSON.stringify(old) !== JSON.stringify(fresh)) {
-        sessions.set(sid, { id: sid, ...fresh, notebook, pages: ps, observations });
+      const box = r.header.box ? { page: number, box: boxOf(r.header.box) } : oldBox;
+      if (JSON.stringify(old) !== JSON.stringify(fresh) || JSON.stringify(box) !== JSON.stringify(oldBox)) {
+        sessions.set(sid, { id: sid, ...fresh, notebook, pages: ps, ...present({ header_box: box }), observations });
         current = sessions.get(sid);
         touched.add(sid);
       }
@@ -358,7 +366,8 @@ for (const { u, page } of [...placed].sort((a, b) => list.indexOf(a) - list.inde
       const h = r.header;
       let sid = slug(`${h.date}-${h.site}`);
       for (let n = 2; sessions.has(sid); n++) sid = slug(`${h.date}-${h.site}-${n}`);
-      current = { id: sid, ...headerFields(h), notebook: id, pages: [], observations: [] };
+      const box = number != null && h.box ? { header_box: { page: number, box: boxOf(h.box) } } : {};
+      current = { id: sid, ...headerFields(h), notebook: id, pages: [], ...box, observations: [] };
       sessions.set(sid, current);
       touched.add(sid);
     }
@@ -393,6 +402,7 @@ for (const { u, page } of [...placed].sort((a, b) => list.indexOf(a) - list.inde
       ...present({ magnification: e.magnification }),
       filter: e.filter,
       description: e.description,
+      ...present({ box: boxOf(e.box) }),
     });
   }
   if (added.length) {

@@ -14,6 +14,7 @@
   "observers": ["Kacy Luker"],
   "notebook": "astronomy-001",
   "pages": [4, 5],
+  "header_box": { "page": 4, "box": [0.02, 0.03, 0.96, 0.27] },
   "observations": [
     {
       "catalog_id": "M13",
@@ -25,7 +26,8 @@
       "transparency": 4,
       "eyepiece": "13mm Ethos",
       "filter": "N/A",
-      "description": "Large bright stars evenly distributed; core of more stars but less bright making core not much brighter than halo; clear edge; 1000's of stars"
+      "description": "Large bright stars evenly distributed; core of more stars but less bright making core not much brighter than halo; clear edge; 1000's of stars",
+      "box": [0.02, 0.305, 0.96, 0.335]
     },
     {
       "catalog_id": "M57",
@@ -37,7 +39,8 @@
       "transparency": 5,
       "eyepiece": "13mm Ethos",
       "filter": "N/A",
-      "description": "Bright ring; center has light but dim compared to ring; ring brightness is brighter than star that is very close to it"
+      "description": "Bright ring; center has light but dim compared to ring; ring brightness is brighter than star that is very close to it",
+      "box": [0.02, 0.612, 0.96, 0.343]
     },
     {
       "catalog_id": "M31",
@@ -49,7 +52,8 @@
       "transparency": 4,
       "eyepiece": "13mm Ethos",
       "filter": "N/A",
-      "description": "Very large halo; bright core with an even brighter center; there is a bright star in or in front of halo"
+      "description": "Very large halo; bright core with an even brighter center; there is a bright star in or in front of halo",
+      "box": [0.2, 0, 0.7, 0.312]
     },
     {
       "catalog_id": "M32",
@@ -61,7 +65,8 @@
       "transparency": 4,
       "eyepiece": "13mm Ethos",
       "filter": "N/A",
-      "description": "Small halo; slightly brighter core; almost inside of dimmest part of M31 halo"
+      "description": "Small halo; slightly brighter core; almost inside of dimmest part of M31 halo",
+      "box": [0.2, 0.305, 0.7, 0.295]
     },
     {
       "catalog_id": "M110",
@@ -73,7 +78,8 @@
       "transparency": 4,
       "eyepiece": "13mm Ethos",
       "filter": "N/A",
-      "description": "Core is dimmer than near big stars; halo is less massive than core; dim"
+      "description": "Core is dimmer than near big stars; halo is less massive than core; dim",
+      "box": [0.2, 0.6, 0.7, 0.305]
     }
   ]
 }

@@ -94,6 +94,16 @@ const imageFor = (img, view) => (view === "original" ? img.dataset.original : im
 const viewerHref = (img, view) =>
   `view.html?${new URLSearchParams({ img: imageFor(img, view), view, name: img.dataset.name ?? "" })}`;
 
+// Show the images inside target in a view (default: the viewer's last one).
+export function applyView(target, view = currentView) {
+  target.classList.toggle("inverted", view === "inverted");
+  for (const img of target.querySelectorAll("img[data-original]")) {
+    img.src = imageFor(img, view);
+    const a = img.closest("a[data-viewer]");
+    if (a) a.href = viewerHref(img, view);
+  }
+}
+
 // Inverted / Cleaned / Original buttons for the scans inside target.
 export function scanToggle(target) {
   const group = el("div", "toggle");
@@ -108,11 +118,7 @@ export function scanToggle(target) {
   });
   function apply(view) {
     currentView = view;
-    target.classList.toggle("inverted", view === "inverted");
-    for (const img of target.querySelectorAll("img[data-original]")) {
-      img.src = imageFor(img, view);
-      img.closest("a").href = viewerHref(img, view);
-    }
+    applyView(target, view);
     for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.view === view));
   }
   apply(currentView);
@@ -122,14 +128,22 @@ export function scanToggle(target) {
 
 // One scanned page, linking to the full image, with a caption.
 export function pageFigure(page, alt, caption) {
-  const figure = el("figure", "page");
+  const figure = imageFigure(page, alt, caption);
   figure.id = pageAnchor(page);
+  return figure;
+}
+
+// Any image with an original and a cleaned copy ({ image, clean, width,
+// height }: a page or a sketch), linking to the viewer, with a caption.
+export function imageFigure(page, alt, caption) {
+  const figure = el("figure", "page");
   const img = el("img");
   img.dataset.original = page.image;
   if (page.clean) img.dataset.clean = page.clean;
   img.src = imageFor(img, currentView);
   img.dataset.name = alt;
   const a = link(viewerHref(img, currentView));
+  a.dataset.viewer = "";
   if (page.width) [img.width, img.height] = [page.width, page.height];
   img.alt = alt;
   img.loading = "lazy";

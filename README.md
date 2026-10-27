@@ -201,14 +201,17 @@ Tapping a page opens it full size (`view.html`) in the same view.
 
 ## Session files
 
-Name each file `<date>-<site>.json` and set its `id` to the same slug,
-for example `data/sessions/2026-10-11-okie-tex-2026.json` with
-`"id": "2026-10-11-okie-tex-2026"`. Set `notebook` and `pages` to where
-the session is written, and `page` on each observation. Seeing and
+Name each file `<date>-<site>.json` and set its `id` to the same slug, for
+example `data/sessions/2026-10-11-okie-tex-2026.json` with `"id":
+"2026-10-11-okie-tex-2026"`. Set `notebook` and `pages` to where the
+session is written, and `page` on each observation. Seeing and
 transparency use the log sheet's I–V scale, stored as 1–5, with the Clear
-Sky Chart's words: seeing I Excellent, II Good, III Average, IV Poor,
-V Bad; transparency I Poor, II Below average, III Average, IV Above
-average, V Transparent.
+Sky Chart's words: seeing I Excellent, II Good, III Average, IV Poor, V
+Bad; transparency I Poor, II Below average, III Average, IV Above average,
+V Transparent. `header_box` (the NEW SESSION block's page and box) and
+each observation's `box` say where the sketch image is cut from, as `[x,
+y, width, height]` fractions of the page image; the import fills them in,
+and if a sketch is cut off on the site, widen its box by hand.
 
 **To-dos.** A field written as N/A is stored as `"N/A"`: it doesn't
 apply. A field left blank is `null` (or left out) and counts as a to-do,
@@ -234,9 +237,12 @@ scripts/enrich-ids.mjs`; it only adds. Objects OpenNGC doesn't cover
 (stars, planets, most Barnard and Abell objects) are left as written. The
 home page's Sketches tab shows one catalog at a time, picked with a
 toggle, and lists every observed object under each catalog it's in (M31
-under Messier and NGC), in catalog order, with its latest observation and
-a count when there are more. Tapping an object opens its page
-(`object.html?id=M31`): the catalog info and every observation of it,
+under Messier and NGC), in catalog order, with a thumbnail of its latest
+sketch (just the sketch circle, found automatically), its latest
+observation and a count when there are more. Tapping an object opens its
+page (`object.html?id=M31`): the catalog info, its sketch, shown as the
+session's NEW SESSION block and the entry, two images with a gap (a toggle
+picks the session when there are several), and every observation of it,
 newest first.
 
 ## Hosting

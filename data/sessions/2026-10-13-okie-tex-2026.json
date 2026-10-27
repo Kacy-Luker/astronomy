@@ -14,6 +14,7 @@
   "observers": ["Kacy Luker"],
   "notebook": "astronomy-001",
   "pages": [6],
+  "header_box": { "page": 6, "box": [0.02, 0.03, 0.96, 0.27] },
   "observations": [
     {
       "catalog_id": "M27",
@@ -25,7 +26,8 @@
       "transparency": 3,
       "eyepiece": "13mm Ethos",
       "filter": "N/A",
-      "description": "Faint; most background stars are brighter; halo and core are very similar brightness; halo is round; core is like a rounded hourglass"
+      "description": "Faint; most background stars are brighter; halo and core are very similar brightness; halo is round; core is like a rounded hourglass",
+      "box": [0.02, 0.3, 0.96, 0.31]
     }
   ]
 }
