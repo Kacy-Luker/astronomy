@@ -158,10 +158,10 @@ export function imageFigure(page, alt, caption) {
 }
 
 // Admin mode is for Kacy: turned on by opening any page with ?admin=on
-// (?admin=off turns it off), which this browser remembers, and never on PR
-// previews. It adds an admin bar to the footer with the how-to page
-// (help.html) and a toggle for the Edit links, which open a data file in
-// GitHub's web editor.
+// (?admin=off turns it off), which this browser remembers (previews share
+// the setting, being on the same site). It adds an admin bar to the footer
+// with the how-to page (help.html) and a toggle for the Edit links, which
+// open a data file in GitHub's web editor.
 const REPO = "https://github.com/Kacy-Luker/astronomy";
 const ADMIN_KEY = "observing-log-admin";
 const EDIT_KEY = "observing-log-edit";
@@ -176,8 +176,9 @@ function store(key, on) {
 }
 const adminParam = new URLSearchParams(location.search).get("admin");
 if (adminParam === "on" || adminParam === "off") store(ADMIN_KEY, adminParam === "on");
-export const adminMode = adminParam !== "off" && (adminParam === "on" || stored(ADMIN_KEY)) &&
-  !document.querySelector(".preview-banner");
+export const adminMode = adminParam !== "off" && (adminParam === "on" || stored(ADMIN_KEY));
+// On a PR preview the Edit links open the PR branch's files, not main's.
+const branch = document.querySelector(".preview-banner")?.dataset.branch ?? "main";
 export const editMode = adminMode && stored(EDIT_KEY);
 
 // A link to edit a file in the repo (e.g. data/sessions/<id>.json), or null
@@ -185,7 +186,7 @@ export const editMode = adminMode && stored(EDIT_KEY);
 export const sessionFile = (id) => `data/sessions/${id}.json`;
 export function editLink(path, text = "Edit") {
   if (!editMode) return null;
-  const a = link(`${REPO}/edit/main/${path}`, text, "edit-link");
+  const a = link(`${REPO}/edit/${branch}/${path}`, text, "edit-link");
   a.title = `Edit ${path} on GitHub`;
   return a;
 }
