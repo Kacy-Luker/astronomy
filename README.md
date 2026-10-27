@@ -221,9 +221,22 @@ to-do. The site marks to-dos with **To do** and shows a count on each
 session; an import's pull request lists the new ones. Which fields
 count is set in `site/todos.js`.
 
+**Your object mappings.** `data/personalObjectMappings.json` lists
+objects you take differently from the catalogs: each mapping has the
+catalog and object being remapped (`from`), the catalog and object it's
+mapped to (`to`), why, and the list or program it follows (`credit`). An
+object written as `from` is looked up as `to`, so its info and other
+designations come from the `to` object, and `from` is added to them. M102
+is mapped to NGC 5866 (the Spindle Galaxy), as in the Astronomical
+League's Messier program, rather than OpenNGC's duplicate of M101. Catalogs
+are Messier, NGC, IC, Caldwell, or another catalog's prefix. Edit it on
+GitHub, then run `node scripts/enrich-ids.mjs` (or the next import) to
+update the sessions. Every page's footer credits the catalog databases the
+objects came from and links this file, with the lists it follows.
+
 **Catalog info.** Each import looks the objects up in
 [OpenNGC](https://github.com/mattiaverga/OpenNGC) (a pinned release, CC
-BY-SA 4.0, credited on the session page), through
+BY-SA 4.0), through
 `scripts/lib/catalog.mjs`: each catalog source is a module in
 `scripts/lib/catalogs/` with the same small interface, so one can be
 swapped or another added. It adds the object's Messier,
@@ -231,9 +244,7 @@ NGC, IC and Caldwell designations to `ids` (M31 gets NGC 224, NGC 7000
 gets C 20) and writes `data/objects.json` with each object's common name,
 type, constellation, magnitude and size. An object written by another
 catalog number OpenNGC knows (UGC, PGC, LBN, Sh2, …) is found too, but
-those numbers aren't added. M102 is taken as NGC 5866 (the Spindle
-Galaxy), as in the Astronomical League's Messier program, not OpenNGC's
-duplicate of M101. IDs already there stay, and `aka` stays as written; the
+those numbers aren't added. IDs already there stay, and `aka` stays as written; the
 site shows the catalog's common name when the sheet has none. Don't edit
 `data/objects.json` by hand. To fill in existing sessions, run `node
 scripts/enrich-ids.mjs`; it only adds. Objects OpenNGC doesn't cover
