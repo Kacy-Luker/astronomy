@@ -63,28 +63,43 @@ function spots(docs) {
 // A summary, so the popup stays small however many sessions a site has: the
 // site without its year, its observations, sessions and date range, and a
 // link to the Sessions tab filtered to it. When several sites share a spot,
-// the newest two get a link each and the rest are counted.
+// the newest two get a link each and "+ N more sites" lists the rest when
+// tapped, scrolling past a few. resized() lets Leaflet refit the popup.
 const SHOWN_EVENTS = 2;
-function popup(spot) {
+function popup(spot, resized) {
   const box = el("div", "map-popup");
   const dates = spot.sessions.map(({ s }) => s.date).sort();
   const range = dates.length > 1 ? `${formatDate(dates[0])} – ${formatDate(dates.at(-1))}` : formatDate(dates[0]);
   const shown = spot.events.slice(0, SHOWN_EVENTS);
-  const more = spot.events.length - shown.length;
+  const rest = spot.events.slice(SHOWN_EVENTS);
   box.append(
-    el("strong", null, shown.join(" · ") + (more ? ` + ${more} more` : "")),
+    el("strong", null, shown.join(" · ") + (rest.length ? ` + ${rest.length} more` : "")),
     el("div", "muted", `${plural(spot.count, "observation")} · ${plural(spot.sessions.length, "session")}`),
     el("div", "muted", range),
   );
-  for (const event of shown) {
+  const row = (event) => {
     const sessions = spot.sessions.filter(({ s }) => eventName(s.site.name) === event).length;
     const text = spot.events.length > 1 ? `See ${plural(sessions, "session")} at ${event}` : `See ${sessions === 1 ? "the session" : `all ${sessions} sessions`}`;
-    const row = el("div", "map-popup-link");
-    row.append(link(`./?${new URLSearchParams({ site: event })}#sessions`, text));
-    box.append(row);
+    const div = el("div", "map-popup-link");
+    div.append(link(`./?${new URLSearchParams({ site: event })}#sessions`, text));
+    keepFilters(div);
+    return div;
+  };
+  box.append(...shown.map(row));
+  if (rest.length) {
+    const more = el("button", "map-popup-more", `+ ${plural(rest.length, "more site")}`);
+    more.type = "button";
+    more.addEventListener("click", (event) => {
+      // Leaflet would take a click on a removed button for one on the map
+      // and close the popup.
+      event.stopPropagation();
+      const list = el("div", "map-popup-list");
+      list.append(...rest.map(row));
+      more.replaceWith(list);
+      resized();
+    });
+    box.append(more);
   }
-  if (more) box.append(el("div", "muted map-popup-link", `+ ${plural(more, "more site")} here`));
-  keepFilters(box);
   return box;
 }
 
@@ -118,7 +133,13 @@ export function mapPanel(panel) {
     const found = spots(latest);
     for (const spot of found) {
       const icon = L.divIcon({ className: "map-marker", html: `<span>${spot.count}</span>`, iconSize: [34, 34] });
-      L.marker([spot.lat, spot.lon], { icon, title: spot.events.join(", ") }).bindPopup(() => popup(spot)).addTo(layer);
+      // Leaflet asks for the content again on update(), so keep it while
+      // the popup is open (an expanded list stays expanded). The top padding
+      // keeps it clear of the zoom buttons.
+      const marker = L.marker([spot.lat, spot.lon], { icon, title: spot.events.join(", ") });
+      let content;
+      marker.bindPopup(() => (content ??= popup(spot, () => marker.getPopup().update())), { autoPanPaddingTopLeft: [5, 80] }).addTo(layer);
+      marker.on("popupclose", () => { content = null; });
     }
     if (found.length) map.fitBounds(L.latLngBounds(found.map((x) => [x.lat, x.lon])).pad(0.5), { maxZoom: 7 });
     else map.setView([39, -98], 3);

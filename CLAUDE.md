@@ -260,8 +260,9 @@ must match `PageReading` in `read-page.mjs`).
   coordinates rounded to 0.1° (Kacy's privacy choice; session pages keep
   exact values), loaded on first open. A marker's popup is a summary
   (sites, observations, sessions, date range, a link to
-  `?site=…#sessions` for each of the newest two sites), never a list, so
-  it stays small at busy sites. The Site filter and the map use the site
+  `?site=…#sessions` for each of the newest two sites; "+ N more sites"
+  expands the rest in a scrolling list), never a full list up front, so it
+  stays small at busy sites. The Site filter and the map use the site
   name without its year (`eventName()` in `site/search.js`); the date
   range picks the year. Leaflet comes from npm
   (`leaflet`, exact version) and `scripts/build.mjs` copies it to
