@@ -212,16 +212,19 @@ matching objects; their to-do count is still the whole session's. The
 search is kept in the address (`?q=andromeda`), so it can be bookmarked or
 shared and survives switching tabs.
 
-**Filters** sit beside the search box on every page. Tap **Filters** for a
+**Filters** sit beside the search box on every page that lists more than
+one thing to narrow (a session with one observation, a notebook with one
+session or an object seen once has no bar). Tap **Filters** for a
 dropdown per field (program, catalog, site, telescope, eyepiece, filter,
-observer, notebook, seeing, transparency; a field with only one value so
-far isn't shown), a date range, and **Has to-dos**. Active filters show as
+observer, notebook, seeing, transparency) with the values on that page; a
+field with only one value there isn't shown. There's also a date range
+(with more than one night) and **Has to-dos** (when only some have them). Active filters show as
 chips: tap one to remove it, or **Clear all**. They're in the address too
 (`?site=Okie-Tex+2026&eyepiece=13mm+Ethos`), and links between pages keep
 them. The home page narrows its tabs; a session page dims the observations
-outside them; an object page seen more than once shows only the matching
-observations and sketches (one seen once has no bar); a notebook page dims
-the sessions in its contents with nothing matching.
+outside them; an object page shows only the matching observations and
+sketches; a notebook page dims the sessions in its contents with nothing
+matching.
 
 ## Session files
 
