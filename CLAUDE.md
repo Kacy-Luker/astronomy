@@ -172,6 +172,12 @@ Transparent (`site/lib.js`). The key printed in the notebook isn't used.
 
 ## Import pipeline (`scripts/import-notebook.mjs`)
 
+The script runs the steps in order and does the file I/O; the logic that
+can be tested on its own is in `scripts/lib/import/` (#103):
+`numbering.mjs` (page numbers from printed odd numbers or `--start`),
+`sessions.mjs` (sessions from the placed pages) and `summary.mjs` (the PR
+summary), each with unit tests in `tests/unit/`.
+
 Run from three forms in Actions: **Import**, **Complete notebook** and
 **Remove notebook**. Each is a thin `workflow_dispatch` wrapper with only
 its own fields, calling the shared `notebook-job.yml` (`workflow_call`,
