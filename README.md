@@ -19,6 +19,7 @@ Astronomy observations transcribed from paper notes, published at
 | `scripts/` | Build and validation scripts |
 | `tests/` | `npm test`: unit tests (`tests/unit/`) and the site tests (`site.spec.mjs`, run by `playwright.config.mjs`) |
 | `docs/PROJECT_BRIEF.md` | The plan this site is built from |
+| `docs/DEPENDENCIES.md` | Every outside service (Claude, catalogs, image tools, GitHub) and what a replacement must do |
 | `CLAUDE.md` | Context for AI agents working on the repo |
 
 ## Local use

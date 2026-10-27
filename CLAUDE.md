@@ -6,8 +6,10 @@ Kacy works mostly from a phone, so anything they do by hand should be
 possible in GitHub's web UI or the Actions tab.
 
 The original plan is in `docs/PROJECT_BRIEF.md`; open work is in GitHub
-issues. The README covers day-to-day use; this file covers what an agent
-needs to change things safely.
+issues. `docs/DEPENDENCIES.md` lists every outside service and the
+contract a replacement must meet (#49); keep it in step when one changes.
+The README covers day-to-day use; this file covers what an agent needs to
+change things safely.
 
 ## Working rules
 
@@ -198,11 +200,16 @@ Remove list only existing notebooks) can be updated.
    crease, never through writing; weak detections use the median of the
    others, then `scan.split`). The fold position varies with scanner
    placement, so don't assume a fixed split.
-2. **Read** (`scripts/lib/read-page.mjs`): `claude-opus-5-5`, effort high,
-   server-side refusal fallback. The page format is given as a JSON Schema
-   in the prompt and validated with Zod, with one retry. Don't switch to
-   API-enforced structured output: the schema is too large ("compiled
-   grammar is too large").
+2. **Read** through the page reader (`scripts/lib/reader.mjs`, #49):
+   `PAGE_READER` picks a reader (`claude`, the default,
+   `scripts/lib/readers/claude.mjs`, or a module path), and every answer,
+   fresh or cached, is checked against `PageReading` / `RedactionCheck`
+   in `scripts/lib/reading.mjs`. The Claude reader: `claude-opus-5-5`,
+   effort high, server-side refusal fallback; the page format is given as
+   a JSON Schema in the prompt and validated with Zod, with one retry.
+   Don't switch to API-enforced structured output: the schema is too
+   large ("compiled grammar is too large"). The contract a replacement
+   must meet is in `docs/DEPENDENCIES.md`.
 3. **Place**: Claude's category (or `--category`, the form's category
    dropdown) decides where a page goes; session pages go by printed odd
    page numbers, which always win, with the others counted from them. Only
@@ -230,7 +237,8 @@ Remove list only existing notebooks) can be updated.
 
 Readings are cached in `.import-cache/` (gitignored). Without an API key,
 the pipeline can be tested by placing hand-written readings there (they
-must match `PageReading` in `read-page.mjs`).
+must match `PageReading` in `scripts/lib/reading.mjs`; the import refuses
+any that don't).
 
 ## Site
 
