@@ -6,7 +6,7 @@ import {
 } from "./lib.js";
 import { jointCard } from "./cards.js";
 import { filterBar } from "./filterbar.js";
-import { field, observationDescription, observationFacts } from "./observation.js";
+import { field, moonParts, observationDescription, observationFacts } from "./observation.js";
 import { findObject, observedObjects, sameName } from "./objects.js";
 import { activeFilters, keepFilters, matchesAll, searchDocuments } from "./search.js";
 
@@ -88,8 +88,9 @@ function renderSighting({ o, s }, obj, notebooks) {
   // Written under another of its designations that night (e.g. NGC 224).
   if (o.catalog_id !== obj.ids[0]) head.append(el("span", "tag", `as ${o.catalog_id}`));
   if (o.favorite) head.append(el("span", "tag favorite", "★ Favorite"));
-  head.append(...[favoriteLink(o, s, s.observations.indexOf(o) + 1), editLink(sessionFile(s.id))].filter(Boolean));
-  card.append(head);
+  const moon = moonParts(o, s);
+  head.append(...[moon.button, favoriteLink(o, s, s.observations.indexOf(o) + 1), editLink(sessionFile(s.id))].filter(Boolean));
+  card.append(...[head, moon.note].filter(Boolean));
   card.append(observationFacts(o, notebooks.find((n) => n.id === s.notebook)), observationDescription(o));
   return card;
 }

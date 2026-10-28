@@ -55,3 +55,61 @@ export function observationDescription(o) {
   if (isNA(o.description)) return el("p", "description muted", "Description: N/A");
   return el("p", "description", o.description);
 }
+
+// The Moon's phase as a small glyph (#127): the lit part of the disc, lit
+// on the right while waxing as seen from the north, mirrored south of the
+// equator. phase runs 0 to 1 (0 new, 0.5 full); lit is the lit fraction.
+const SVG = "http://www.w3.org/2000/svg";
+export function moonGlyph(phase, lit, south = false) {
+  const svg = document.createElementNS(SVG, "svg");
+  svg.setAttribute("viewBox", "-10 -10 20 20");
+  svg.setAttribute("class", "moon-glyph");
+  svg.setAttribute("aria-hidden", "true");
+  const disc = document.createElementNS(SVG, "circle");
+  disc.setAttribute("r", "9");
+  disc.setAttribute("class", "moon-dark");
+  svg.append(disc);
+  if (lit > 0.005) {
+    // The limb on the lit side, then the terminator (half an ellipse) back.
+    const waxing = phase < 0.5;
+    const rx = (9 * Math.abs(1 - 2 * lit)).toFixed(2);
+    const term = waxing === lit < 0.5 ? 0 : 1;
+    const path = document.createElementNS(SVG, "path");
+    path.setAttribute("d", `M0 -9A9 9 0 0 ${waxing ? 1 : 0} 0 9A${rx} 9 0 0 ${term} 0 -9Z`);
+    path.setAttribute("class", "moon-lit");
+    if (south) path.setAttribute("transform", "scale(-1 1)");
+    svg.append(path);
+  }
+  return svg;
+}
+
+// The Moon at an observation (o.moon, worked out by the build): a button
+// with the glyph for the card's heading row, and the note it opens with
+// the phase name, how much was lit and, with the site's coordinates and a
+// time, whether the Moon was up. Nothing when the build had no date.
+let moonNotes = 0;
+export function moonParts(o, s) {
+  const m = o.moon;
+  if (!m) return { button: null, note: null };
+  const summary = `${m.name}, ${m.illumination}% lit`;
+  const button = el("button", "tag moon");
+  button.type = "button";
+  button.title = `Moon: ${summary}`;
+  button.setAttribute("aria-label", `Moon: ${summary}`);
+  button.setAttribute("aria-expanded", "false");
+  button.append(moonGlyph(m.phase, m.illumination / 100, s.site?.lat < 0));
+  const note = el("p", "moon-note");
+  note.id = `moon-note-${++moonNotes}`;
+  note.hidden = true;
+  const parts = [`${m.name}, ${m.illumination}% illuminated.`];
+  if (m.up === true) parts.push(`The Moon was up, ${Math.max(0, m.altitude)}° above the horizon.`);
+  else if (m.up === false) parts.push("The Moon was below the horizon.");
+  parts.push(m.timed ? "Times are approximate." : "No time written, so for the evening.");
+  note.textContent = parts.join(" ");
+  button.setAttribute("aria-controls", note.id);
+  button.addEventListener("click", () => {
+    note.hidden = !note.hidden;
+    button.setAttribute("aria-expanded", String(!note.hidden));
+  });
+  return { button, note };
+}

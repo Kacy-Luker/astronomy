@@ -8,6 +8,8 @@
   --tag-bg: #2c211c;
   --todo: #f2c14e;
   --todo-bg: #2e2612;
+  --moon-lit: #e6e4df;
+  --moon-dark: #3a3f4c;
   color-scheme: dark;
 }
 
@@ -152,6 +154,18 @@ a { color: var(--accent); }
 .favorite-link + .edit-link { margin-left: .5rem; }
 .session-head .favorite-link:first-of-type { margin-left: auto; }
 .tag.favorite { color: #f2c94c; }
+/* The Moon's phase on an observation card (#127): a tag-sized button that
+   opens a short note under the heading row. */
+.tag.moon {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; padding: .15rem .45rem; cursor: pointer; font: inherit; line-height: 1;
+}
+.tag.moon:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tag.moon[aria-expanded="true"] { border-color: var(--accent); }
+.moon-glyph { width: 1rem; height: 1rem; display: block; }
+.moon-dark { fill: var(--moon-dark); }
+.moon-lit { fill: var(--moon-lit); }
+.moon-note { margin: .5rem 0 0; font-size: .9rem; color: var(--muted); }
 /* Like the preview banner, in the accent color so the two aren't mixed up. */
 .admin-bar {
   padding: .5rem 16px; text-align: center; font-size: .9rem; line-height: 1.8;

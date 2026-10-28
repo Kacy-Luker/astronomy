@@ -5,6 +5,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { todoCount } from "../site/todos.js";
+import { observationMoon } from "../scripts/lib/moon.mjs";
 
 const read = (path) => JSON.parse(readFileSync(path, "utf8"));
 const sessions = readdirSync("test-data/sessions").map((f) => read(`test-data/sessions/${f}`));
@@ -197,4 +198,36 @@ test("Sketches thumbnails are always inverted, cover thumbnails never (#122)", a
   await page.evaluate(() => localStorage.setItem("page-view", "inverted"));
   await page.goto("#notebooks");
   await expect(page.locator(".cover-thumb").first()).toHaveCSS("filter", "none");
+});
+
+test("each observation card has the Moon's phase, and tapping it says how much was lit (#127)", async ({ page }) => {
+  const s = session("2026-08-15-davis-mountains");
+  const moon = observationMoon(s, s.observations[0]);
+  await page.goto(`session.html?id=${s.id}`);
+  const card = page.locator("article.observation").first();
+  const button = card.locator("button.moon");
+  await expect(button).toHaveAttribute("aria-label", `Moon: ${moon.name}, ${moon.illumination}% lit`);
+  await expect(page.locator("article.observation button.moon")).toHaveCount(s.observations.length);
+  const note = card.locator(".moon-note");
+  await expect(note).toBeHidden();
+  await button.click();
+  await expect(button).toHaveAttribute("aria-expanded", "true");
+  await expect(note).toBeVisible();
+  await expect(note).toContainText(`${moon.illumination}% illuminated`);
+  await expect(note).toContainText(moon.up ? "The Moon was up" : "below the horizon");
+  // Keyboard: the button is reachable and closes the note again.
+  await button.focus();
+  await page.keyboard.press("Enter");
+  await expect(note).toBeHidden();
+  // An entry with no time gets the evening's phase, and nothing about up.
+  const untimed = session("2025-06-21-backyard");
+  const i = untimed.observations.findIndex((o) => o.local_time == null);
+  await page.goto(`session.html?id=${untimed.id}`);
+  const other = page.locator("article.observation").nth(i);
+  await other.locator("button.moon").click();
+  await expect(other.locator(".moon-note")).toContainText("No time written");
+  await expect(other.locator(".moon-note")).not.toContainText("horizon");
+  // The object page's observations have it too.
+  await page.goto(`object.html?id=${encodeURIComponent("M31")}`);
+  await expect(page.locator("article.observation button.moon").first()).toBeVisible();
 });
