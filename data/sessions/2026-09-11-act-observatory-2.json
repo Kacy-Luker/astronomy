@@ -1,0 +1,46 @@
+{
+  "id": "2026-09-11-act-observatory-2",
+  "program": "Messier",
+  "date": "2026-09-11",
+  "site": { "name": "ACT Observatory", "lat": 35.831, "lon": -96.147 },
+  "sky": { "sqm": 20.89 },
+  "scope": {
+    "name": "Orion XT8",
+    "type": "Dobsonian",
+    "aperture_mm": 203,
+    "focal_length_mm": 1200,
+    "f_ratio": 5.9
+  },
+  "observers": ["Kacy Luker"],
+  "notebook": "test-001",
+  "pages": [2],
+  "header_box": { "page": 2, "box": [0.09, 0.025, 0.77, 0.265] },
+  "observations": [
+    {
+      "catalog_id": "M51",
+      "aka": "Whirlpool Galaxy",
+      "ids": ["M51", "NGC 5194"],
+      "page": 2,
+      "local_time": "20:50",
+      "seeing": 3,
+      "transparency": 4,
+      "eyepiece": "21mm Ethos",
+      "filter": "N/A",
+      "description": "2 bright cores with a dimmer halo; halos overlap; larger is top right of eyepiece",
+      "box": [0.06, 0.3, 0.8, 0.325]
+    },
+    {
+      "catalog_id": "M28",
+      "aka": null,
+      "ids": ["M28", "NGC 6626"],
+      "page": 2,
+      "local_time": "23:15",
+      "seeing": 2,
+      "transparency": 4,
+      "eyepiece": "21mm Ethos",
+      "filter": "N/A",
+      "description": "Bright core with a few distinct stars, dim halo with less dense star distribution than core.",
+      "box": [0.06, 0.615, 0.72, 0.33]
+    }
+  ]
+}

@@ -11,6 +11,7 @@ on:
         options:
           # Written by scripts/sync-workflow.mjs from data/notebooks/.
           # existing-notebooks:start
+          - test-001
           - astronomy-001
           # existing-notebooks:end
       confirm:
