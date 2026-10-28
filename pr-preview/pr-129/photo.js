@@ -1,13 +1,13 @@
-// A link to a photo of an object's patch of sky (#126): Aladin Lite, CDS's
-// sky viewer, centred on the object's RA/Dec with the DSS2 colour survey.
+// A link to a photo of an object's patch of sky (#126): ESASky, ESA's sky
+// viewer, centred on the object's RA/Dec with the DSS2 colour survey.
 // It's an outside service (docs/DEPENDENCIES.md); its address is PHOTO,
 // credited beside the link. Another viewer only needs a URL that takes a
 // position and a field of view.
 export const PHOTO = {
-  url: "https://aladin.cds.unistra.fr/AladinLite/",
-  survey: "P/DSS2/color",
-  name: "Aladin Lite",
-  credit: "DSS2 colour, CDS",
+  url: "https://sky.esa.int/esasky/",
+  survey: "DSS2 color",
+  name: "ESASky",
+  credit: "DSS2 colour, ESA",
 };
 
 // Field of view in degrees: three times the object's largest size, kept
@@ -30,14 +30,32 @@ export function photoFov(size) {
   return Math.round(Math.min(MAX_FOV, Math.max(MIN_FOV, deg * 3)) * 100) / 100;
 }
 
+// Sexagesimal "hh:mm:ss.s" or "±dd:mm:ss" as a number of hours or degrees.
+function sexagesimal(text) {
+  const m = /^\s*([+-]?)(\d+(?:\.\d+)?)(?::(\d+(?:\.\d+)?))?(?::(\d+(?:\.\d+)?))?\s*$/.exec(text ?? "");
+  if (!m) return null;
+  const value = Number(m[2]) + Number(m[3] ?? 0) / 60 + Number(m[4] ?? 0) / 3600;
+  return m[1] === "-" ? -value : value;
+}
+
+// The catalog's RA/Dec in decimal degrees ("10.68479 41.26906"), the form
+// ESASky's target takes; null when either is missing or unreadable.
+export function targetDegrees(ra, dec) {
+  const h = sexagesimal(ra), d = sexagesimal(dec);
+  if (h == null || d == null) return null;
+  return `${(h * 15).toFixed(5)} ${d.toFixed(5)}`;
+}
+
 // The viewer's address for an object's catalog info, or null without RA/Dec.
 export function photoUrl(info) {
-  const ra = info?.ra, dec = info?.dec;
-  if (typeof ra !== "string" || typeof dec !== "string" || !ra.trim() || !dec.trim()) return null;
+  const target = targetDegrees(info?.ra, info?.dec);
+  if (!target) return null;
   const params = [
-    ["target", `${ra.trim()} ${dec.trim()}`],
+    ["target", target],
     ["fov", String(photoFov(info.size))],
-    ["survey", PHOTO.survey],
+    ["hips", PHOTO.survey],
+    ["cooframe", "J2000"],
+    ["sci", "true"],
   ];
   return `${PHOTO.url}?${params.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&")}`;
 }
