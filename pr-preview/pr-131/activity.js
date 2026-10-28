@@ -1,4 +1,4 @@
-// The home page's Activity tab (#128): totals, observations per month,
+// The home page's Activity tab (#128): totals, observations per quarter,
 // objects by type, how seeing and transparency were spread, the most used
 // telescopes and eyepieces. Counted from the same
 // documents as the search (site/search.js), so it follows the search and
@@ -12,36 +12,39 @@ import { el, plural, seeingText, transparencyText } from "./lib.js";
 const objectKey = (o) => o.catalog?.key ?? o.catalog_id;
 const NOT_IN_CATALOG = "Not in the catalogs";
 
-// "2026-10" for every month from the first observation's to the last's,
-// with the quiet months in between at zero.
-function monthRange(first, last) {
-  const months = [];
-  let [y, m] = first.split("-").map(Number);
-  const [ly, lm] = last.split("-").map(Number);
-  while (y < ly || (y === ly && m <= lm)) {
-    months.push(`${y}-${String(m).padStart(2, "0")}`);
-    if (++m > 12) [y, m] = [y + 1, 1];
+// The quarter a date is in, "2026-Q4".
+const quarterOf = (date) => `${date.slice(0, 4)}-Q${Math.ceil(Number(date.slice(5, 7)) / 3)}`;
+
+// The last QUARTERS quarters (two years), oldest first, ending with
+// today's: quiet ones are shown too.
+export const QUARTERS = 8;
+function lastQuarters(today) {
+  let y = today.getFullYear(), q = Math.floor(today.getMonth() / 3) + 1;
+  const quarters = [];
+  for (let i = 0; i < QUARTERS; i++) {
+    quarters.unshift(`${y}-Q${q}`);
+    if (--q < 1) [y, q] = [y - 1, 4];
   }
-  return months;
+  return quarters;
 }
 
 // Everything the tab shows, from the matching documents ([{ o, s }]).
-export function activityStats(docs) {
+// today picks the two years the quarters chart covers.
+export function activityStats(docs, today = new Date()) {
   const sessions = new Set(docs.map((d) => d.s.id));
   const objects = new Map();
   for (const { o } of docs) if (!objects.has(objectKey(o))) objects.set(objectKey(o), o.catalog?.type || NOT_IN_CATALOG);
 
-  const byMonth = new Map();
+  const byQuarter = new Map();
   for (const { s } of docs) {
-    const month = s.date.slice(0, 7);
-    if (!byMonth.has(month)) byMonth.set(month, { observations: 0, sessions: new Set() });
-    byMonth.get(month).observations++;
-    byMonth.get(month).sessions.add(s.id);
+    const quarter = quarterOf(s.date);
+    if (!byQuarter.has(quarter)) byQuarter.set(quarter, { observations: 0, sessions: new Set() });
+    byQuarter.get(quarter).observations++;
+    byQuarter.get(quarter).sessions.add(s.id);
   }
-  const keys = [...byMonth.keys()].sort();
-  const months = keys.length ? monthRange(keys[0], keys.at(-1)).map((month) => ({
-    month, count: byMonth.get(month)?.observations ?? 0, sessions: byMonth.get(month)?.sessions.size ?? 0,
-  })) : [];
+  const quarters = lastQuarters(today).map((quarter) => ({
+    quarter, count: byQuarter.get(quarter)?.observations ?? 0, sessions: byQuarter.get(quarter)?.sessions.size ?? 0,
+  }));
 
   const types = new Map();
   for (const type of objects.values()) types.set(type, (types.get(type) ?? 0) + 1);
@@ -61,7 +64,7 @@ export function activityStats(docs) {
     sessions: sessions.size,
     observations: docs.length,
     objects: objects.size,
-    months,
+    quarters,
     types: [...types].map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count || (a.name === NOT_IN_CATALOG) - (b.name === NOT_IN_CATALOG) || a.name.localeCompare(b.name)),
     seeing: spread("seeing", seeingText),
@@ -71,10 +74,8 @@ export function activityStats(docs) {
   };
 }
 
-const monthName = (month) => {
-  const [y, m] = month.split("-").map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: "short", year: "numeric" });
-};
+// "2026-Q4" as "Q4 2026".
+const quarterName = (quarter) => quarter.split("-").reverse().join(" ");
 
 // A bar chart as a list: each row has its label and number in words, and
 // a bar (hidden from screen readers, which read the numbers) as long as its
@@ -124,8 +125,8 @@ export function renderActivity(docs) {
   const unrated = (spread) => (spread.unrated ? `${plural(spread.unrated, "observation")} not rated.` : null);
   return [
     totals,
-    bars("Observations per month", stats.months.map((m) => ({
-      label: monthName(m.month), count: m.count,
+    bars("Observations per quarter, last two years", stats.quarters.map((m) => ({
+      label: quarterName(m.quarter), count: m.count,
       value: m.count ? `${plural(m.count, "observation")} · ${plural(m.sessions, "session")}` : "None",
     })), null, true),
     bars("Objects by type", stats.types.map((t) => ({ label: t.name, count: t.count, value: plural(t.count, "object") })), null, true),
