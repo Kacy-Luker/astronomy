@@ -44,6 +44,10 @@ A page with a printed page number, or a plain page facing a session page,
 is blank when nothing is written on it yet; it is never a cover. The plain page
 facing the title page at the very front is the inside_front_cover, and
 inside_back_cover only comes after the info page, at the very back.
+front_cover is only the closed notebook on the scanner: the cover board,
+with the scanner's lid beside it. A paper page inside the book is never the
+front cover, even with a title or volume label on it; the first one with
+the title, owner or contact details is the title page.
 
 Rules:
 - Transcribe what is written. Do not add facts, cross-catalog IDs, or names that
