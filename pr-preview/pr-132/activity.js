@@ -1,13 +1,11 @@
 // The home page's Activity tab (#128): totals, observations per month,
 // objects by type, how seeing and transparency were spread, the most used
-// telescopes and eyepieces, the observing programs (site/programs.js,
-// #125), and a link to the feed of new sessions
-// (feed.xml, written by scripts/build.mjs). Counted from the same
-// documents as the search (site/search.js), so it follows the search and
-// filters. Charts are plain bars drawn with the site's own styles, each
-// with its number written beside it.
+// telescopes and eyepieces, and the observing programs (site/programs.js,
+// #125). Counted from the same documents as the search (site/search.js),
+// so it follows the search and filters. Charts are plain bars drawn with
+// the site's own styles, each with its number written beside it.
 import { group } from "./equipment.js";
-import { el, link, plural, seeingText, transparencyText } from "./lib.js";
+import { el, plural, seeingText, transparencyText } from "./lib.js";
 import { renderPrograms } from "./programs.js";
 
 // One object however it's written (M31 and NGC 224), as site/objects.js
@@ -124,9 +122,6 @@ export function renderActivity(docs, { catalog = {}, narrowed = false } = {}) {
     list.append(item);
   }
   totals.append(list);
-  const follow = el("p", "follow");
-  follow.append(link("feed.xml", "Follow new sessions", "feed-link"), " ", el("span", "muted", "(a feed for news readers)"));
-  totals.append(follow);
 
   const rated = (spread) => spread.steps.map((s) => ({ label: s.label, count: s.count, value: String(s.count) }));
   const unrated = (spread) => (spread.unrated ? `${plural(spread.unrated, "observation")} not rated.` : null);
