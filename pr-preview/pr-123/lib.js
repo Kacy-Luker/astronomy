@@ -1,0 +1,289 @@
+// Helpers shared by the site's pages.
+
+export function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text != null) node.textContent = text;
+  return node;
+}
+
+export function link(href, text, className) {
+  const a = el("a", className, text);
+  a.href = href;
+  return a;
+}
+
+export function formatDate(iso) {
+  // Parse as a calendar date so the time zone can't shift the day.
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    year: "numeric", month: "short", day: "numeric",
+  });
+}
+
+export function plural(n, word) {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
+}
+
+async function loadJSON(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(res.statusText);
+  return res.json();
+}
+
+// The test site and PR previews (#64) can show the made-up test data
+// (test-data/) instead of the real log. Their banner carries
+// data-test-data, the dataset shown by default; ?data=test or ?data=real
+// switches, and this browser remembers the choice. The live site has no
+// test data and always shows the real log.
+const DATA_KEY = "observing-log-data";
+const testBanner = document.querySelector(".preview-banner[data-test-data]");
+function chooseData() {
+  if (!testBanner) return "real";
+  const asked = new URLSearchParams(location.search).get("data");
+  if (asked === "test" || asked === "real") {
+    try { localStorage.setItem(DATA_KEY, asked); } catch { /* not remembered */ }
+    return asked;
+  }
+  let saved = null;
+  try { saved = localStorage.getItem(DATA_KEY); } catch { /* none */ }
+  return saved === "test" || saved === "real" ? saved : testBanner.dataset.testData;
+}
+export const dataset = chooseData();
+const DATA_ROOT = dataset === "test" ? "test-data/" : "";
+// A data file's path in the repo, e.g. dataFile("notebooks/x.json").
+export const dataFile = (path) => `${dataset === "test" ? "test-data" : "data"}/${path}`;
+
+if (testBanner) {
+  const toggle = el("span", "data-toggle");
+  toggle.append("Showing ");
+  for (const [value, text] of [["real", "real data"], ["test", "test data"]]) {
+    const url = new URL(location.href);
+    url.searchParams.set("data", value);
+    const a = link(url.href, text);
+    if (value === dataset) a.setAttribute("aria-current", "true");
+    toggle.append(a, value === "real" ? " | " : "");
+  }
+  testBanner.append(toggle);
+}
+
+export const loadSessions = () => loadJSON(`${DATA_ROOT}data/sessions.json`);
+export const loadNotebooks = () => loadJSON(`${DATA_ROOT}data/notebooks.json`);
+// Catalog info by object (data/objects.json); empty when there is none.
+export const loadObjects = () => loadJSON(`${DATA_ROOT}data/objects.json`).then((d) => d.objects, () => ({}));
+
+export const sessionHref = (id) => `session.html?id=${encodeURIComponent(id)}`;
+export const objectHref = (id) => `object.html?id=${encodeURIComponent(id)}`;
+export const notebookHref = (id, page) =>
+  `notebook.html?id=${encodeURIComponent(id)}${page ? `#${pageAnchor(page)}` : ""}`;
+
+// Numbered pages anchor by number; front matter by its position in the scan.
+export function pageAnchor(page) {
+  return page.number != null ? `p${page.number}` : `scan-${page.slot}`;
+}
+
+// Category labels come with the pages (data/categories.json); these are the
+// kinds that aren't categories.
+export const KIND_NAMES = { session: "Session", unused: "Unused", blank: "Blank" };
+
+export function pageName(page) {
+  return page.number != null ? `Page ${page.number}` : page.label ?? KIND_NAMES[page.kind] ?? page.kind;
+}
+
+// Kacy circles I–V using the Clear Sky Chart's words, with seeing I as the
+// best (as on the Antoniadi scale) and transparency V as the best.
+const ROMAN = ["I", "II", "III", "IV", "V"];
+const SEEING = ["Excellent", "Good", "Average", "Poor", "Bad"];
+const TRANSPARENCY = ["Poor", "Below average", "Average", "Above average", "Transparent"];
+
+// An object's name: as written on the sheet (AKA), else the catalog's.
+export const objectName = (o) => o.aka || o.catalog?.name || null;
+
+// "Planetary nebula in Vulpecula · mag 7.4 · 6.7′", from the build's
+// catalog info (data/objects.json, OpenNGC).
+export function catalogText(c) {
+  if (!c) return null;
+  const what = c.constellation ? `${c.type} in ${c.constellation}` : c.type;
+  return [what, c.magnitude != null && `mag ${c.magnitude}`, c.size].filter(Boolean).join(" · ");
+}
+
+export const seeingText = (n) => n && `${ROMAN[n - 1]} · ${SEEING[n - 1]}`;
+export const transparencyText = (n) => n && `${ROMAN[n - 1]} · ${TRANSPARENCY[n - 1]}`;
+
+// How scans are shown: inverted (white on dark; the default), blue (a plain
+// inversion, so the cream paper turns navy and pencil pale blue, #96),
+// cleaned (stamp show-through removed), or the original scan. Inverted and
+// blue use the cleaned image. The viewer's last choice is remembered;
+// storage can be unavailable.
+const VIEWS = { inverted: "Inverted", blue: "Blue", cleaned: "Cleaned", original: "Original" };
+// Both inverted views are .inverted; .blue changes the filter (style.css).
+export function viewClasses(target, view) {
+  target.classList.toggle("inverted", view === "inverted" || view === "blue");
+  target.classList.toggle("blue", view === "blue");
+}
+const VIEW_KEY = "page-view";
+function savedView() {
+  try { return localStorage.getItem(VIEW_KEY); } catch { return null; }
+}
+function saveView(view) {
+  try { localStorage.setItem(VIEW_KEY, view); } catch { /* not persisted */ }
+}
+let currentView = VIEWS[savedView()] ? savedView() : "inverted";
+
+const imageFor = (img, view) => (view === "original" ? img.dataset.original : img.dataset.clean || img.dataset.original);
+
+// Tapping a page opens it full size in view.html, in the same view: the
+// inversion is a style here, so the bare image file would show un-inverted.
+const viewerHref = (img, view) =>
+  `view.html?${new URLSearchParams({ img: imageFor(img, view), view, name: img.dataset.name ?? "" })}`;
+
+// Show the images inside target in a view (default: the viewer's last one).
+export function applyView(target, view = currentView) {
+  viewClasses(target, view);
+  for (const img of target.querySelectorAll("img[data-original]")) {
+    img.src = imageFor(img, view);
+    const a = img.closest("a[data-viewer]");
+    if (a) a.href = viewerHref(img, view);
+  }
+}
+
+// Inverted / Cleaned / Original buttons for the scans inside target.
+export function scanToggle(target) {
+  const group = el("div", "toggle");
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "How scans are shown");
+  const buttons = Object.entries(VIEWS).map(([view, label]) => {
+    const b = el("button", null, label);
+    b.type = "button";
+    b.dataset.view = view;
+    b.addEventListener("click", () => { apply(view); saveView(view); });
+    return b;
+  });
+  function apply(view) {
+    currentView = view;
+    applyView(target, view);
+    for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.view === view));
+  }
+  apply(currentView);
+  group.append(...buttons);
+  return group;
+}
+
+// One scanned page, linking to the full image, with a caption.
+export function pageFigure(page, alt, caption) {
+  const figure = imageFigure(page, alt, caption);
+  figure.id = pageAnchor(page);
+  return figure;
+}
+
+// Any image with an original and a cleaned copy ({ image, clean, width,
+// height }: a page or a sketch), linking to the viewer, with a caption.
+export function imageFigure(page, alt, caption) {
+  const figure = el("figure", "page");
+  const img = el("img");
+  img.dataset.original = page.image;
+  if (page.clean) img.dataset.clean = page.clean;
+  img.src = imageFor(img, currentView);
+  img.dataset.name = alt;
+  const a = link(viewerHref(img, currentView));
+  a.dataset.viewer = "";
+  if (page.width) [img.width, img.height] = [page.width, page.height];
+  img.alt = alt;
+  img.loading = "lazy";
+  a.append(img);
+  figure.append(a);
+  if (caption) {
+    const fc = el("figcaption");
+    fc.append(...[caption].flat());
+    figure.append(fc);
+  }
+  return figure;
+}
+
+// Admin mode is for Kacy: turned on by opening any page with ?admin=on
+// (?admin=off turns it off), which this browser remembers (previews share
+// the setting, being on the same site). It adds an admin bar at the top
+// of the page with the how-to page (help.html) and a toggle for the Edit links, which
+// open a data file in GitHub's web editor. The installed app has no address
+// bar, so a device that has been in admin mode also gets an "Admin mode"
+// link in the footer to turn it back on (#112); visitors never see it.
+const REPO = "https://github.com/Kacy-Luker/astronomy";
+const ADMIN_KEY = "observing-log-admin";
+const EDIT_KEY = "observing-log-edit";
+const ADMIN_SEEN_KEY = "observing-log-admin-seen";
+function stored(key) {
+  try { return localStorage.getItem(key) === "on"; } catch { return false; }
+}
+function store(key, on) {
+  try {
+    if (on) localStorage.setItem(key, "on");
+    else localStorage.removeItem(key);
+  } catch { /* not remembered */ }
+}
+const adminParam = new URLSearchParams(location.search).get("admin");
+if (adminParam === "on" || adminParam === "off") store(ADMIN_KEY, adminParam === "on");
+export const adminMode = adminParam !== "off" && (adminParam === "on" || stored(ADMIN_KEY));
+if (adminMode) store(ADMIN_SEEN_KEY, true);
+// On a PR preview the Edit links open the PR branch's files, not main's.
+const branch = document.querySelector(".preview-banner")?.dataset.branch ?? "main";
+export const editMode = adminMode && stored(EDIT_KEY);
+
+// A link to edit a file in the repo (e.g. data/sessions/<id>.json), or null
+// when the Edit links are off.
+export const sessionFile = (id) => dataFile(`sessions/${id}.json`);
+export function editLink(path, text = "Edit") {
+  if (!editMode) return null;
+  const a = link(`${REPO}/edit/${branch}/${path}`, text, "edit-link");
+  a.title = `Edit ${path} on GitHub`;
+  return a;
+}
+
+// The admin star for setting Kacy's favorite observation of an object
+// (#23), or null outside admin mode. The site can't save a tap, so it opens
+// a ready-made GitHub issue; submitting it runs .github/workflows/
+// favorite.yml, which opens a pull request. n counts the observation from 1
+// in its session's file.
+export function favoriteLink(o, s, n) {
+  // The Favorite workflow only changes the real data.
+  if (!adminMode || dataset === "test") return null;
+  const verb = o.favorite ? "Unfavorite" : "Favorite";
+  const what = `${o.catalog_id} on ${formatDate(s.date)}`;
+  const body = [
+    o.favorite
+      ? `Tap Submit to stop this being your favorite observation of ${o.catalog_id}. A pull request will follow.`
+      : `Tap Submit to make this your favorite observation of ${o.catalog_id}, replacing any other. A pull request will follow.`,
+    "",
+    `Session: ${s.id}`,
+    `Observation: ${n}`,
+  ].join("\n");
+  const a = link(`${REPO}/issues/new?${new URLSearchParams({ title: `${verb}: ${what}`, body })}`, o.favorite ? "★" : "☆", "favorite-link");
+  a.title = o.favorite ? `Stop ${what} being the favorite` : `Make ${what} the favorite`;
+  a.setAttribute("aria-label", a.title);
+  return a;
+}
+
+// The admin bar runs across the top of the page, under the preview banner
+// on a PR preview, and scrolls away with the page.
+if (adminMode) {
+  const bar = el("div", "admin-bar");
+  bar.append(el("strong", null, "Admin"), " · ");
+  // The Edit links are drawn as the page loads, so switching reloads it.
+  const toggle = el("button", "admin-toggle", `Edit links: ${editMode ? "on" : "off"}`);
+  toggle.type = "button";
+  toggle.setAttribute("aria-pressed", String(editMode));
+  toggle.addEventListener("click", () => { store(EDIT_KEY, !editMode); location.reload(); });
+  const off = new URL(location.href);
+  off.searchParams.set("admin", "off");
+  bar.append(link("help.html", "How to add a session"), " · ", toggle, " · ", link(off.href, "Leave admin mode"));
+  const banner = document.querySelector(".preview-banner");
+  if (banner) banner.after(bar);
+  else document.body.prepend(bar);
+}
+
+// Back into admin mode, on a device that has used it (#112).
+if (!adminMode && stored(ADMIN_SEEN_KEY)) {
+  const on = new URL(location.href);
+  on.searchParams.set("admin", "on");
+  const footer = document.querySelector(".site-footer") ?? document.body.appendChild(el("footer", "site-footer muted"));
+  footer.append(" ", link(on.href, "Admin mode", "admin-on"));
+}
