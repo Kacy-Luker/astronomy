@@ -8,6 +8,7 @@ import { jointCard } from "./cards.js";
 import { filterBar } from "./filterbar.js";
 import { field, observationDescription, observationFacts } from "./observation.js";
 import { findObject, observedObjects, sameName } from "./objects.js";
+import { PHOTO, photoUrl } from "./photo.js";
 import { activeFilters, keepFilters, matchesAll, searchDocuments } from "./search.js";
 
 const main = document.getElementById("object");
@@ -35,10 +36,24 @@ function renderHeader(obj, info) {
     field(dl, "Size", info.size);
     field(dl, "RA / Dec", info.ra && info.dec && `${info.ra}, ${info.dec}`);
     if (info.names?.length > 1) field(dl, "Also called", info.names.slice(1).join(", "));
+    field(dl, "Photo", photoLink(info));
   }
   field(dl, "Observed", plural(obj.seen.length, "time"));
   header.append(dl);
   return header;
+}
+
+// A photo of the object's patch of sky, to compare with the sketch (#126):
+// Aladin Lite in a new tab, credited beside the link. None without RA/Dec.
+function photoLink(info) {
+  const href = photoUrl(info);
+  if (!href) return null;
+  const a = link(href, PHOTO.name, "photo-link");
+  a.target = "_blank";
+  a.rel = "noopener";
+  const span = el("span");
+  span.append(a, el("span", "muted", ` (${PHOTO.credit})`));
+  return span;
 }
 
 // The sketch from one session at a time: the session's header, then the
