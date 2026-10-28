@@ -175,7 +175,9 @@ Transparent (`site/lib.js`). The key printed in the notebook isn't used.
   shown (`hidden` in `data/categories.json`). It's scanned closed, so the scanner's lid fills the
   rest of the scan; `scripts/lib/cover.mjs` trims to the cover. The import
   finds a closed-notebook scan among the spreads (Claude reads one half as
-  `front_cover`, the lid as blank) and keeps it apart from the pages; a
+  `front_cover`, the lid as blank) and keeps it apart from the pages (there's
+  one cover: a later page that also reads as `front_cover` is kept as the
+  title page, #16); a
   cover scanned on its own goes through `scripts/import-cover.mjs` (Import
   with Front cover as the category).
 - Back matter (categories after the session pages) stays at the end of

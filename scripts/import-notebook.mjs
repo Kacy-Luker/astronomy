@@ -176,16 +176,19 @@ await read(toRead);
 
 // A scan of the closed notebook is the outside front cover: Claude reads one
 // half as the cover and the other (the scanner's lid) as blank. Neither is
-// a page.
+// a page. There's one cover, scanned first; a later page that reads as a
+// cover is the title page (its volume label looks like the cover's), so
+// it's kept rather than lost.
 let coverScan = null;
 const coverAt = toRead.filter((u) => readings.get(u).kind === "front_cover");
 if (coverAt.length) {
   const spread = coverAt[0] >> 1;
   coverScan = await coverImage(spreads[spread], scan.rotate ?? 90);
-  if (coverAt.some((u) => u >> 1 !== spread)) {
-    notes.push(`- More than one spread reads as the front cover; scan ${spread + 1} was used and the others were left out. Check the scan.`);
+  for (const u of coverAt.filter((u) => u >> 1 !== spread)) {
+    readings.set(u, { ...readings.get(u), kind: "title" });
+    notes.push(`- Uploaded page ${nn(u)} also reads as the front cover; scan ${spread + 1} was used as the cover, and this page was kept as the title page. Check it.`);
   }
-  toRead = toRead.filter((u) => u >> 1 !== spread && !coverAt.includes(u));
+  toRead = toRead.filter((u) => u >> 1 !== spread);
 }
 
 // 3. What each page read is, and its page number (scripts/lib/import/numbering.mjs).

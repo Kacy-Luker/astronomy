@@ -63,16 +63,26 @@ function reading(i, { notebook, sessions } = book(ID)) {
   };
 }
 
+// A reading with nothing on the page but its kind.
+const bare = (kind) => ({
+  kind, printed_number: null, label: null, will_change: false, notebook_label: null,
+  personal_info: [], header: null, entries: [], uncertain: [],
+});
+
 // A scan: pages [a, b], [c, d], ... side by side with a faint fold between
 // them, turned sideways as the scanner gives them (the notebook's scan.rotate
-// turns them back), with the readings cached under the scan's name.
+// turns them back), with the readings cached under the scan's name. A page is
+// the notebook's page index, or { file, reading } for anything else, or
+// { page, kind } for a page Claude puts in another category.
 async function scan(work, name, pairs, { id, notebook, image, ...rest } = book(ID)) {
   const dir = join(work, "uploads", name);
   mkdirSync(dir, { recursive: true });
   const cache = join(work, ".import-cache", id, name);
   mkdirSync(cache, { recursive: true });
   for (const [k, pair] of pairs.entries()) {
-    const [left, right] = await Promise.all(pair.map((i) => sharp(image(i)).toBuffer({ resolveWithObject: true })));
+    const fileOf = (i) => (typeof i === "number" ? image(i) : i.file ?? image(i.page));
+    const height = (await sharp(fileOf(pair[0])).metadata()).height;
+    const [left, right] = await Promise.all(pair.map((i) => sharp(fileOf(i)).resize({ height }).toBuffer({ resolveWithObject: true })));
     const { width: w, height: h } = left.info;
     const fold = await sharp({ create: { width: 4, height: h, channels: 3, background: "#d8d4ca" } }).png().toBuffer();
     const spread = await sharp({ create: { width: w + right.info.width, height: h, channels: 3, background: "#f4f1e8" } })
@@ -81,9 +91,11 @@ async function scan(work, name, pairs, { id, notebook, image, ...rest } = book(I
     await sharp(spread).rotate(-90).jpeg({ quality: 90 }).toFile(join(dir, `${String(k + 1).padStart(2, "0")}.jpg`));
     pair.forEach((i, side) => {
       const u = String(2 * k + side + 1).padStart(2, "0");
-      writeFileSync(join(cache, `${u}.json`), JSON.stringify(reading(i, { notebook, ...rest })));
+      const page = typeof i === "number" ? i : i.page;
+      const read = i.reading ?? { ...reading(page, { notebook, ...rest }), ...(i.kind && { kind: i.kind }) };
+      writeFileSync(join(cache, `${u}.json`), JSON.stringify(read));
       // The blur check: nothing readable is left.
-      if (notebook.pages[i].redact) writeFileSync(join(cache, `${u}.check.json`), JSON.stringify({ legible: false, what: [] }));
+      if (notebook.pages[page]?.redact) writeFileSync(join(cache, `${u}.check.json`), JSON.stringify({ legible: false, what: [] }));
     });
   }
   return dir;
@@ -173,4 +185,23 @@ test("a free-text notebook (#109) is read the same way, and kept as scanned", as
   assert.deepEqual(written, s3.map(session));
   // Show-through cleaning fits the stamp, so there's nothing to clean.
   assert.deepEqual(readdirSync(join(work, "scans", id)).filter((f) => f.includes(".clean.")), []);
+});
+
+test("one front cover: a title page that also reads as a cover is kept as the title page", async () => {
+  // As in the first live import (#16): the closed notebook first, then the
+  // title page, which Claude also read as the front cover.
+  const id = "cover-test";
+  const lid = join(work, "lid.png");
+  await sharp({ create: { width: 1000, height: 1600, channels: 3, background: "#fafafa" } }).png().toFile(lid);
+  const cover = { file: `test-data/scans/${ID}/cover-front.jpg`, reading: bare("front_cover") };
+  const title = notebook.pages.findIndex((p) => p.kind === "title");
+  const summary = runFor(id, await scan(work, "cover", [[cover, { file: lid, reading: bare("blank") }], [0, { page: title, kind: "front_cover" }], [2, 3]], { ...book(ID), id }),
+    "--mode", "new");
+  const nb = out(`data/notebooks/${id}.json`);
+  assert.deepEqual(nb.pages.map((p) => p.kind), notebook.pages.slice(0, 4).map((p) => p.kind));
+  assert.ok(existsSync(join(work, "scans", id, "cover-front.jpg")));
+  assert.match(summary, /also reads as the front cover; scan 1 was used as the cover, and this page was kept as the title page/);
+  for (const box of notebook.pages[title].redact) {
+    assert.ok(await sharpness(join(work, "scans", id, `${String(title + 1).padStart(2, "0")}.jpg`), box) < BLURRED, "the title page wasn't blurred");
+  }
 });
