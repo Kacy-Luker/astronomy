@@ -232,7 +232,9 @@ supported types) can be updated.
    effort high, server-side refusal fallback; the page format is given as
    a JSON Schema in the prompt and checked (`scripts/lib/schema.mjs`),
    with one retry. It corrects plain misspellings and gives names in
-   normal capitalization (Kacy prints in capitals), but adds nothing.
+   normal capitalization (Kacy prints in capitals), but adds nothing; each
+   correction goes in the reading's `corrections` and is listed under
+   "Spelling corrected" in the PR summary (`sessions.mjs`, `summary.mjs`).
    Don't switch to API-enforced structured output: the schema is too
    large ("compiled grammar is too large"). The contract a replacement
    must meet is in `docs/DEPENDENCIES.md`.
