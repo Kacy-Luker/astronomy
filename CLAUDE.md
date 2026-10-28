@@ -371,14 +371,6 @@ any that don't).
   the site's CSS (`.bars`, no chart library, Kacy's choice), each row with
   its number written out and the bar `aria-hidden`; two columns from
   40rem. Hours aren't counted: sessions have no start and end times.
-- Feed (#128): `scripts/build.mjs` writes `dist/feed.xml`, an Atom feed of
-  the newest 20 sessions of the real data only (`atomFeed()` in
-  `scripts/lib/feed.mjs`, unit-tested: title date and site, summary the
-  objects, links the live site's absolute `SITE_URL`, its time the newest
-  session's date so rebuilds give the same file). Only the live build
-  (neither `TEST_SITE` nor `PREVIEW_OF`) adds `<link rel="alternate"
-  type="application/atom+xml">` to every page's head; the Activity tab's
-  "Follow new sessions" links to `feed.xml` on every build.
 - Favorites (#23): `favorite: true` on an observation, at most one per
   object (validation; objects matched through `data/objects.json`). The
   admin-mode star (`favoriteLink()` in `site/lib.js`, object page; hidden

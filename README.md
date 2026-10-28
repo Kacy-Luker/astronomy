@@ -316,12 +316,6 @@ used telescopes and eyepieces. The charts are simple bars with each number
 written beside them. Like the other tabs, it follows the search and
 filters, so `?site=Okie-Tex#activity` shows just Okie-Tex.
 
-**Follow new sessions** at the top links to `feed.xml`, a feed of the 20
-newest sessions (date, site and objects, linking to each session page)
-that news readers can follow. The build writes it from the real data, and
-the live site's pages announce it so feed readers find it on their own;
-previews and the test site don't.
-
 ## Session files
 
 **Admin mode.** Open any page of the site with `?admin=on` at the end of

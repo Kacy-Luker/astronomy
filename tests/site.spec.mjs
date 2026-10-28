@@ -150,12 +150,6 @@ test("the Activity tab counts the test data, and narrows with the search (#128)"
   await expect(total("objects")).toHaveText(String(objectsOf(built)));
   await expect(page.locator("#activity")).toContainText("I · Excellent");
   await expect(page.locator("#activity")).toContainText("V · Transparent");
-  await expect(page.locator("#activity .feed-link")).toHaveAttribute("href", "feed.xml");
-  const feed = await page.request.get("feed.xml");
-  expect(feed.ok()).toBe(true);
-  expect(await feed.text()).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
-  // Only the live site announces the feed.
-  await expect(page.locator('link[type="application/atom+xml"]')).toHaveCount(0);
 
   const m31 = built.filter(({ o }) => (o.ids ?? []).includes("M31"));
   await page.goto("?q=andromeda#activity");
