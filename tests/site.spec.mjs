@@ -112,6 +112,17 @@ test("the scan view toggle is remembered", async ({ page }) => {
   await page.getByRole("button", { name: "Inverted" }).first().click();
 });
 
+test("the Blue view is a plain inversion, also full size (#96)", async ({ page }) => {
+  await page.goto("notebook.html?id=test-001");
+  await page.getByRole("button", { name: "Blue" }).first().click();
+  const img = page.locator(".scans img").first();
+  await expect(img).toHaveCSS("filter", "invert(1)");
+  await page.getByRole("button", { name: "Inverted" }).first().click();
+  await expect(img).toHaveCSS("filter", "invert(1) hue-rotate(180deg)");
+  await page.goto("view.html?img=test-data/scans/test-001/06.jpg&view=blue");
+  await expect(page.locator("figure.page img")).toHaveCSS("filter", "invert(1)");
+});
+
 test("search and filters narrow the observations", async ({ page }) => {
   const m31 = observations.filter((o) => (o.ids ?? []).includes("M31")).length;
   await page.goto("?q=andromeda");

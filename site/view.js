@@ -1,7 +1,7 @@
-// One page full size, in the view it was opened from (Inverted, Cleaned or
-// Original), so tapping a page doesn't lose the inversion: that's a style on
+// One page full size, in the view it was opened from (Inverted, Blue,
+// Cleaned or Original), so tapping a page doesn't lose the inversion: that's a style on
 // the site, not part of the image file.
-import { el, link } from "./lib.js";
+import { el, link, viewClasses } from "./lib.js";
 
 const main = document.getElementById("view");
 const params = new URLSearchParams(location.search);
@@ -18,7 +18,7 @@ if (/^(test-data\/)?(scans|sketches)\/[a-z0-9-]+\/[\w.-]+\.jpg$/.test(src)) {
   img.alt = name ?? "Notebook page";
   figure.append(img);
   if (name) figure.append(el("figcaption", "page-name", name));
-  main.classList.toggle("inverted", view === "inverted");
+  viewClasses(main, view);
   main.replaceChildren(figure, el("p", "muted"));
   main.lastChild.append(link(src, "Open the image file"));
 } else {

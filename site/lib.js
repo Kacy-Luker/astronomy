@@ -110,10 +110,17 @@ export function catalogText(c) {
 export const seeingText = (n) => n && `${ROMAN[n - 1]} · ${SEEING[n - 1]}`;
 export const transparencyText = (n) => n && `${ROMAN[n - 1]} · ${TRANSPARENCY[n - 1]}`;
 
-// How scans are shown: inverted (white on dark; the default), cleaned (stamp
-// show-through removed), or the original scan. Inverted uses the cleaned
-// image. The viewer's last choice is remembered; storage can be unavailable.
-const VIEWS = { inverted: "Inverted", cleaned: "Cleaned", original: "Original" };
+// How scans are shown: inverted (white on dark; the default), blue (a plain
+// inversion, so the cream paper turns navy and pencil pale blue, #96),
+// cleaned (stamp show-through removed), or the original scan. Inverted and
+// blue use the cleaned image. The viewer's last choice is remembered;
+// storage can be unavailable.
+const VIEWS = { inverted: "Inverted", blue: "Blue", cleaned: "Cleaned", original: "Original" };
+// Both inverted views are .inverted; .blue changes the filter (style.css).
+export function viewClasses(target, view) {
+  target.classList.toggle("inverted", view === "inverted" || view === "blue");
+  target.classList.toggle("blue", view === "blue");
+}
 const VIEW_KEY = "page-view";
 function savedView() {
   try { return localStorage.getItem(VIEW_KEY); } catch { return null; }
@@ -132,7 +139,7 @@ const viewerHref = (img, view) =>
 
 // Show the images inside target in a view (default: the viewer's last one).
 export function applyView(target, view = currentView) {
-  target.classList.toggle("inverted", view === "inverted");
+  viewClasses(target, view);
   for (const img of target.querySelectorAll("img[data-original]")) {
     img.src = imageFor(img, view);
     const a = img.closest("a[data-viewer]");
