@@ -49,7 +49,8 @@ at a path.
 - `name` (optional), for messages.
 
 **It must:**
-- Transcribe what's written and add nothing.
+- Transcribe what's written and add nothing, correcting only plain
+  misspellings.
 - Keep "N/A" (the field doesn't apply) apart from a blank field (`null`,
   a to-do).
 - Skip crossed-out entries.

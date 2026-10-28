@@ -46,6 +46,8 @@ is blank when nothing is written on it yet; it is never a cover.
 Rules:
 - Transcribe what is written. Do not add facts, cross-catalog IDs, or names that
   aren't on the page. Leave a field null when it's blank.
+- Correct plain misspellings (eyepeice is "eyepiece", Dumbell Nebula is
+  "Dumbbell Nebula"), but keep the writer's own wording and abbreviations.
 - Skip an entry that is crossed out. Leave out individual struck-through words.
 - The writer prints in capitals. Give names (program, site, observers, AKA,
   scope) in normal capitalization, e.g. MESSIER is "Messier", OKIE-TEX 2026
