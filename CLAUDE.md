@@ -374,6 +374,19 @@ any that don't).
   the site's CSS (`.bars`, no chart library, Kacy's choice), each row with
   its number written out and the bar `aria-hidden`; two columns from
   40rem. Hours aren't counted: sessions have no start and end times.
+- Observing programs (`site/programs.js`, #125): a section of the
+  Activity tab, after the totals. `PROGRAMS` is Messier (M1–M110) and
+  Caldwell (C1–C109) as numbered ranges; `programProgress()` (unit-tested)
+  marks a designation observed when any matching observation has it among
+  its catalog object's `ids` (from `data/objects.json`, so NGC 224 counts
+  as M31 and Kacy's mappings apply, M102), its own `ids` or its
+  `catalog_id`. Each program shows "N of 110" and a bar, and a `<details>`
+  checklist: observed objects are ticked links to `object.html?id=`, the
+  rest greyed (dashed). Counts follow the search and filters, with
+  "Observed in the current selection." when narrowed. Only designations
+  are shown for unobserved objects (no names: the OpenNGC cache isn't
+  available offline at build). The Herschel 400 needs its own object list
+  and is a follow-up.
 - Favorites (#23): `favorite: true` on an observation, at most one per
   object (validation; objects matched through `data/objects.json`). The
   admin-mode star (`favoriteLink()` in `site/lib.js`, object page; hidden
