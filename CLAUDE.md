@@ -359,6 +359,16 @@ any that don't).
   (`leaflet`, exact version) and `scripts/build.mjs` copies it to
   `dist/vendor/leaflet/`; no CDN. The tile URL is the `TILES` constant,
   the one outside service, credited on the map.
+- Moon phase (#127): the build stores `o.moon` (`phase` 0–1, 0.5 full;
+  `illumination` %; `name`; `timed`; with a time and numeric site
+  lat/lon, `up` and `altitude`) from `observationMoon()` in
+  `scripts/lib/moon.mjs`, our own short computation (no library; checked
+  against astronomy-engine to 0.2% lit and 0.2° altitude). Local times
+  have no zone: taken as solar time at the site's longitude (else UTC−6),
+  before noon as the next morning, a written UT wins; no time means 22:00
+  and no `up`. `moonParts()` in `site/observation.js` gives the card's
+  glyph button (mirrored south of the equator) and the note it toggles,
+  on the session and object pages.
 - Favorites (#23): `favorite: true` on an observation, at most one per
   object (validation; objects matched through `data/objects.json`). The
   admin-mode star (`favoriteLink()` in `site/lib.js`, object page; hidden
