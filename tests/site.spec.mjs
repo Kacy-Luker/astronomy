@@ -204,13 +204,13 @@ test("the map opens on the USA, and fits other sites when only they match", asyn
 });
 
 test("admin mode can be turned back on from the footer, only where it's been used (#112)", async ({ page }) => {
-  const footerLink = page.locator(".site-footer").getByRole("button", { name: "Admin mode" });
+  const footerLink = page.locator(".site-footer").getByRole("button", { name: "Admin mode: off" });
   await page.goto("");
   await expect(page.locator(".summary").first()).toContainText("observations");
   await expect(footerLink).toHaveCount(0);
   await page.goto("?admin=on");
   await expect(page.locator(".admin-bar")).toBeVisible();
-  await page.locator(".admin-bar").getByRole("button", { name: "Leave admin mode" }).click();
+  await page.locator(".admin-bar").getByRole("button", { name: "Admin mode: on" }).click();
   await expect(page.locator(".admin-bar")).toHaveCount(0);
   // As in the installed app: no address bar, so back on from the footer.
   await footerLink.click();

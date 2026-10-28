@@ -325,7 +325,7 @@ browser remembers it. Every page then has an admin bar across the top
 (under the preview bar on a PR preview) with a short phone how-to
 (`help.html`: adding a session, other imports, finishing and removing a
 notebook), an **Edit links** toggle, a **Test data** toggle (see
-[Test site](#test-site)), and a **Leave admin mode** button
+[Test site](#test-site)), and an **Admin mode: on** toggle to leave
 (`?admin=off`). With Edit links on, pages show links that open the file
 in GitHub's editor: **Edit session** and an **Edit** on each
 observation (the session's file), **Edit notebook**, and **Edit
@@ -335,7 +335,7 @@ open the pull request's branch instead of main.
 In the installed app (below) there's no address bar. On Android the app
 shares Chrome's storage, so open `kacyluker.com/astronomy/?admin=on` once
 in Chrome and the app is in admin mode too. After that, a device that has
-been in admin mode shows an **Admin mode** button at the bottom of every
+been in admin mode shows an **Admin mode: off** toggle at the bottom of every
 page while it's off, to turn it back on from inside the app (#112).
 
 Name each file `<date>-<site>.json` and set its `id` to the same slug, for

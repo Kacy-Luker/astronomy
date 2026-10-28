@@ -393,10 +393,10 @@ any that don't).
   to `help.html` (Kacy's phone how-to; keep it in step with the forms
   and the README's Importing section), an Edit links toggle (also
   remembered; switching reloads the page), the Test data toggle
-  (`dataSwitch()`, above) and Leave admin mode, all buttons alike
-  (`adminButton()`, `.admin-toggle`). The installed app has no address bar, so a
+  (`dataSwitch()`, above) and "Admin mode: on" (turns it off), all
+  toggles alike (`adminButton()`, `.admin-toggle`). The installed app has no address bar, so a
   device that has been in admin mode
-  (`observing-log-admin-seen` in localStorage) gets an "Admin mode" button
+  (`observing-log-admin-seen` in localStorage) gets an "Admin mode: off" toggle
   in the footer while it's off (#112); on Android the app shares Chrome's
   storage, so `?admin=on` in Chrome turns it on in the app.
   With it on, `editLink()` in `site/lib.js` (which also holds the repo URL)
