@@ -175,7 +175,11 @@ a { color: var(--accent); }
   position: absolute; right: -.2rem; bottom: -.25rem;
   width: .85rem; height: .85rem; pointer-events: none;
 }
-.moon-note { margin: .5rem 0 0; font-size: .9rem; color: var(--muted); }
+/* A boxed note, so it isn't read as part of the object's catalog line. */
+.moon-note {
+  margin: .5rem 0 .75rem; padding: .5rem .75rem; font-size: .9rem; color: var(--text);
+  background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--moon-lit); border-radius: 6px;
+}
 /* Like the preview banner, in the accent color so the two aren't mixed up. */
 .admin-bar {
   padding: .5rem 16px; text-align: center; font-size: .9rem; line-height: 1.8;
