@@ -351,8 +351,8 @@ the address (for example `kacyluker.com/astronomy/?admin=on`); the
 browser remembers it. Every page then has an admin bar across the top
 (under the preview bar on a PR preview) with a short phone how-to
 (`help.html`: adding a session, other imports, finishing and removing a
-notebook), an **Edit links** toggle, the real/test data switch (see
-[Test site](#test-site)), and a link to leave admin mode
+notebook), an **Edit links** toggle, a **Test data** toggle (see
+[Test site](#test-site)), and an **Admin mode: on** toggle to leave
 (`?admin=off`). With Edit links on, pages show links that open the file
 in GitHub's editor: **Edit session** and an **Edit** on each
 observation (the session's file), **Edit notebook**, and **Edit
@@ -362,8 +362,8 @@ open the pull request's branch instead of main.
 In the installed app (below) there's no address bar. On Android the app
 shares Chrome's storage, so open `kacyluker.com/astronomy/?admin=on` once
 in Chrome and the app is in admin mode too. After that, a device that has
-been in admin mode shows an **Admin mode** link at the bottom of every
-page while it's off, to turn it back on from inside the app (#112).
+been in admin mode shows an **Admin mode: off** toggle at the bottom of
+every page while it's off, to turn it back on from inside the app (#112).
 
 Name each file `<date>-<site>.json` and set its `id` to the same slug, for
 example `data/sessions/2026-10-11-okie-tex-2026.json` with `"id":
@@ -475,11 +475,13 @@ Mesa, for the Near link). Every merge to `main` deploys it alongside the live
 site, so it's never out of date.
 
 Its banner says **Test site**. In admin mode the admin bar has a
-**Showing real data | test data** switch, on every site:
-- **Test site and PR previews:** they carry both datasets, so it switches
-  in place. Previews show real data by default.
-- **Live site:** it has only your data, so **test data** opens the same
+**Test data: on/off** toggle, on every site:
+- **Live site:** it has only your data, so turning it on opens the same
   page on the test site.
+- **Test site:** turning it off goes back to the same page on the live
+  site.
+- **PR previews:** they carry both datasets, so it switches in place.
+  Previews show real data by default.
 
 The choice goes in the address (`?data=test`), links keep it, and your
 browser remembers it. Visitors never see the switch. Favorite stars are

@@ -50,9 +50,11 @@ change things safely.
   leaves `test/` and `pr-preview/` alone). The banner's
   `data-test-data` (the default dataset) means both datasets are built
   (`dataset`, `dataFile()`, `?data=`, remembered in localStorage, in
-  `site/lib.js`). The real/test switch is in the admin bar only (#117,
-  `dataLinks()`): in place where both are built, and on the live site,
-  which has no test data, a link to the same page under `test/`. PR
+  `site/lib.js`). The Test data toggle is in the admin bar only (#117,
+  #133, `dataSwitch()`): on the live site, which has no test data, on
+  opens the same page under `test/`; on the test site (the banner's
+  `data-test-site`) off goes back to the live site's page; previews
+  switch in place. PR
   preview comments link to the preview with `?admin=on`; `preview.yml`
   posts its own comment (marked `<!-- preview-link -->`) since the
   preview action's is turned off.
@@ -416,10 +418,11 @@ any that don't).
   of the page (after `.preview-banner` when there is one) with a link
   to `help.html` (Kacy's phone how-to; keep it in step with the forms
   and the README's Importing section), an Edit links toggle (also
-  remembered; switching reloads the page) and the real/test data switch
-  (`dataLinks()`, above). The installed app has no address bar, so a
+  remembered; switching reloads the page), the Test data toggle
+  (`dataSwitch()`, above) and "Admin mode: on" (turns it off), all
+  toggles alike (`adminButton()`, `.admin-toggle`). The installed app has no address bar, so a
   device that has been in admin mode
-  (`observing-log-admin-seen` in localStorage) gets an "Admin mode" link
+  (`observing-log-admin-seen` in localStorage) gets an "Admin mode: off" toggle
   in the footer while it's off (#112); on Android the app shares Chrome's
   storage, so `?admin=on` in Chrome turns it on in the app.
   With it on, `editLink()` in `site/lib.js` (which also holds the repo URL)
