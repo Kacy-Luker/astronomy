@@ -440,6 +440,7 @@ const summary = summarize({
   frontCover,
   notes,
   corrections,
+  usage: reader?.usage() ?? null,
 });
 if (opts.summary) await writeFile(opts.summary, summary);
 console.log(summary);

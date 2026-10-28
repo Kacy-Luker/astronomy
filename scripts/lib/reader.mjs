@@ -23,6 +23,8 @@ export async function loadReader(choice = process.env.PAGE_READER || "claude") {
   };
   return {
     name: reader.name ?? choice,
+    // Tokens used so far ({ input, output }), when the reader counts them.
+    usage: () => reader.usage?.() ?? null,
     readPage: held("readPage", PageReading),
     checkRedaction: held("checkRedaction", RedactionCheck),
   };
