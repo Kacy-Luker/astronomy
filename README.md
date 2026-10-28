@@ -286,8 +286,8 @@ it was above the horizon at the site (only when the session has a
 lat/long and the entry a time). It's worked out when the site is built,
 from the date, time and coordinates, with no outside service. When the
 entry has a UT, that's used, and the note says so. Otherwise the local
-time is used, taken as approximate since it's written without a time
-zone: local solar time at the site, or US Central when there's no
+time is used, and since it's written without a time zone, one is
+assumed (the note says so): local solar time at the site, or US Central when there's no
 longitude; times after midnight count as the next morning.
 An entry with no time gets the evening's phase and nothing about the
 horizon.
