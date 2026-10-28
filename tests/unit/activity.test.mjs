@@ -24,15 +24,19 @@ test("totals count sessions, observations and objects (M31 and NGC 224 are one)"
   assert.deepEqual([stats.sessions, stats.observations, stats.objects], [3, 4, 3]);
 });
 
-test("months run from the first to the last, quiet ones at zero", () => {
-  assert.deepEqual(activityStats(docs).months, [
-    { month: "2026-01", count: 2, sessions: 1 },
-    { month: "2026-02", count: 0, sessions: 0 },
-    { month: "2026-03", count: 2, sessions: 2 },
+test("quarters cover the last two years, quiet ones at zero", () => {
+  const today = new Date(2026, 4, 15); // May 2026, Q2
+  const { quarters } = activityStats(docs, today);
+  assert.deepEqual(quarters.map((q) => q.quarter), [
+    "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1", "2026-Q2",
   ]);
-  const year = activityStats([{ s: { id: "x", date: "2025-12-31" }, o: {} }, { s: { id: "y", date: "2026-01-01" }, o: {} }]);
-  assert.deepEqual(year.months.map((m) => m.month), ["2025-12", "2026-01"]);
-  assert.deepEqual(activityStats([]).months, []);
+  assert.deepEqual(quarters.at(-2), { quarter: "2026-Q1", count: 4, sessions: 3 });
+  assert.deepEqual(quarters.at(-1), { quarter: "2026-Q2", count: 0, sessions: 0 });
+  // Older than two years: left off the chart, still in the totals.
+  const old = activityStats([{ s: { id: "x", date: "2024-06-30" }, o: {} }, { s: { id: "y", date: "2024-07-01" }, o: {} }], today);
+  assert.deepEqual(old.quarters.map((q) => q.count), [1, 0, 0, 0, 0, 0, 0, 0]);
+  assert.equal(old.observations, 2);
+  assert.equal(activityStats([], today).quarters.length, 8);
 });
 
 test("objects by type count each object once, uncatalogued ones last", () => {

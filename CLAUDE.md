@@ -360,8 +360,9 @@ any that don't).
   `dist/vendor/leaflet/`; no CDN. The tile URL is the `TILES` constant,
   the one outside service, credited on the map.
 - Activity tab (`site/activity.js`, #128; last in the tab row): totals
-  (sessions, observations, objects), observations per month (every month
-  from the first to the last, quiet ones at zero), objects by type (each
+  (sessions, observations, objects), observations per quarter (the last
+  `QUARTERS`, eight, ending with today's; quiet ones at zero; older ones
+  only in the totals), objects by type (each
   object once, by its catalog key; no type is "Not in the catalogs"),
   seeing and transparency over I–V with `seeingText()`/`transparencyText()`
   words, and the top five telescopes and eyepieces (`group()` from
