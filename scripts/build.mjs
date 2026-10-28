@@ -5,6 +5,7 @@ import { join } from "node:path";
 import * as images from "./lib/image.mjs";
 import { category, isBack, ranks } from "./lib/categories.mjs";
 import { findCircle } from "./lib/circle.mjs";
+import { observationMoon } from "./lib/moon.mjs";
 import { objectKeys, pageName, readJSON, readJSONDir } from "./lib/files.mjs";
 import { typeOf } from "./lib/notebook-types.mjs";
 
@@ -81,6 +82,14 @@ async function buildData(dir, root) {
   const objectsFile = join(dir, "objects.json");
   const { objects } = await readJSON(objectsFile, { objects: {} });
   const objectOf = objectKeys(objects);
+  // The Moon at each observation (scripts/lib/moon.mjs): the site shows its
+  // phase on the observation's card.
+  for (const s of sessions) {
+    for (const o of s.observations ?? []) {
+      const moon = observationMoon(s, o);
+      if (moon) o.moon = moon;
+    }
+  }
   for (const o of sessions.flatMap((s) => s.observations ?? [])) {
     const key = objectOf(o);
     if (key) {
