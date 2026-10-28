@@ -369,10 +369,12 @@ any that don't).
   Favorites only filter.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in
   localStorage (`?admin=off` clears it), adds an admin bar across the top
-  of the page (after `.preview-banner` when there is one) with a link to `help.html` (Kacy's phone how-to; keep it in step with
-  the forms and the README's Importing section) and an Edit links toggle
-  (also remembered; switching reloads the page). The installed app has
-  no address bar, so a device that has been in admin mode
+  of the page (after `.preview-banner` when there is one) with a link
+  to `help.html` (Kacy's phone how-to; keep it in step with the forms
+  and the README's Importing section), an Edit links toggle (also
+  remembered; switching reloads the page) and the real/test data switch
+  (`dataLinks()`, above). The installed app has no address bar, so a
+  device that has been in admin mode
   (`observing-log-admin-seen` in localStorage) gets an "Admin mode" link
   in the footer while it's off (#112); on Android the app shares Chrome's
   storage, so `?admin=on` in Chrome turns it on in the app.

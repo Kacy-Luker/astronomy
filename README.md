@@ -310,11 +310,12 @@ the address (for example `kacyluker.com/astronomy/?admin=on`); the
 browser remembers it. Every page then has an admin bar across the top
 (under the preview bar on a PR preview) with a short phone how-to
 (`help.html`: adding a session, other imports, finishing and removing a
-notebook), an **Edit links** toggle, and a link to leave admin mode
+notebook), an **Edit links** toggle, the real/test data switch (see
+[Test site](#test-site)), and a link to leave admin mode
 (`?admin=off`). With Edit links on, pages show links that open the file
-in GitHub's editor: **Edit session** and an **Edit** on each observation (the session's
-file), **Edit notebook**, and **Edit mappings** on object pages. Visitors
-never see any of it. It works on PR previews too, where the Edit links
+in GitHub's editor: **Edit session** and an **Edit** on each
+observation (the session's file), **Edit notebook**, and **Edit
+mappings** on object pages. Visitors never see any of it. It works on PR previews too, where the Edit links
 open the pull request's branch instead of main.
 
 In the installed app (below) there's no address bar. On Android the app
@@ -473,10 +474,11 @@ yours.
   stamp, goes through a new import as a free-text notebook the same way.
 - **Site tests** (`tests/site.spec.mjs`, Playwright in Chromium) against
   the test site's build, at phone and desktop width: every page loads with
-  no errors, failed requests or sideways scroll; the admin bar's real/test switch;
-  to-dos, N/A and the seeing and transparency words; one object under two
-  designations; the Sketches toggle and the back button; the scan view
-  being remembered; search and filters; and the map's Near link. Expected
+  no errors, failed requests or sideways scroll; the admin bar's
+  real/test switch; to-dos, N/A and the seeing and transparency words;
+  one object under two designations; the Sketches toggle and the back
+  button; the scan view being remembered; search and filters; and the
+  map's Near link. Expected
   values come from the test data where they can.
 
 When a site test fails on GitHub, its screenshots are kept with the run
