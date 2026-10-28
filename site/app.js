@@ -229,7 +229,7 @@ try {
     keepFilters(equipment);
     updateMap(matching);
     const activity = document.getElementById("activity");
-    activity.replaceChildren(...renderActivity(matching));
+    activity.replaceChildren(...renderActivity(matching, { catalog, narrowed }));
     keepFilters(activity);
     summary.textContent = narrowed
       ? `${plural(found.size, "matching observation")} · ${plural(shown.length, "session")} · ${plural(objects.length, "object")}`

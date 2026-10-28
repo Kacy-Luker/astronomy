@@ -158,6 +158,35 @@ test("the Activity tab counts the test data, and narrows with the search (#128)"
   await expect(total("objects")).toHaveText("1");
 });
 
+test("the Activity tab's observing programs count the test data, and follow the search (#125)", async ({ page }) => {
+  // Every designation observed, as site/programs.js gathers them.
+  const catalog = read("test-data/objects.json").objects;
+  const built = read("dist/test-data/data/sessions.json").flatMap((s) => s.observations);
+  const seen = new Set(built.flatMap((o) => [...(catalog[o.catalog?.key ?? o.catalog_id]?.ids ?? []), ...(o.ids ?? []), o.catalog_id]));
+  const done = (prefix, size) => Array.from({ length: size }, (_, i) => `${prefix}${i + 1}`).filter((id) => seen.has(id));
+  const messier = done("M", 110);
+  const caldwell = done("C", 109);
+  expect(messier.length, "the test data has a partly done Messier program").toBeGreaterThan(0);
+  expect(caldwell.length, "the test data has a partly done Caldwell program").toBeGreaterThan(0);
+
+  const program = (name) => page.locator(`#activity [data-program="${name}"]`);
+  await page.goto("#activity");
+  await expect(program("messier").locator(".program-count")).toHaveText(`${messier.length} of 110`);
+  await expect(program("caldwell").locator(".program-count")).toHaveText(`${caldwell.length} of 109`);
+  await expect(page.locator("#activity")).not.toContainText("current selection");
+  await program("messier").locator("summary").click();
+  await expect(program("messier").locator(".seen")).toHaveCount(messier.length);
+  await expect(program("messier").locator(".not-yet")).toHaveCount(110 - messier.length);
+  await expect(program("messier").getByRole("link", { name: "✓ M31", exact: true })).toHaveAttribute("href", /object\.html\?id=M31/);
+  const missing = Array.from({ length: 110 }, (_, i) => `M${i + 1}`).find((id) => !seen.has(id));
+  await expect(program("messier").locator(".not-yet", { hasText: new RegExp(`^${missing}$`) })).toBeVisible();
+
+  await page.goto("?q=andromeda#activity");
+  await expect(program("messier").locator(".program-count")).toHaveText("1 of 110");
+  await expect(program("caldwell").locator(".program-count")).toHaveText("0 of 109");
+  await expect(page.locator("#activity .programs")).toContainText("Observed in the current selection.");
+});
+
 test("the map groups sites by spot, and its Near link lists every session there", async ({ page }) => {
   const atSpot = sessions.filter((s) => Math.round(s.site.lat * 10) === 369 && Math.round(s.site.lon * 10) === -1030);
   await page.goto("#map");
