@@ -316,7 +316,11 @@ a { color: var(--accent); }
 .bar-track { height: .5rem; margin-top: .2rem; background: var(--bg); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
 .bar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
 .bar-note { margin: .5rem 0 0; font-size: .9rem; }
-/* Side by side when there's room; totals and months stay full width. */
+/* Past eight rows a chart scrolls (MAX_ROWS in site/activity.js); rows
+   get a fixed line height so eight fit exactly. */
+.bars.scroll { max-height: calc(8 * 2.7rem); overflow-y: auto; overscroll-behavior: contain; padding-right: .25rem; }
+.bars.scroll .bar-head { line-height: 1.4rem; }
+/* Side by side when there's room; totals and years stay full width. */
 @media (min-width: 40rem) {
   #activity:not([hidden]) { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1rem; align-items: start; }
   #activity > .wide-card { grid-column: 1 / -1; }

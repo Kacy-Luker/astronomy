@@ -1,4 +1,4 @@
-// The home page's Activity tab (#128): totals, observations per quarter,
+// The home page's Activity tab (#128): totals, observations per year,
 // objects by type, how seeing and transparency were spread, the most used
 // telescopes and eyepieces, and the observing programs (site/programs.js,
 // #125). Counted from the same documents as the search (site/search.js),
@@ -13,39 +13,22 @@ import { renderPrograms } from "./programs.js";
 const objectKey = (o) => o.catalog?.key ?? o.catalog_id;
 const NOT_IN_CATALOG = "Not in the catalogs";
 
-// The quarter a date is in, "2026-Q4".
-const quarterOf = (date) => `${date.slice(0, 4)}-Q${Math.ceil(Number(date.slice(5, 7)) / 3)}`;
-
-// The last QUARTERS quarters (two years), oldest first, ending with
-// today's: quiet ones are shown too.
-export const QUARTERS = 8;
-function lastQuarters(today) {
-  let y = today.getFullYear(), q = Math.floor(today.getMonth() / 3) + 1;
-  const quarters = [];
-  for (let i = 0; i < QUARTERS; i++) {
-    quarters.unshift(`${y}-Q${q}`);
-    if (--q < 1) [y, q] = [y - 1, 4];
-  }
-  return quarters;
-}
-
 // Everything the tab shows, from the matching documents ([{ o, s }]).
-// today picks the two years the quarters chart covers.
-export function activityStats(docs, today = new Date()) {
+export function activityStats(docs) {
   const sessions = new Set(docs.map((d) => d.s.id));
   const objects = new Map();
   for (const { o } of docs) if (!objects.has(objectKey(o))) objects.set(objectKey(o), o.catalog?.type || NOT_IN_CATALOG);
 
-  const byQuarter = new Map();
+  // Only years with observations, newest first.
+  const byYear = new Map();
   for (const { s } of docs) {
-    const quarter = quarterOf(s.date);
-    if (!byQuarter.has(quarter)) byQuarter.set(quarter, { observations: 0, sessions: new Set() });
-    byQuarter.get(quarter).observations++;
-    byQuarter.get(quarter).sessions.add(s.id);
+    const year = s.date.slice(0, 4);
+    if (!byYear.has(year)) byYear.set(year, { observations: 0, sessions: new Set() });
+    byYear.get(year).observations++;
+    byYear.get(year).sessions.add(s.id);
   }
-  const quarters = lastQuarters(today).map((quarter) => ({
-    quarter, count: byQuarter.get(quarter)?.observations ?? 0, sessions: byQuarter.get(quarter)?.sessions.size ?? 0,
-  }));
+  const years = [...byYear].sort(([a], [b]) => b.localeCompare(a))
+    .map(([year, y]) => ({ year, count: y.observations, sessions: y.sessions.size }));
 
   const types = new Map();
   for (const type of objects.values()) types.set(type, (types.get(type) ?? 0) + 1);
@@ -65,7 +48,7 @@ export function activityStats(docs, today = new Date()) {
     sessions: sessions.size,
     observations: docs.length,
     objects: objects.size,
-    quarters,
+    years,
     types: [...types].map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count || (a.name === NOT_IN_CATALOG) - (b.name === NOT_IN_CATALOG) || a.name.localeCompare(b.name)),
     seeing: spread("seeing", seeingText),
@@ -75,13 +58,14 @@ export function activityStats(docs, today = new Date()) {
   };
 }
 
-// "2026-Q4" as "Q4 2026".
-const quarterName = (quarter) => quarter.split("-").reverse().join(" ");
+
+// A chart longer than this many rows scrolls (.bars.scroll).
+const MAX_ROWS = 8;
 
 // A bar chart as a list: each row has its label and number in words, and
 // a bar (hidden from screen readers, which read the numbers) as long as its
 // share of the biggest row.
-function bars(title, rows, note, wide = false) {
+function bars(title, rows, note, wide = false, scroll = false) {
   const card = el("section", wide ? "session wide-card" : "session");
   card.append(el("h3", "section-title", title));
   if (!rows.length) {
@@ -89,7 +73,8 @@ function bars(title, rows, note, wide = false) {
     return card;
   }
   const most = Math.max(1, ...rows.map((r) => r.count));
-  const list = el("ul", "bars");
+  const list = el("ul", scroll && rows.length > MAX_ROWS ? "bars scroll" : "bars");
+  if (list.classList.contains("scroll")) list.tabIndex = 0; // scrollable from the keyboard
   for (const r of rows) {
     const item = el("li", "bar-row");
     const head = el("div", "bar-head");
@@ -129,10 +114,9 @@ export function renderActivity(docs, { catalog = {}, narrowed = false } = {}) {
   return [
     totals,
     renderPrograms(docs, catalog, narrowed),
-    bars("Observations per quarter, last two years", stats.quarters.map((m) => ({
-      label: quarterName(m.quarter), count: m.count,
-      value: m.count ? `${plural(m.count, "observation")} · ${plural(m.sessions, "session")}` : "None",
-    })), null, true),
+    bars("Observations per year", stats.years.map((y) => ({
+      label: y.year, count: y.count, value: `${plural(y.count, "observation")} · ${plural(y.sessions, "session")}`,
+    })), null, true, true),
     bars("Objects by type", stats.types.map((t) => ({ label: t.name, count: t.count, value: plural(t.count, "object") })), null, true),
     bars("Seeing", rated(stats.seeing), unrated(stats.seeing)),
     bars("Transparency", rated(stats.transparency), unrated(stats.transparency)),
