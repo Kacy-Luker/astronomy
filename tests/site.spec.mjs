@@ -102,8 +102,8 @@ test("an object with coordinates links to a photo of its sky; one without has no
   const photo = page.locator(".session-header .facts a.photo-link");
   await expect(photo).toHaveCount(1);
   const href = new URL(await photo.getAttribute("href"));
-  expect(href.hostname).toBe("aladin.cds.unistra.fr");
-  expect(href.searchParams.get("target")).toBe("00:42:44.35 +41:16:08.6");
+  expect(href.hostname).toBe("sky.esa.int");
+  expect(href.searchParams.get("target")).toBe("10.68479 41.26906");
   expect(href.searchParams.get("fov")).toBe("5");
   await expect(photo).toHaveAttribute("target", "_blank");
   await expect(photo).toHaveAttribute("rel", "noopener");

@@ -22,7 +22,7 @@ fails if another file starts using a wrapped library or tool directly.
 | claude-code-action | The Docs check on PRs | `docs.yml` | Optional |
 | OpenStreetMap tiles | The Map tab's background | `TILES` in `site/map.js` | Wrapped (a constant) |
 | Leaflet | The Map tab | `site/map.js` | One file |
-| Aladin Lite (CDS) | The object page's Photo link | `PHOTO` in `site/photo.js` | Wrapped (a constant) |
+| ESASky (ESA) | The object page's Photo link | `PHOTO` in `site/photo.js` | Wrapped (a constant) |
 
 ## Photo link
 
@@ -36,14 +36,17 @@ tab, to compare with Kacy's sketch (#126). It's only a link: nothing is
 loaded from the service until it's tapped.
 
 **The contract:** a web address that takes a sky position (the catalog's
-RA and Dec, as written, e.g. `00:42:44.35 +41:16:08.6`) and a field of
+RA and Dec, given in decimal degrees, e.g. `10.68479 41.26906` for
+`00:42:44.35 +41:16:08.6`) and a field of
 view in degrees, and shows survey images of the whole sky (north and
 south). The field of view is three times the object's largest size,
 0.1°–5°, or 0.5° when the size isn't known.
 
-**Today:** Aladin Lite from CDS, Strasbourg, with the DSS2 colour survey:
-`https://aladin.cds.unistra.fr/AladinLite/?target=<RA> <Dec>&fov=<degrees>&survey=P/DSS2/color`
-(each value URL-encoded). `tests/unit/photo.test.mjs` checks the address.
+**Today:** ESASky from the European Space Agency, with the DSS2 colour
+survey:
+`https://sky.esa.int/esasky/?target=<RA°> <Dec°>&fov=<degrees>&hips=DSS2 color&cooframe=J2000&sci=true`
+(each value URL-encoded). Aladin Lite (CDS) takes the same position and
+field of view, but its server dropped connections from Kacy's phone. `tests/unit/photo.test.mjs` checks the address.
 
 ## Page reader
 

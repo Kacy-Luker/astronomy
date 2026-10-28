@@ -388,7 +388,7 @@ info, its sketch, shown as the session's NEW SESSION block and the entry,
 two images with a gap (a toggle picks the session when there are
 several), and every observation of it, newest first. When the catalog
 gives its RA/Dec, a **Photo** line links to
-[Aladin Lite](https://aladin.cds.unistra.fr/AladinLite/) (CDS, Strasbourg)
+[ESASky](https://sky.esa.int/esasky/) (the European Space Agency's sky viewer)
 in a new tab, centred on the object in the DSS2 colour survey, zoomed to
 about three times its size, to compare with the sketch. A session page
 shows its NEW SESSION block at the top and each observation's entry on

@@ -44,7 +44,7 @@ function renderHeader(obj, info) {
 }
 
 // A photo of the object's patch of sky, to compare with the sketch (#126):
-// Aladin Lite in a new tab, credited beside the link. None without RA/Dec.
+// ESASky in a new tab, credited beside the link. None without RA/Dec.
 function photoLink(info) {
   const href = photoUrl(info);
   if (!href) return null;

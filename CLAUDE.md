@@ -297,8 +297,8 @@ any that don't).
   thumbnail of the favorite or latest sketch and links to the object
   page, which shows one sketch at a time (a toggle picks the session) and
   every observation, newest first. Its catalog facts end with a Photo
-  link (#126, `photoUrl()` in `site/photo.js`): Aladin Lite in a new tab
-  at the object's RA/Dec, field of view three times its size (0.1°–5°,
+  link (#126, `photoUrl()` in `site/photo.js`): ESASky in a new tab
+  at the object's RA/Dec (in decimal degrees), field of view three times its size (0.1°–5°,
   0.5° when unknown); none without RA/Dec. The address is the `PHOTO`
   constant, an outside service credited beside the link. Both use `site/objects.js` for the grouping; the session
   and object pages share the entry fields (`site/observation.js`).
