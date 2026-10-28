@@ -335,8 +335,8 @@ open the pull request's branch instead of main.
 In the installed app (below) there's no address bar. On Android the app
 shares Chrome's storage, so open `kacyluker.com/astronomy/?admin=on` once
 in Chrome and the app is in admin mode too. After that, a device that has
-been in admin mode shows an **Admin mode: off** toggle at the bottom of every
-page while it's off, to turn it back on from inside the app (#112).
+been in admin mode shows an **Admin mode: off** toggle at the bottom of
+every page while it's off, to turn it back on from inside the app (#112).
 
 Name each file `<date>-<site>.json` and set its `id` to the same slug, for
 example `data/sessions/2026-10-11-okie-tex-2026.json` with `"id":
