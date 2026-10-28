@@ -187,19 +187,27 @@ test("a free-text notebook (#109) is read the same way, and kept as scanned", as
   assert.deepEqual(readdirSync(join(work, "scans", id)).filter((f) => f.includes(".clean.")), []);
 });
 
-test("one front cover: a title page that also reads as a cover is kept as the title page", async () => {
-  // As in the first live import (#16): the closed notebook first, then the
-  // title page, which Claude also read as the front cover.
+test("the cover scan is the spread with the lid; nothing else is lost to a cover reading", async () => {
+  // As in the live imports (#16): Claude read the closed notebook's cover as
+  // the title page, or the title page as a second cover, and a plain page
+  // after the last written one as the inside back cover.
   const id = "cover-test";
   const lid = join(work, "lid.png");
-  await sharp({ create: { width: 1000, height: 1600, channels: 3, background: "#fafafa" } }).png().toFile(lid);
-  const cover = { file: `test-data/scans/${ID}/cover-front.jpg`, reading: bare("front_cover") };
+  await sharp({ create: { width: 1000, height: 1600, channels: 3, background: "#9b9b9b" } }).png().toFile(lid);
+  const cover = { file: `test-data/scans/${ID}/cover-front.jpg`, reading: bare("title") };
   const title = notebook.pages.findIndex((p) => p.kind === "title");
-  const summary = runFor(id, await scan(work, "cover", [[cover, { file: lid, reading: bare("blank") }], [0, { page: title, kind: "front_cover" }], [2, 3]], { ...book(ID), id }),
-    "--mode", "new");
+  const last = notebook.pages.findIndex((p) => p.kind === "blank" && p.open);
+  const summary = runFor(id, await scan(work, "cover", [
+    [cover, { file: lid, reading: bare("blank") }],
+    [0, { page: title, kind: "front_cover" }],
+    [2, 3],
+    [last - 1, { page: last, kind: "inside_back_cover" }],
+  ], { ...book(ID), id }), "--mode", "new");
   const nb = out(`data/notebooks/${id}.json`);
-  assert.deepEqual(nb.pages.map((p) => p.kind), notebook.pages.slice(0, 4).map((p) => p.kind));
+  const kinds = (pages) => pages.map(({ kind, number }) => ({ kind, number }));
+  assert.deepEqual(kinds(nb.pages), kinds([...notebook.pages.slice(0, 4), ...notebook.pages.slice(last - 1, last + 1)]));
   assert.ok(existsSync(join(work, "scans", id, "cover-front.jpg")));
+  assert.ok(nb.front_cover);
   assert.match(summary, /also reads as the front cover; scan 1 was used as the cover, and this page was kept as the title page/);
   for (const box of notebook.pages[title].redact) {
     assert.ok(await sharpness(join(work, "scans", id, `${String(title + 1).padStart(2, "0")}.jpg`), box) < BLURRED, "the title page wasn't blurred");

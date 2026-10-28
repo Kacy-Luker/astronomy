@@ -174,10 +174,13 @@ Transparent (`site/lib.js`). The key printed in the notebook isn't used.
   the inside front cover is recorded (so spreads stay physical) but never
   shown (`hidden` in `data/categories.json`). It's scanned closed, so the scanner's lid fills the
   rest of the scan; `scripts/lib/cover.mjs` trims to the cover. The import
-  finds a closed-notebook scan among the spreads (Claude reads one half as
-  `front_cover`, the lid as blank) and keeps it apart from the pages (there's
-  one cover: a later page that also reads as `front_cover` is kept as the
-  title page, #16); a
+  finds a closed-notebook scan among the spreads and keeps it apart from
+  the pages: the spread with the scanner's grey lid in one half (`isLid()`
+  in `scripts/lib/cover.mjs`, measured, since Claude mixes up the cover's
+  volume label and the title page), else the first half Claude reads as
+  `front_cover`. There's one cover: another page read as `front_cover` is
+  kept as the title page (#16). Kacy never scans the inside back cover, so
+  a page read as one is recorded as blank; a
   cover scanned on its own goes through `scripts/import-cover.mjs` (Import
   with Front cover as the category).
 - Back matter (categories after the session pages) stays at the end of

@@ -35,7 +35,7 @@ import { basename, join } from "node:path";
 import { parseArgs } from "node:util";
 import { CATEGORIES, SESSION_RANK, category, ranks } from "./lib/categories.mjs";
 import { enrichSessions, loadCatalog, objectsFile } from "./lib/catalog.mjs";
-import { coverImage } from "./lib/cover.mjs";
+import { coverImage, isLid } from "./lib/cover.mjs";
 import { pageName as nn, readJSON, readJSONDir, writeJSON } from "./lib/files.mjs";
 import { numberPages } from "./lib/import/numbering.mjs";
 import { present, recordSessions } from "./lib/import/sessions.mjs";
@@ -174,21 +174,35 @@ if (mode === "add" && list.length && !named && startPage == null) {
 }
 await read(toRead);
 
-// A scan of the closed notebook is the outside front cover: Claude reads one
-// half as the cover and the other (the scanner's lid) as blank. Neither is
-// a page. There's one cover, scanned first; a later page that reads as a
-// cover is the title page (its volume label looks like the cover's), so
-// it's kept rather than lost.
+// A scan of the closed notebook is the outside front cover: one half is the
+// cover, the other the scanner's lid. Neither is a page. It's the spread
+// with the lid in it (isLid in scripts/lib/cover.mjs), or else the first
+// that Claude reads as the cover. There's one cover; another page that
+// reads as one is the title page (its volume label looks like the cover's),
+// so it's kept rather than lost.
 let coverScan = null;
 const coverAt = toRead.filter((u) => readings.get(u).kind === "front_cover");
-if (coverAt.length) {
-  const spread = coverAt[0] >> 1;
+let lidAt = null;
+for (const u of toRead) {
+  if (await isLid(uploaded[u])) {
+    lidAt = u;
+    break;
+  }
+}
+if (lidAt != null || coverAt.length) {
+  const spread = (lidAt ?? coverAt[0]) >> 1;
   coverScan = await coverImage(spreads[spread], scan.rotate ?? 90);
   for (const u of coverAt.filter((u) => u >> 1 !== spread)) {
     readings.set(u, { ...readings.get(u), kind: "title" });
     notes.push(`- Uploaded page ${nn(u)} also reads as the front cover; scan ${spread + 1} was used as the cover, and this page was kept as the title page. Check it.`);
   }
   toRead = toRead.filter((u) => u >> 1 !== spread);
+}
+
+// Kacy never scans the inside back cover (#16): a plain page Claude calls
+// that is a blank page, such as the one after the last written page.
+for (const u of toRead) {
+  if (readings.get(u).kind === "inside_back_cover") readings.set(u, { ...readings.get(u), kind: "blank" });
 }
 
 // 3. What each page read is, and its page number (scripts/lib/import/numbering.mjs).
