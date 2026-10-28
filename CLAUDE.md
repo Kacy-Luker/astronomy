@@ -48,9 +48,14 @@ change things safely.
   `dist/test-data/` when `TEST_SITE` or `PREVIEW_OF` is set; `pages.yml`
   deploys a `TEST_SITE=1` build to `gh-pages/test/` (the main deploy
   leaves `test/` and `pr-preview/` alone). The banner's
-  `data-test-data` (the default dataset) turns on the real/test switch in
-  `site/lib.js` (`dataset`, `dataFile()`, `?data=`, remembered in
-  localStorage); the live site never has it.
+  `data-test-data` (the default dataset) means both datasets are built
+  (`dataset`, `dataFile()`, `?data=`, remembered in localStorage, in
+  `site/lib.js`). The real/test switch is in the admin bar only (#117,
+  `dataLinks()`): in place where both are built, and on the live site,
+  which has no test data, a link to the same page under `test/`. PR
+  preview comments link to the preview with `?admin=on`; `preview.yml`
+  posts its own comment (marked `<!-- preview-link -->`) since the
+  preview action's is turned off.
 - Keep README.md and CLAUDE.md in step with the code in the same PR. The
   **Docs** workflow also checks code PRs, commits fixes ("Update docs for
   this change") to the branch and comments what changed; pull before

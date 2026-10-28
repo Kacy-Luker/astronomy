@@ -413,7 +413,9 @@ own app, so remove a preview's icon once you're done testing.
 
 Every pull request, including import PRs, is built and published at
 `kacyluker.com/astronomy/pr-preview/pr-<number>/`, with a banner saying
-it's a preview. A comment on the PR links to it and updates on each push.
+it's a preview. A comment on the PR links to it in admin mode
+(`?admin=on`), so it opens with the admin bar and its data switch, and
+updates on each push.
 The preview is removed when the PR is merged or closed. The main deploy
 leaves `gh-pages/pr-preview/` alone.
 
@@ -430,12 +432,16 @@ sites at one map spot (Okie-Tex in two years, Camp Billy Joe and Black
 Mesa, for the Near link). Every merge to `main` deploys it alongside the live
 site, so it's never out of date.
 
-Its banner says **Test site** and has a **Showing real data | test data**
-switch. PR previews have the same switch (real data by default there), so
-any PR can be tried on both. The choice goes in the address
-(`?data=test`), links keep it, and your browser remembers it. The live
-site has no test data and no switch. Favorite stars are hidden while
-showing test data, since favorites only change the real data.
+Its banner says **Test site**. In admin mode the admin bar has a
+**Showing real data | test data** switch, on every site:
+- **Test site and PR previews:** they carry both datasets, so it switches
+  in place. Previews show real data by default.
+- **Live site:** it has only your data, so **test data** opens the same
+  page on the test site.
+
+The choice goes in the address (`?data=test`), links keep it, and your
+browser remembers it. Visitors never see the switch. Favorite stars are
+hidden while showing test data, since favorites only change the real data.
 
 The test data lives in `test-data/` (notebooks, sessions and
 `objects.json`, checked by `npm run validate` like `data/`). Its page
@@ -467,7 +473,7 @@ yours.
   stamp, goes through a new import as a free-text notebook the same way.
 - **Site tests** (`tests/site.spec.mjs`, Playwright in Chromium) against
   the test site's build, at phone and desktop width: every page loads with
-  no errors, failed requests or sideways scroll; the real/test switch;
+  no errors, failed requests or sideways scroll; the admin bar's real/test switch;
   to-dos, N/A and the seeing and transparency words; one object under two
   designations; the Sketches toggle and the back button; the scan view
   being remembered; search and filters; and the map's Near link. Expected
