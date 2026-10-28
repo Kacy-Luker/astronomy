@@ -169,6 +169,12 @@ a { color: var(--accent); }
 /* Below the horizon: the same phase, greyed, with a dashed outline. */
 .moon-glyph.down .moon-dark { fill: transparent; stroke: var(--muted); stroke-dasharray: 2.4 2; }
 .moon-glyph.down .moon-lit { fill: var(--moon-down); }
+.tag.moon.south { position: relative; }
+/* Southern sites: a kangaroo on the icon's corner (the glyph is mirrored). */
+.moon-south {
+  position: absolute; right: -.2rem; bottom: -.25rem;
+  font-size: .7rem; line-height: 1; pointer-events: none;
+}
 .moon-note { margin: .5rem 0 0; font-size: .9rem; color: var(--muted); }
 /* Like the preview banner, in the accent color so the two aren't mixed up. */
 .admin-bar {

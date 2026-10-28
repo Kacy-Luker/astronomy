@@ -229,6 +229,12 @@ test("each observation card has the Moon's phase, and tapping it says how much w
   await other.locator("button.moon").click();
   await expect(other.locator(".moon-note")).toContainText("No time written");
   await expect(other.locator(".moon-note")).not.toContainText("horizon");
+  // South of the equator: mirrored, with a kangaroo on the icon.
+  await expect(button.locator(".moon-south")).toHaveCount(0);
+  await page.goto("session.html?id=2026-10-24-siding-spring");
+  const south = page.locator("article.observation button.moon").first();
+  await expect(south.locator(".moon-south")).toHaveCount(1);
+  await expect(south).toHaveAttribute("aria-label", /seen from the southern hemisphere$/);
   // The object page's observations have it too.
   await page.goto(`object.html?id=${encodeURIComponent("M31")}`);
   await expect(page.locator("article.observation button.moon").first()).toBeVisible();
