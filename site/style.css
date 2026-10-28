@@ -8,6 +8,9 @@
   --tag-bg: #2c211c;
   --todo: #f2c14e;
   --todo-bg: #2e2612;
+  --moon-lit: #e6e4df;
+  --moon-dark: #1c1f27;
+  --moon-down: #5c616d;
   color-scheme: dark;
 }
 
@@ -152,6 +155,31 @@ a { color: var(--accent); }
 .favorite-link + .edit-link { margin-left: .5rem; }
 .session-head .favorite-link:first-of-type { margin-left: auto; }
 .tag.favorite { color: #f2c94c; }
+/* The Moon's phase on an observation card (#127): a tag-sized button that
+   opens a short note under the heading row. */
+.tag.moon {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; padding: .15rem .45rem; cursor: pointer; font: inherit; line-height: 1;
+}
+.tag.moon:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tag.moon[aria-expanded="true"] { border-color: var(--accent); }
+.moon-glyph { width: 1rem; height: 1rem; display: block; }
+.moon-dark { fill: var(--moon-dark); }
+.moon-lit { fill: var(--moon-lit); }
+/* Below the horizon: the same phase, greyed, with a dashed outline. */
+.moon-glyph.down .moon-dark { fill: transparent; stroke: var(--muted); stroke-dasharray: 2.4 2; }
+.moon-glyph.down .moon-lit { fill: var(--moon-down); }
+.tag.moon.south { position: relative; }
+/* Southern sites: a kangaroo on the icon's corner (the glyph is mirrored). */
+.moon-south {
+  position: absolute; right: -.2rem; bottom: -.25rem;
+  width: .85rem; height: .85rem; pointer-events: none;
+}
+/* A boxed note, so it isn't read as part of the object's catalog line. */
+.moon-note {
+  margin: .5rem 0 .75rem; padding: .5rem .75rem; font-size: .9rem; color: var(--text);
+  background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--moon-lit); border-radius: 6px;
+}
 /* Like the preview banner, in the accent color so the two aren't mixed up. */
 .admin-bar {
   padding: .5rem 16px; text-align: center; font-size: .9rem; line-height: 1.8;

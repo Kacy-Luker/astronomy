@@ -274,6 +274,24 @@ panel gets **Favorites only** once some observations are favorites and
 some aren't. By hand: `node scripts/favorite.mjs <session id>
 <observation number> [--off]`.
 
+## Moon phase
+
+Each observation card on a session or object page has a small Moon
+showing its phase when the entry was made: a new Moon is a dark circle,
+and a Moon below the horizon is greyed with a dashed outline. At a
+site south of the equator it's drawn as seen from there (mirrored),
+with a kangaroo on the icon. Tap it for
+a short note: the phase name, how much of the Moon was lit, and whether
+it was above the horizon at the site (only when the session has a
+lat/long and the entry a time). It's worked out when the site is built,
+from the date, time and coordinates, with no outside service. When the
+entry has a UT, that's used, and the note says so. Otherwise the local
+time is used, and since it's written without a time zone, one is
+assumed (the note says so): local solar time at the site, or US Central when there's no
+longitude; times after midnight count as the next morning.
+An entry with no time gets the evening's phase and nothing about the
+horizon.
+
 ## Equipment
 
 The home page's **Equipment** tab lists every telescope (with its type,
