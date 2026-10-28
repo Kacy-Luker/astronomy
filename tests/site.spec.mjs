@@ -97,6 +97,24 @@ test("an object under two designations is one object, with its catalog line and 
   }
 });
 
+test("an object with coordinates links to a photo of its sky; one without has none (#126)", async ({ page }) => {
+  await page.goto("object.html?id=M31");
+  const photo = page.locator(".session-header .facts a.photo-link");
+  await expect(photo).toHaveCount(1);
+  const href = new URL(await photo.getAttribute("href"));
+  expect(href.hostname).toBe("aladin.cds.unistra.fr");
+  expect(href.searchParams.get("target")).toBe("00:42:44.35 +41:16:08.6");
+  expect(href.searchParams.get("fov")).toBe("5");
+  await expect(photo).toHaveAttribute("target", "_blank");
+  await expect(photo).toHaveAttribute("rel", "noopener");
+  await expect(page.locator(".session-header .facts")).toContainText("Photo");
+  // Albireo has no catalog info in the test data, so no RA/Dec.
+  await page.goto("object.html?id=Albireo");
+  await expect(page.locator(".session-header .facts")).toContainText("Observed");
+  await expect(page.locator(".session-header .facts")).not.toContainText("Photo");
+  await expect(page.locator("a.photo-link")).toHaveCount(0);
+});
+
 test("the Sketches tab's catalog toggle is in the address, and back returns to the last tab", async ({ page }) => {
   await page.goto("#sessions");
   await page.getByRole("tab", { name: "Sketches" }).click();
