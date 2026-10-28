@@ -296,7 +296,11 @@ any that don't).
   Messier, NGC, IC, Caldwell, then others, by number). Each row has a
   thumbnail of the favorite or latest sketch and links to the object
   page, which shows one sketch at a time (a toggle picks the session) and
-  every observation, newest first. Both use `site/objects.js` for the grouping; the session
+  every observation, newest first. Its catalog facts end with a Photo
+  link (#126, `photoUrl()` in `site/photo.js`): Aladin Lite in a new tab
+  at the object's RA/Dec, field of view three times its size (0.1°–5°,
+  0.5° when unknown); none without RA/Dec. The address is the `PHOTO`
+  constant, an outside service credited beside the link. Both use `site/objects.js` for the grouping; the session
   and object pages share the entry fields (`site/observation.js`).
 - Sketch images: the build cuts each session's `header_box` (NEW SESSION
   block) and each observation's `box` from their pages, from the cleaned
@@ -358,7 +362,7 @@ any that don't).
   range picks the year. Leaflet comes from npm
   (`leaflet`, exact version) and `scripts/build.mjs` copies it to
   `dist/vendor/leaflet/`; no CDN. The tile URL is the `TILES` constant,
-  the one outside service, credited on the map.
+  the map's one outside service, credited on the map.
 - Favorites (#23): `favorite: true` on an observation, at most one per
   object (validation; objects matched through `data/objects.json`). The
   admin-mode star (`favoriteLink()` in `site/lib.js`, object page; hidden
