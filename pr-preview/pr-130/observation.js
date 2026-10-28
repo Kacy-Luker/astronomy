@@ -121,7 +121,7 @@ export function moonParts(o, s) {
   const parts = [`${m.name}, ${m.illumination}% illuminated.`];
   if (m.up === true) parts.push(`The Moon was up, ${Math.max(0, m.altitude)}° above the horizon.`);
   else if (m.up === false) parts.push("The Moon was below the horizon.");
-  parts.push(m.ut ? "From the UT written." : m.timed ? "From the local time, so approximate." : "No time written, so for the evening.");
+  parts.push(m.ut ? "From the UT written." : m.timed ? "From the local time, with the time zone assumed." : "No time written, so for the evening.");
   note.textContent = parts.join(" ");
   button.setAttribute("aria-controls", note.id);
   button.addEventListener("click", () => {
