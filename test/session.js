@@ -5,7 +5,7 @@ import {
 } from "./lib.js";
 import { objectCard, sessionCard } from "./cards.js";
 import { filterBar } from "./filterbar.js";
-import { field, observationDescription, observationFacts, pageOf, scopeText, sheetField } from "./observation.js";
+import { field, moonParts, observationDescription, observationFacts, pageOf, scopeText, sheetField } from "./observation.js";
 import { activeFilters, keepFilters, matchesAll, searchDocuments } from "./search.js";
 import { isBlank, isNA, todoCount } from "./todos.js";
 
@@ -70,8 +70,9 @@ function renderObservation(o, notebook, s) {
   head.append(h);
   const name = objectName(o);
   if (name) head.append(el("span", "muted", name));
-  head.append(...[editLink(sessionFile(s.id))].filter(Boolean));
-  card.append(head);
+  const moon = moonParts(o, s);
+  head.append(...[moon.button, editLink(sessionFile(s.id))].filter(Boolean));
+  card.append(...[head, moon.note].filter(Boolean));
   const about = catalogText(o.catalog);
   if (about) card.append(el("p", "catalog muted", about));
 
