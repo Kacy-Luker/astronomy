@@ -37,3 +37,27 @@ jobs:
           umbrella-dir: pr-preview
           pages-base-url: kacyluker.com/astronomy
           qr-code: false
+          # Our own comment instead (below), so the link opens in admin mode.
+          comment: false
+      # One comment per PR, kept up to date: the preview's address with
+      # ?admin=on, so it opens with the admin bar and its real/test data
+      # switch (#117); after the PR closes, that the preview is gone.
+      - name: Comment the preview link
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.number }}
+          CLOSED: ${{ github.event.action == 'closed' }}
+        run: |
+          mark="<!-- preview-link -->"
+          url="https://kacyluker.com/astronomy/pr-preview/pr-$PR/?admin=on"
+          if [ "$CLOSED" = true ]; then
+            body="$mark"$'\n'"The preview of this pull request has been removed."
+          else
+            body="$mark"$'\n'"**Preview:** $url"$'\n\n'"Opens in admin mode, with the real/test data switch in the admin bar. It's ready once the [Pages deployment](https://github.com/$GITHUB_REPOSITORY/deployments) finishes."
+          fi
+          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate --jq ".[] | select(.body | startswith(\"$mark\")) | .id" | head -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$body" > /dev/null
+          else
+            gh pr comment "$PR" --body "$body"
+          fi

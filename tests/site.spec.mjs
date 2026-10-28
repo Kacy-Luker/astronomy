@@ -45,7 +45,7 @@ for (const path of PAGES) {
   });
 }
 
-test("the test site shows the test data, and the switch shows the real data", async ({ page }) => {
+test("the test site shows the test data, and the admin bar's switch shows the real data (#117)", async ({ page }) => {
   const count = `${sessions.length} sessions · ${observations.length} observations`;
   const summary = page.locator(".summary").first();
   // Loaded (not the "Loading" text) and showing the real data, not the test data's count.
@@ -55,7 +55,11 @@ test("the test site shows the test data, and the switch shows the real data", as
   };
   await page.goto("");
   await expect(summary).toContainText(count);
-  await page.getByRole("link", { name: "real data" }).click();
+  // Only in admin mode, and never in the banner.
+  await expect(page.getByRole("link", { name: "real data" })).toHaveCount(0);
+  await page.goto("?admin=on");
+  await expect(page.locator(".preview-banner").getByRole("link", { name: "real data" })).toHaveCount(0);
+  await page.locator(".admin-bar").getByRole("link", { name: "real data" }).click();
   await expect(page).toHaveURL(/data=real/);
   await real();
   // Remembered on the next visit.
