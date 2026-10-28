@@ -47,6 +47,10 @@ Rules:
 - Transcribe what is written. Do not add facts, cross-catalog IDs, or names that
   aren't on the page. Leave a field null when it's blank.
 - Skip an entry that is crossed out. Leave out individual struck-through words.
+- The writer prints in capitals. Give names (program, site, observers, AKA,
+  scope) in normal capitalization, e.g. MESSIER is "Messier", OKIE-TEX 2026
+  is "Okie-Tex 2026", KACY LUKER is "Kacy Luker", and descriptions in
+  sentence case. Catalog designations keep theirs (M31, NGC 7000).
 - Join description lines into one string; use "; " where the writer used ";".
 - Where the writer wrote N/A, use the string "N/A": the field doesn't apply.
   null means the field is blank, which the writer will come back to; keep
