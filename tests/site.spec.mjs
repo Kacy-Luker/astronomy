@@ -177,3 +177,14 @@ test("admin mode can be turned back on from the footer, only where it's been use
   await footerLink.click();
   await expect(page.locator(".admin-bar")).toBeVisible();
 });
+
+test("Sketches thumbnails are always inverted, cover thumbnails never (#122)", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("page-view", "original"));
+  await page.goto("#sketches");
+  const thumb = page.locator(".sketch-thumb img").first();
+  await expect(thumb).toHaveCSS("filter", "invert(1) hue-rotate(180deg)");
+  await expect(thumb).toHaveAttribute("src", /\.thumb\.clean\.jpg$/);
+  await page.evaluate(() => localStorage.setItem("page-view", "inverted"));
+  await page.goto("#notebooks");
+  await expect(page.locator(".cover-thumb").first()).toHaveCSS("filter", "none");
+});
