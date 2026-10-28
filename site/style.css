@@ -10,7 +10,6 @@
   --todo-bg: #2e2612;
   --moon-lit: #e6e4df;
   --moon-dark: #1c1f27;
-  --moon-edge: #6b7180;
   --moon-down: #5c616d;
   color-scheme: dark;
 }
@@ -165,7 +164,7 @@ a { color: var(--accent); }
 .tag.moon:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tag.moon[aria-expanded="true"] { border-color: var(--accent); }
 .moon-glyph { width: 1rem; height: 1rem; display: block; }
-.moon-dark { fill: var(--moon-dark); stroke: var(--moon-edge); stroke-width: 1.2; }
+.moon-dark { fill: var(--moon-dark); }
 .moon-lit { fill: var(--moon-lit); }
 /* Below the horizon: the same phase, greyed, with a dashed outline. */
 .moon-glyph.down .moon-dark { fill: transparent; stroke: var(--muted); stroke-dasharray: 2.4 2; }

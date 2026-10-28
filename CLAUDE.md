@@ -368,7 +368,7 @@ any that don't).
   before noon as the next morning, a written UT wins; no time means 22:00
   and no `up`. `moonParts()` in `site/observation.js` gives the card's
   glyph button (mirrored south of the equator; a New Moon has no sliver,
-  just the outlined dark disc; `up: false` adds `.down`, greyed with a
+  just the dark disc; `up: false` adds `.down`, greyed with a
   dashed outline) and the note it toggles,
   on the session and object pages.
 - Favorites (#23): `favorite: true` on an observation, at most one per
