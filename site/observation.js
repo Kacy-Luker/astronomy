@@ -55,3 +55,78 @@ export function observationDescription(o) {
   if (isNA(o.description)) return el("p", "description muted", "Description: N/A");
   return el("p", "description", o.description);
 }
+
+// The Moon's phase as a small glyph (#127): the lit part of the disc, lit
+// on the right while waxing as seen from the north, mirrored south of the
+// equator. phase runs 0 to 1 (0 new, 0.5 full); lit is the lit fraction.
+// A new Moon is the dark disc alone; down (the Moon below the horizon)
+// greys the phase and draws the disc as a dashed outline.
+const SVG = "http://www.w3.org/2000/svg";
+export function moonGlyph(phase, lit, south = false, down = false) {
+  const svg = document.createElementNS(SVG, "svg");
+  svg.setAttribute("viewBox", "-10 -10 20 20");
+  svg.setAttribute("class", down ? "moon-glyph down" : "moon-glyph");
+  svg.setAttribute("aria-hidden", "true");
+  const disc = document.createElementNS(SVG, "circle");
+  disc.setAttribute("r", "9");
+  disc.setAttribute("class", "moon-dark");
+  svg.append(disc);
+  if (lit > 0.005) {
+    // The limb on the lit side, then the terminator (half an ellipse) back.
+    const waxing = phase < 0.5;
+    const rx = (9 * Math.abs(1 - 2 * lit)).toFixed(2);
+    const term = waxing === lit < 0.5 ? 0 : 1;
+    const path = document.createElementNS(SVG, "path");
+    path.setAttribute("d", `M0 -9A9 9 0 0 ${waxing ? 1 : 0} 0 9A${rx} 9 0 0 ${term} 0 -9Z`);
+    path.setAttribute("class", "moon-lit");
+    if (south) path.setAttribute("transform", "scale(-1 1)");
+    svg.append(path);
+  }
+  return svg;
+}
+
+// The Moon at an observation (o.moon, worked out by the build): a button
+// with the glyph for the card's heading row, and the note it opens with
+// the phase name, how much was lit and, with the site's coordinates and a
+// time, whether the Moon was up. Nothing when the build had no date.
+let moonNotes = 0;
+export function moonParts(o, s) {
+  const m = o.moon;
+  if (!m) return { button: null, note: null };
+  const where = [m.up === false && "below the horizon", s.site?.lat < 0 && "seen from the southern hemisphere"].filter(Boolean);
+  const summary = [`${m.name}, ${m.illumination}% lit`, ...where].join(", ");
+  const button = el("button", "tag moon");
+  button.type = "button";
+  button.title = `Moon: ${summary}`;
+  button.setAttribute("aria-label", `Moon: ${summary}`);
+  button.setAttribute("aria-expanded", "false");
+  // A New Moon is drawn dark, without the sliver of its last few percent.
+  const lit = m.name === "New Moon" ? 0 : m.illumination / 100;
+  // South of the equator the Moon is drawn as seen from there, mirrored,
+  // with a kangaroo on the icon so it isn't taken for the other phase.
+  const south = s.site?.lat < 0;
+  button.append(moonGlyph(m.phase, lit, south, m.up === false));
+  if (south) {
+    button.classList.add("south");
+    // A picture, not the emoji, so it's the same kangaroo on every phone
+    // (Noto Color Emoji's, SIL Open Font License).
+    const roo = el("img", "moon-south");
+    roo.src = "icons/kangaroo.png";
+    roo.alt = "";
+    button.append(roo);
+  }
+  const note = el("p", "moon-note");
+  note.id = `moon-note-${++moonNotes}`;
+  note.hidden = true;
+  const parts = [`${m.name}, ${m.illumination}% illuminated.`];
+  if (m.up === true) parts.push(`The Moon was up, ${Math.max(0, m.altitude)}° above the horizon.`);
+  else if (m.up === false) parts.push("The Moon was below the horizon.");
+  parts.push(m.ut ? "From the UT written." : m.timed ? "From the local time, with the time zone assumed." : "No time written, so for the evening.");
+  note.textContent = parts.join(" ");
+  button.setAttribute("aria-controls", note.id);
+  button.addEventListener("click", () => {
+    note.hidden = !note.hidden;
+    button.setAttribute("aria-expanded", String(!note.hidden));
+  });
+  return { button, note };
+}
