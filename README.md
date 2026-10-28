@@ -325,12 +325,6 @@ as M31), and your own mappings apply (M102 is NGC 5866). With a search or
 filter on, it counts only what matches and says "Observed in the current
 selection".
 
-**Follow new sessions** at the top links to `feed.xml`, a feed of the 20
-newest sessions (date, site and objects, linking to each session page)
-that news readers can follow. The build writes it from the real data, and
-the live site's pages announce it so feed readers find it on their own;
-previews and the test site don't.
-
 ## Session files
 
 **Admin mode.** Open any page of the site with `?admin=on` at the end of
