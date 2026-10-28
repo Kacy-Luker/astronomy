@@ -42,14 +42,15 @@ at a path.
   - boxes around any phone number, email or street address
   - the NEW SESSION block (in free text, the date heading and the lines
     about the night) and each object entry, with their boxes
-  - anything it was unsure of
+  - anything it was unsure of, and each misspelling it corrected
 - `checkRedaction(image)`: `image` is the same page after blurring. It
   returns `{ legible, what }`, saying whether any personal detail can
   still be read.
 - `name` (optional), for messages.
 
 **It must:**
-- Transcribe what's written and add nothing.
+- Transcribe what's written and add nothing, correcting only plain
+  misspellings.
 - Keep "N/A" (the field doesn't apply) apart from a blank field (`null`,
   a to-do).
 - Skip crossed-out entries.

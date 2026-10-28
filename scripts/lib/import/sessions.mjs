@@ -10,8 +10,8 @@
 // notebook: the notebook's id; pages: the pages placed from the upload, in
 // notebook order, as { name, number, reading } (name for the notes, e.g.
 // "Uploaded page 03"); mode: the import's mode. Returns the ids of the
-// sessions written (touched) and deleted (removed), and notes for the PR
-// summary.
+// sessions written (touched) and deleted (removed), and notes and the
+// reader's spelling corrections for the PR summary.
 const slug = (text) => text.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 export const present = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v != null));
 // A reading's box as stored: [x, y, width, height], clamped to the page.
@@ -36,6 +36,7 @@ const headerFields = (h) => {
 
 export function recordSessions({ sessions, notebook, pages, mode }) {
   const notes = [];
+  const corrections = []; // misspellings the reader corrected, for the summary
   const mine = () => [...sessions.values()].filter((s) => s.notebook === notebook);
   const touched = new Set();
   const removed = new Set();
@@ -133,6 +134,7 @@ export function recordSessions({ sessions, notebook, pages, mode }) {
     }
     addEntries(current, added.filter((e) => !above.includes(e)), number, Boolean(r.header));
     if (added.length) for (const note of r.uncertain) notes.push(`- ${current.id}, page ${number ?? "?"}: ${note}`);
+    if (added.length) for (const fix of r.corrections ?? []) corrections.push(`- ${current.id}, page ${number ?? "?"}: ${fix}`);
   }
   for (const s of mine()) {
     if (touched.has(s.id) && !s.observations.length) {
@@ -141,5 +143,5 @@ export function recordSessions({ sessions, notebook, pages, mode }) {
       removed.add(s.id);
     }
   }
-  return { touched, removed, notes };
+  return { touched, removed, notes, corrections };
 }

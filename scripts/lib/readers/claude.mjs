@@ -40,11 +40,20 @@ ${CATEGORIES.map((c) => `- ${c.kind}: ${c.describe}`).join("\n")}
 - blank: nothing written or printed on it, including the scanner's lid beside
   the closed notebook's front cover.
 Odd pages carry a small printed page number in the top outer corner.
+A page with a printed page number, or a plain page facing a session page,
+is blank when nothing is written on it yet; it is never a cover.
 
 Rules:
 - Transcribe what is written. Do not add facts, cross-catalog IDs, or names that
   aren't on the page. Leave a field null when it's blank.
+- Correct plain misspellings (eyepeice is "eyepiece", Dumbell Nebula is
+  "Dumbbell Nebula"), but keep the writer's own wording and abbreviations.
+  List each one in "corrections" with the field and both spellings.
 - Skip an entry that is crossed out. Leave out individual struck-through words.
+- The writer prints in capitals. Give names (program, site, observers, AKA,
+  scope) in normal capitalization, e.g. MESSIER is "Messier", OKIE-TEX 2026
+  is "Okie-Tex 2026", KACY LUKER is "Kacy Luker", and descriptions in
+  sentence case. Catalog designations keep theirs (M31, NGC 7000).
 - Join description lines into one string; use "; " where the writer used ";".
 - Where the writer wrote N/A, use the string "N/A": the field doesn't apply.
   null means the field is blank, which the writer will come back to; keep
@@ -57,8 +66,8 @@ Rules:
   the ";" (e.g. "13mm Ethos; 92x" is 92). With nothing after the ";" the
   magnification is blank (null); the writer fills it in later.
 - will_change is true for a table of contents or index with empty rows left,
-  and a session page with unused space below its last entry where another
-  entry could still go. Otherwise false.
+  a session page with unused space below its last entry where another
+  entry could still go, and a blank session page. Otherwise false.
 - personal_info boxes must fully cover each item with a little margin.
 - The header and entry boxes are used to cut out each sketch: include the
   whole block with a little margin, and never cut through writing.

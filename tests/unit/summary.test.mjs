@@ -21,7 +21,9 @@ test("an add lists what was recorded, each session with its to-dos, and the note
     scanName: "2026-10-10.pdf", uploadedCount: 4, recorded: ["page 3", "page 4"],
     sessions: new Map([[session.id, session]]), touched: new Set([session.id]), removed: new Set(),
     notes: ["- Skipped 2 uploaded page(s) that were already recorded."],
+    corrections: ["- 2026-10-10-okie-tex-2026, page 3: M31 description: eyepeice → eyepiece"],
   });
+  assert.match(text, /### Spelling corrected\n\n- 2026-10-10-okie-tex-2026, page 3: M31 description: eyepeice → eyepiece/);
   assert.match(text, /^Added to \*\*Test Notebook 2\*\* from `2026-10-10.pdf`: 2 of 4 uploaded pages recorded \(page 3, page 4\)\.$/m);
   assert.match(text, /^Status: \*\*in progress\*\*\.$/m);
   assert.match(text, /^- `2026-10-10-okie-tex-2026`: M31 \(pages 3\)$/m);

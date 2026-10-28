@@ -26,7 +26,8 @@ test("a reader that answers in the format is used as is", async () => {
     export const checkRedaction = async () => ({ legible: false, what: [] });
   `));
   assert.equal(reader.name, "fake");
-  assert.deepEqual(await reader.readPage(Buffer.from("")), blank);
+  // A reading without spelling corrections gets an empty list (#16).
+  assert.deepEqual(await reader.readPage(Buffer.from("")), { ...blank, corrections: [] });
   assert.deepEqual(await reader.checkRedaction(Buffer.from("")), { legible: false, what: [] });
 });
 

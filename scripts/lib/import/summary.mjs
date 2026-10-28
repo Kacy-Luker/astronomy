@@ -8,14 +8,15 @@
 // recorded from it, in notebook order, one per page; cover: whether the
 // closed-notebook scan became the front cover; sessions, touched, removed:
 // from scripts/lib/import/sessions.mjs; frontCover: the notebook's
-// front_cover; notes: lines for "Check these".
+// front_cover; notes: lines for "Check these"; corrections: the misspellings
+// the reader corrected (#16).
 import { CATEGORIES, category } from "../categories.mjs";
 import { pageName as nn } from "../files.mjs";
 import { sessionTodos } from "../../../site/todos.js";
 
 export const nameOf = (page) => (page.number != null ? `page ${page.number}` : (page.label ?? category(page.kind)?.label ?? page.kind).toLowerCase());
 
-export function summarize({ mode, notebook, scanName = null, uploadedCount = 0, recorded = [], cover = false, sessions, touched, removed, frontCover, notes = [] }) {
+export function summarize({ mode, notebook, scanName = null, uploadedCount = 0, recorded = [], cover = false, sessions, touched, removed, frontCover, notes = [], corrections = [] }) {
   const what = {
     new: "Created", add: "Added to", replace: "Replaced pages in", complete: "Completed",
   }[mode];
@@ -71,6 +72,7 @@ export function summarize({ mode, notebook, scanName = null, uploadedCount = 0, 
     const missing = CATEGORIES.filter((c) => !c.rescan && !notebook.pages.some((p) => p.kind === c.kind));
     if (missing.length) lines.push("", "### Not scanned", "", ...missing.map((c) => `- ${c.label}`));
   }
+  if (corrections.length) lines.push("", "### Spelling corrected", "", ...corrections);
   if (notes.length) lines.push("", "### Check these", "", ...notes);
   return lines.join("\n") + "\n";
 }

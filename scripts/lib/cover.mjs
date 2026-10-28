@@ -8,6 +8,19 @@ import { image, size } from "./image.mjs";
 
 const W = 200; // measure at this width
 const DIFF = 40; // grey levels from the lid that count as cover
+const PAPER = 180; // grey levels paper (and a tan board) is lighter than
+
+// Whether half a scanned spread is the scanner's lid rather than a page: the
+// lid is grey, and pages, the outside cover included, are mostly paper. On
+// Astronomy 001's scans the lid is 9% paper-light and pages 96-99% (#16),
+// so the closed-notebook scan is found without asking Claude, which mixes
+// up the cover's volume label and the title page.
+export async function isLid(page) {
+  const { data } = await image(page).grey().resize({ width: 100 }).pixels();
+  let light = 0;
+  for (const v of data) light += v > PAPER;
+  return light / data.length < 0.5;
+}
 
 export async function coverImage(file, rotate = 90) {
   const scan = await image(file).rotate().buffer();

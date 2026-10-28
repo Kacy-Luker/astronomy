@@ -158,10 +158,12 @@ published pages so pages already recorded aren't read again (a scan with
 a chosen category is always read in full). Entries are grouped into
 sessions (a page without a NEW SESSION header continues the last one); on
 a page that already has entries, only entries beyond those are added, so
-nothing is duplicated and hand corrections survive. Phone numbers, emails and
-addresses are blurred, and each blurred page is checked again; if anything
-is still readable the whole page is blurred. Expect roughly 5–10 cents per
-page read.
+nothing is duplicated and hand corrections survive. Claude fixes plain
+misspellings and writes names in normal capitals rather than as printed;
+the pull request lists each spelling it corrected. Phone numbers, emails
+and addresses are blurred, and each blurred page is checked again; if
+anything is still readable the whole page is blurred. Expect roughly
+5–10 cents per page read.
 
 Locally, the same thing runs as:
 
