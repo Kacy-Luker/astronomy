@@ -278,14 +278,15 @@ some aren't. By hand: `node scripts/favorite.mjs <session id>
 
 Each observation card on a session or object page has a small Moon
 showing its phase when the entry was made: a new Moon is a dark circle,
-and a Moon below the horizon is greyed with a dashed outline. Tap it for a short note: the
-phase name, how much of the Moon was lit, and whether it was above the
-horizon at the site (only when the session has a lat/long and the entry a
-time). It's worked out when the site is built, from the date, time and
-coordinates, with no outside service. Times are written without a time
-zone, so they're taken as approximate: local solar time at the site, or
-US Central when there's no longitude; a UT written on the sheet is used
-when there is one, and times after midnight count as the next morning.
+and a Moon below the horizon is greyed with a dashed outline. Tap it for
+a short note: the phase name, how much of the Moon was lit, and whether
+it was above the horizon at the site (only when the session has a
+lat/long and the entry a time). It's worked out when the site is built,
+from the date, time and coordinates, with no outside service. Times are
+written without a time zone, so they're taken as approximate: local
+solar time at the site, or US Central when there's no longitude; a UT
+written on the sheet is used when there is one, and times after midnight
+count as the next morning.
 An entry with no time gets the evening's phase and nothing about the
 horizon.
 
