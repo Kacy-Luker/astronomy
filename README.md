@@ -306,6 +306,22 @@ follow the search and filters. The map is
 site) on [OpenStreetMap](https://www.openstreetmap.org/) tiles, credited
 on the map.
 
+## Activity
+
+The home page's **Activity** tab sums up the log: how many sessions,
+observations and objects (M31 and NGC 224 count as one), observations per
+month (with the quiet months in between), objects by type, how seeing and
+transparency were spread (with the Clear Sky Chart words), and the most
+used telescopes and eyepieces. The charts are simple bars with each number
+written beside them. Like the other tabs, it follows the search and
+filters, so `?site=Okie-Tex#activity` shows just Okie-Tex.
+
+**Follow new sessions** at the top links to `feed.xml`, a feed of the 20
+newest sessions (date, site and objects, linking to each session page)
+that news readers can follow. The build writes it from the real data, and
+the live site's pages announce it so feed readers find it on their own;
+previews and the test site don't.
+
 ## Session files
 
 **Admin mode.** Open any page of the site with `?admin=on` at the end of
