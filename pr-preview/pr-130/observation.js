@@ -59,8 +59,8 @@ export function observationDescription(o) {
 // The Moon's phase as a small glyph (#127): the lit part of the disc, lit
 // on the right while waxing as seen from the north, mirrored south of the
 // equator. phase runs 0 to 1 (0 new, 0.5 full); lit is the lit fraction.
-// The disc is outlined, so a new Moon is a whole dark circle; down (the
-// Moon below the horizon) greys the phase and dashes the outline.
+// A new Moon is the dark disc alone; down (the Moon below the horizon)
+// greys the phase and draws the disc as a dashed outline.
 const SVG = "http://www.w3.org/2000/svg";
 export function moonGlyph(phase, lit, south = false, down = false) {
   const svg = document.createElementNS(SVG, "svg");
