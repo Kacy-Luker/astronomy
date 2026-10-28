@@ -48,6 +48,7 @@ Rules:
   aren't on the page. Leave a field null when it's blank.
 - Correct plain misspellings (eyepeice is "eyepiece", Dumbell Nebula is
   "Dumbbell Nebula"), but keep the writer's own wording and abbreviations.
+  List each one in "corrections" with the field and both spellings.
 - Skip an entry that is crossed out. Leave out individual struck-through words.
 - The writer prints in capitals. Give names (program, site, observers, AKA,
   scope) in normal capitalization, e.g. MESSIER is "Messier", OKIE-TEX 2026

@@ -13,8 +13,8 @@ const entry = (catalog_id, y) => ({
   catalog_id, aka: null, local_time: "21:00", ut: null, seeing: 2, transparency: 4,
   eyepiece: "25mm", magnification: 48, filter: "N/A", description: "Seen", box: box(y),
 });
-const page = (number, { head = null, entries = [], uncertain = [] } = {}) =>
-  ({ name: `page ${number}`, number, reading: { kind: "session", header: head, entries, uncertain } });
+const page = (number, { head = null, entries = [], uncertain = [], corrections = [] } = {}) =>
+  ({ name: `page ${number}`, number, reading: { kind: "session", header: head, entries, uncertain, corrections } });
 const run = (pages, { sessions = new Map(), mode = "new" } = {}) =>
   ({ sessions, ...recordSessions({ sessions, notebook: "nb", pages, mode }) });
 const summary = (sessions) => Object.fromEntries([...sessions.values()].map((s) =>
@@ -86,4 +86,9 @@ test("entries with no session to belong to are skipped and reported, and uncerta
   assert.match(notes.join("\n"), /page 4 has entries but no session/);
   const { notes: more } = run([page(1, { head: header("2026-10-10", "Okie-Tex 2026"), entries: [entry("M31", 0.3)], uncertain: ["M31: time may be 21:10"] })]);
   assert.deepEqual(more, ["- 2026-10-10-okie-tex-2026, page 1: M31: time may be 21:10"]);
+});
+
+test("the reader's spelling corrections are listed with their session and page (#16)", () => {
+  const { corrections } = run([page(1, { head: header("2026-10-10", "Okie-Tex 2026"), entries: [entry("M27", 0.3)], corrections: ["M27 AKA: Dumbell → Dumbbell"] })]);
+  assert.deepEqual(corrections, ["- 2026-10-10-okie-tex-2026, page 1: M27 AKA: Dumbell → Dumbbell"]);
 });

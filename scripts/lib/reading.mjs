@@ -69,6 +69,8 @@ export const PageReading = z.object({
   })).describe("Object entries in page order, skipping crossed-out entries"),
   uncertain: z.array(z.string())
     .describe("Readings you are unsure of, e.g. 'M110 description: last word may be dim'"),
+  corrections: z.array(z.string()).default([])
+    .describe("Each misspelling you corrected, e.g. 'M51 description: eyepeice → eyepiece'"),
 });
 
 export const RedactionCheck = z.object({ legible: z.boolean(), what: z.array(z.string()) });

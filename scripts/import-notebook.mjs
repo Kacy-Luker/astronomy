@@ -322,7 +322,7 @@ await inBatches(placed, async (entry) => {
 
 // 5. Sessions from the session pages placed (scripts/lib/import/sessions.mjs).
 const sessions = new Map((await readJSONDir(join("data", "sessions"))).map(({ data: s }) => [s.id, s]));
-const { touched, removed, notes: sessionNotes } = recordSessions({
+const { touched, removed, notes: sessionNotes, corrections } = recordSessions({
   sessions,
   notebook: id,
   pages: [...placed].sort((a, b) => list.indexOf(a) - list.indexOf(b))
@@ -439,6 +439,7 @@ const summary = summarize({
   removed,
   frontCover,
   notes,
+  corrections,
 });
 if (opts.summary) await writeFile(opts.summary, summary);
 console.log(summary);
