@@ -52,6 +52,20 @@ test("the reader is told what the notebook is written on (#109)", async () => {
   assert.doesNotMatch(system("free"), /NEW SESSION block:\nPROGRAM/);
 });
 
+test("the tokens a reader used are passed on, when it counts them (#16)", async () => {
+  const counting = await loadReader(fakeReader(`
+    export const readPage = async () => (${JSON.stringify(blank)});
+    export const checkRedaction = async () => ({ legible: false, what: [] });
+    export const usage = () => ({ input: 10, output: 2 });
+  `));
+  assert.deepEqual(counting.usage(), { input: 10, output: 2 });
+  const silent = await loadReader(fakeReader(`
+    export const readPage = async () => (${JSON.stringify(blank)});
+    export const checkRedaction = async () => ({ legible: false, what: [] });
+  `));
+  assert.equal(silent.usage(), null);
+});
+
 test("a reader missing a function isn't loaded", async () => {
   await assert.rejects(loadReader(fakeReader("export const readPage = async () => null;")), /has no checkRedaction\(\)/);
 });

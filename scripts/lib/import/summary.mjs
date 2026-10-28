@@ -9,14 +9,17 @@
 // closed-notebook scan became the front cover; sessions, touched, removed:
 // from scripts/lib/import/sessions.mjs; frontCover: the notebook's
 // front_cover; notes: lines for "Check these"; corrections: the misspellings
-// the reader corrected (#16).
+// the reader corrected (#16); usage: the tokens the reader used, when known.
 import { CATEGORIES, category } from "../categories.mjs";
 import { pageName as nn } from "../files.mjs";
 import { sessionTodos } from "../../../site/todos.js";
 
 export const nameOf = (page) => (page.number != null ? `page ${page.number}` : (page.label ?? category(page.kind)?.label ?? page.kind).toLowerCase());
 
-export function summarize({ mode, notebook, scanName = null, uploadedCount = 0, recorded = [], cover = false, sessions, touched, removed, frontCover, notes = [], corrections = [] }) {
+// Anthropic's prices per token, for what an import cost.
+export const PRICES = "https://docs.claude.com/en/docs/about-claude/pricing";
+
+export function summarize({ mode, notebook, scanName = null, uploadedCount = 0, recorded = [], cover = false, sessions, touched, removed, frontCover, notes = [], corrections = [], usage = null }) {
   const what = {
     new: "Created", add: "Added to", replace: "Replaced pages in", complete: "Completed",
   }[mode];
@@ -27,6 +30,7 @@ export function summarize({ mode, notebook, scanName = null, uploadedCount = 0, 
       : "."),
     ...(cover ? ["The scan of the closed notebook is the front cover; check it's upright and trimmed in the preview."] : []),
     `Status: **${notebook.status === "completed" ? "completed" : "in progress"}**.`,
+    ...(usage ? [`Claude used ${usage.input.toLocaleString("en-US")} input and ${usage.output.toLocaleString("en-US")} output tokens ([prices per token](${PRICES})).`] : []),
     "",
   ];
   if (touched.size || removed.size) {

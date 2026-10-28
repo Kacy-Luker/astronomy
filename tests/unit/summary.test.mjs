@@ -22,7 +22,9 @@ test("an add lists what was recorded, each session with its to-dos, and the note
     sessions: new Map([[session.id, session]]), touched: new Set([session.id]), removed: new Set(),
     notes: ["- Skipped 2 uploaded page(s) that were already recorded."],
     corrections: ["- 2026-10-10-okie-tex-2026, page 3: M31 description: eyepeice → eyepiece"],
+    usage: { input: 123456, output: 7890 },
   });
+  assert.match(text, /^Claude used 123,456 input and 7,890 output tokens \(\[prices per token\]\(https:\/\/docs\.claude\.com\/en\/docs\/about-claude\/pricing\)\)\.$/m);
   assert.match(text, /### Spelling corrected\n\n- 2026-10-10-okie-tex-2026, page 3: M31 description: eyepeice → eyepiece/);
   assert.match(text, /^Added to \*\*Test Notebook 2\*\* from `2026-10-10.pdf`: 2 of 4 uploaded pages recorded \(page 3, page 4\)\.$/m);
   assert.match(text, /^Status: \*\*in progress\*\*\.$/m);

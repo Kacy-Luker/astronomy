@@ -162,8 +162,10 @@ nothing is duplicated and hand corrections survive. Claude fixes plain
 misspellings and writes names in normal capitals rather than as printed;
 the pull request lists each spelling it corrected. Phone numbers, emails
 and addresses are blurred, and each blurred page is checked again; if
-anything is still readable the whole page is blurred. Expect roughly
-5–10 cents per page read.
+anything is still readable the whole page is blurred. Each import's pull
+request says how many tokens Claude used; the cost is those times
+[Anthropic's prices per token](https://docs.claude.com/en/docs/about-claude/pricing)
+for the model in `scripts/lib/readers/claude.mjs`.
 
 Locally, the same thing runs as:
 

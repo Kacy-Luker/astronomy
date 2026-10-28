@@ -76,6 +76,11 @@ Rules:
 // Made on first use, so loading the reader needs no API key.
 let client;
 
+// Tokens used by this run's requests, retries included, for the PR summary
+// (#16): cost is these times the prices per token.
+const used = { input: 0, output: 0 };
+export const usage = () => ({ ...used });
+
 // The first {...} block in a reply, parsed; null when there isn't valid JSON.
 export function extractJSON(text) {
   const start = text.indexOf("{"), end = text.lastIndexOf("}");
@@ -110,6 +115,9 @@ async function ask(image, prompt, schema, maxTokens, form) {
       system: system(form),
       messages,
     });
+    const u = response.usage ?? {};
+    used.input += (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0);
+    used.output += u.output_tokens ?? 0;
     if (response.stop_reason === "refusal") {
       throw new Error(`refused (${response.stop_details?.category ?? "no category"})`);
     }
