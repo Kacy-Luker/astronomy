@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>How to add a session · Observing Log</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="icons/icon-16.png" sizes="16x16" type="image/png">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+</head>
+<body>
+  <div class="preview-banner" data-branch="127-moon-phase" data-test-data="real">Preview of PR #130: Moon phase icon on each observation card. <a href="https://github.com/Kacy-Luker/astronomy/pull/130">View the pull request</a></div>
+  <header class="site-header">
+    <h1><a href="./">Observing Log</a></h1>
+    <p class="tagline"><a href="./">← Home</a></p>
+  </header>
+
+  <!-- Kacy's phone workflow; linked only in admin mode (site/lib.js). Details
+       are in the README, which this page links to. -->
+  <main class="help">
+    <h2 class="session-title">How to add a session</h2>
+    <ol>
+      <li><strong>Scan</strong> the spreads you wrote on, including the one the session started on, into one PDF (a JPEG works too).</li>
+      <li><strong>Upload</strong> it to <a href="https://github.com/Kacy-Luker/astronomy-scans">astronomy-scans</a> (<em>Add file → Upload files</em>) in the notebook's folder, named for the date: <code>astronomy-001/2026-10-20.pdf</code>. Add a 24-hour time when you upload more than once a day: <code>2026-10-20-1350.pdf</code>.</li>
+      <li><strong>Import:</strong> open <a href="https://github.com/Kacy-Luker/astronomy/actions/workflows/import-notebook.yml">Actions → Import</a>, tap <em>Run workflow</em>, pick the notebook, and run it. Leave the scan empty to use the newest file in the notebook's folder.</li>
+      <li><strong>Check</strong> the pull request it opens: compare the preview link with your pages, and fix any misread field in the pull request itself (<em>Files changed</em> → the session's file → <em>⋯ → Edit file</em>), so the fix goes in with the import.</li>
+      <li><strong>Merge</strong> it. Merge each import before running the next.</li>
+    </ol>
+
+    <h3>Other imports</h3>
+    <ul>
+      <li><strong>New notebook:</strong> upload into a new folder (e.g. <code>astronomy-002/</code>), starting with the closed notebook, then pick <em>new-notebook</em> and its <em>notebook type</em>. The folder name becomes its id.</li>
+      <li><strong>Re-read pages:</strong> scan those spreads, pick the notebook and tick <em>reread</em>. What was recorded for them is replaced.</li>
+      <li><strong>Front cover:</strong> scan the closed notebook on its own and pick <em>Front cover</em> as the category.</li>
+      <li><strong>Page numbers missed:</strong> if the scanner cut off the printed numbers, put the first session page's number in <em>start page</em>.</li>
+      <li><strong>Wrong category:</strong> pick the right one in <em>category</em> and every non-blank page in the scan goes there.</li>
+    </ul>
+
+    <h3>Finishing a notebook</h3>
+    <ol>
+      <li>Run <a href="https://github.com/Kacy-Luker/astronomy/actions/workflows/complete-notebook.yml">Actions → Complete notebook</a> with no scan. Its pull request lists what to rescan: the front cover, table of contents and index, plus every blank page to check.</li>
+      <li>Scan those spreads in any order into one file (the closed notebook can go in it too), upload it, and run Complete notebook again with that file.</li>
+    </ol>
+
+    <h3>Removing a notebook</h3>
+    <p><a href="https://github.com/Kacy-Luker/astronomy/actions/workflows/remove-notebook.yml">Actions → Remove notebook</a>: type the notebook's id in <em>confirm</em>. Its pull request deletes the notebook, its pages and its sessions from the site; the scans in astronomy-scans are kept.</p>
+
+    <h3>Fixing things later</h3>
+    <ul>
+      <li>Once merged, turn on <em>Edit links</em> in the admin bar at the top of any page: they open sessions, observations, notebooks and your mappings (from object pages) in GitHub's editor. Write <code>N/A</code> where a field doesn't apply; a blank field is a to-do.</li>
+      <li>In the installed app, <em>Leave admin mode</em> turns this bar off; the <em>Admin mode</em> link at the bottom of any page turns it back on.</li>
+      <li>Everything else is in the <a href="https://github.com/Kacy-Luker/astronomy#readme">README</a>.</li>
+    </ul>
+  </main>
+
+  <script type="module" src="lib.js"></script>
+  <footer class="site-footer muted">
+    Object data from <a href="https://github.com/mattiaverga/OpenNGC">OpenNGC</a> (CC BY-SA 4.0).
+    <a href="https://github.com/Kacy-Luker/astronomy/blob/main/data/personalObjectMappings.json">Kacy's object mappings</a>.
+  </footer>
+</body>
+</html>
