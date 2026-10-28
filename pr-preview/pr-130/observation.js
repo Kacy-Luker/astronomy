@@ -93,7 +93,8 @@ let moonNotes = 0;
 export function moonParts(o, s) {
   const m = o.moon;
   if (!m) return { button: null, note: null };
-  const summary = `${m.name}, ${m.illumination}% lit${m.up === false ? ", below the horizon" : ""}`;
+  const where = [m.up === false && "below the horizon", s.site?.lat < 0 && "seen from the southern hemisphere"].filter(Boolean);
+  const summary = [`${m.name}, ${m.illumination}% lit`, ...where].join(", ");
   const button = el("button", "tag moon");
   button.type = "button";
   button.title = `Moon: ${summary}`;
@@ -101,7 +102,14 @@ export function moonParts(o, s) {
   button.setAttribute("aria-expanded", "false");
   // A New Moon is drawn dark, without the sliver of its last few percent.
   const lit = m.name === "New Moon" ? 0 : m.illumination / 100;
-  button.append(moonGlyph(m.phase, lit, s.site?.lat < 0, m.up === false));
+  // South of the equator the Moon is drawn as seen from there, mirrored,
+  // with a kangaroo on the icon so it isn't taken for the other phase.
+  const south = s.site?.lat < 0;
+  button.append(moonGlyph(m.phase, lit, south, m.up === false));
+  if (south) {
+    button.classList.add("south");
+    button.append(el("span", "moon-south", "🦘"));
+  }
   const note = el("p", "moon-note");
   note.id = `moon-note-${++moonNotes}`;
   note.hidden = true;
