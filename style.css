@@ -189,8 +189,9 @@ a { color: var(--accent); }
 }
 .toggle button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
 
-/* Swap light and dark; the hue turn keeps ink colors recognizable. */
-.scans.inverted img, main.inverted figure.page img, .inverted > .sketch-frame img, .viewer .inverted img, .object-rows.inverted img, .sketch-frame.inverted img { filter: invert(1) hue-rotate(180deg); }
+/* Swap light and dark: a plain inversion, so the cream paper goes navy and
+   pencil pale blue (#96). */
+.scans.inverted img, main.inverted figure.page img, .inverted > .sketch-frame img, .viewer .inverted img, .object-rows.inverted img, .sketch-frame.inverted img { filter: invert(1); }
 
 /* view.html: one page, as large as the screen allows. */
 .viewer main { max-width: 72rem; }
