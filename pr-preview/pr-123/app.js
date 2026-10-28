@@ -22,11 +22,11 @@ const DEFAULT_TAB = "sessions";
 
 function renderNotebook(nb, sessions) {
   const item = el("li", "session notebook-card");
-  // The outside front cover, when it's been scanned, beside the title, in
-  // the viewer's chosen view (see applyView).
+  // The outside front cover, when it's been scanned, beside the title. It's
+  // a photo of the cover, so it's never inverted (#122).
   if (nb.front_cover?.thumb) {
     const img = el("img", "cover-thumb");
-    img.dataset.original = nb.front_cover.thumb;
+    img.src = nb.front_cover.thumb;
     img.alt = "";
     img.loading = "lazy";
     item.append(img);
@@ -74,7 +74,8 @@ function renderSession(s) {
 // more).
 function renderObjectRow(id, obj) {
   const item = el("li", "object-row");
-  // The favorite's sketch circle (else the latest's), small, in the viewer's chosen view (see applyView).
+  // The favorite's sketch circle (else the latest's), small, always inverted
+  // whatever view was last picked elsewhere (#122).
   const sketch = (obj.seen.find(({ o }) => o.favorite && o.sketch) ?? obj.seen.find(({ o }) => o.sketch))?.o.sketch;
   if (sketch) {
     const thumb = link(objectHref(id), null, "sketch-thumb");
@@ -125,7 +126,7 @@ function objectsPanel(panel) {
     current = name;
     const rows = sections.get(name).sort(([a], [b]) => compareIds(a, b));
     list.replaceChildren(...rows.map(([id, obj]) => renderObjectRow(id, obj)));
-    applyView(list);
+    applyView(list, "inverted");
     keepFilters(list);
     for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.catalog === slug(name)));
   }
@@ -217,7 +218,6 @@ try {
     const books = narrowed ? notebooks.filter((nb) => shown.some((s) => s.notebook === nb.id)) : notebooks;
     notebookList.replaceChildren(...books.map((nb) => renderNotebook(nb, shown)));
     if (!books.length) noMatch(notebookList, "No notebooks match.");
-    applyView(notebookList);
     sessionList.replaceChildren(...shown.map(renderSession));
     if (!shown.length) noMatch(sessionList, "No sessions match.");
     const objects = observedObjects(shown, catalog);

@@ -35,7 +35,8 @@ async function loadJSON(path) {
 // (test-data/) instead of the real log. Their banner carries
 // data-test-data, the dataset shown by default; ?data=test or ?data=real
 // switches, and this browser remembers the choice. The live site has no
-// test data and always shows the real log.
+// test data and always shows the real log. The switch is in the admin bar
+// (#117; dataLinks() below).
 const DATA_KEY = "observing-log-data";
 const testBanner = document.querySelector(".preview-banner[data-test-data]");
 function chooseData() {
@@ -54,17 +55,20 @@ const DATA_ROOT = dataset === "test" ? "test-data/" : "";
 // A data file's path in the repo, e.g. dataFile("notebooks/x.json").
 export const dataFile = (path) => `${dataset === "test" ? "test-data" : "data"}/${path}`;
 
-if (testBanner) {
-  const toggle = el("span", "data-toggle");
-  toggle.append("Showing ");
-  for (const [value, text] of [["real", "real data"], ["test", "test data"]]) {
-    const url = new URL(location.href);
-    url.searchParams.set("data", value);
-    const a = link(url.href, text);
-    if (value === dataset) a.setAttribute("aria-current", "true");
-    toggle.append(a, value === "real" ? " | " : "");
-  }
-  testBanner.append(toggle);
+// The admin bar's real/test switch: where each dataset is shown. A site
+// with both (test site, previews) switches in place; the live site has only
+// the real data, so "test" opens the same page on the test site (test/).
+export function dataLinks(href, both, current) {
+  return [["real", "real data"], ["test", "test data"]].map(([value, text]) => {
+    const url = new URL(href);
+    if (both) url.searchParams.set("data", value);
+    else if (value === "test") {
+      const page = url.pathname.split("/").pop();
+      url.pathname = url.pathname.replace(/[^/]*$/, `test/${page}`);
+      url.searchParams.set("data", "test");
+    }
+    return { text, href: url.href, current: value === current };
+  });
 }
 
 export const loadSessions = () => loadJSON(`${DATA_ROOT}data/sessions.json`);
@@ -274,7 +278,14 @@ if (adminMode) {
   toggle.addEventListener("click", () => { store(EDIT_KEY, !editMode); location.reload(); });
   const off = new URL(location.href);
   off.searchParams.set("admin", "off");
-  bar.append(link("help.html", "How to add a session"), " · ", toggle, " · ", link(off.href, "Leave admin mode"));
+  const data = el("span", "data-toggle");
+  data.append("Showing ");
+  dataLinks(location.href, Boolean(testBanner), dataset).forEach(({ text, href, current }, i) => {
+    const a = link(href, text);
+    if (current) a.setAttribute("aria-current", "true");
+    data.append(...(i ? [" | "] : []), a);
+  });
+  bar.append(link("help.html", "How to add a session"), " · ", toggle, " · ", data, " · ", link(off.href, "Leave admin mode"));
   const banner = document.querySelector(".preview-banner");
   if (banner) banner.after(bar);
   else document.body.prepend(bar);
