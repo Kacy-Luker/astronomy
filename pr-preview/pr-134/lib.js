@@ -210,10 +210,11 @@ export function imageFigure(page, alt, caption) {
 // (?admin=off turns it off), which this browser remembers (previews share
 // the setting, being on the same site). It adds an admin bar at the top
 // of the page with the how-to page (help.html), toggles for the Edit links
-// (which open a data file in GitHub's web editor) and the test data, and a
-// Leave admin mode button. The installed app has no address bar, so a
-// device that has been in admin mode also gets an "Admin mode" button in
-// the footer to turn it back on (#112); visitors never see it.
+// (which open a data file in GitHub's web editor) and the test data, and
+// an "Admin mode: on" toggle that turns it off. The installed app has no
+// address bar, so a device that has been in admin mode also gets an
+// "Admin mode: off" toggle in the footer to turn it back on (#112);
+// visitors never see it.
 const REPO = "https://github.com/Kacy-Luker/astronomy";
 const ADMIN_KEY = "observing-log-admin";
 const EDIT_KEY = "observing-log-edit";
@@ -297,7 +298,8 @@ if (adminMode) {
   const data = adminButton(`Test data: ${on ? "on" : "off"}`, () => location.assign(href));
   data.classList.add("data-toggle");
   data.setAttribute("aria-pressed", String(on));
-  const leave = adminButton("Leave admin mode", () => location.assign(withAdmin("off")));
+  const leave = adminButton("Admin mode: on", () => location.assign(withAdmin("off")));
+  leave.setAttribute("aria-pressed", "true");
   bar.append(link("help.html", "How to add a session"), " · ", edit, " · ", data, " · ", leave);
   const banner = document.querySelector(".preview-banner");
   if (banner) banner.after(bar);
@@ -307,5 +309,7 @@ if (adminMode) {
 // Back into admin mode, on a device that has used it (#112).
 if (!adminMode && stored(ADMIN_SEEN_KEY)) {
   const footer = document.querySelector(".site-footer") ?? document.body.appendChild(el("footer", "site-footer muted"));
-  footer.append(" ", adminButton("Admin mode", () => location.assign(withAdmin("on")), "admin-toggle admin-on"));
+  const on = adminButton("Admin mode: off", () => location.assign(withAdmin("on")), "admin-toggle admin-on");
+  on.setAttribute("aria-pressed", "false");
+  footer.append(" ", on);
 }
