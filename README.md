@@ -220,7 +220,9 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 On the site, scans have an **Inverted / Blue / Cleaned / Original**
 toggle. Inverted (the default) shows the cleaned page with light and dark
 swapped. Blue is a plain inversion, so the cream paper turns navy and the
-pencil pale blue.
+pencil pale blue. The Sketches tab's thumbnails are always inverted,
+whatever the toggle is set to, and the notebook cards' cover thumbnails
+never are.
 Tapping a page opens it full size (`view.html`) in the same view.
 
 ## Searching
@@ -312,11 +314,12 @@ the address (for example `kacyluker.com/astronomy/?admin=on`); the
 browser remembers it. Every page then has an admin bar across the top
 (under the preview bar on a PR preview) with a short phone how-to
 (`help.html`: adding a session, other imports, finishing and removing a
-notebook), an **Edit links** toggle, and a link to leave admin mode
+notebook), an **Edit links** toggle, the real/test data switch (see
+[Test site](#test-site)), and a link to leave admin mode
 (`?admin=off`). With Edit links on, pages show links that open the file
-in GitHub's editor: **Edit session** and an **Edit** on each observation (the session's
-file), **Edit notebook**, and **Edit mappings** on object pages. Visitors
-never see any of it. It works on PR previews too, where the Edit links
+in GitHub's editor: **Edit session** and an **Edit** on each
+observation (the session's file), **Edit notebook**, and **Edit
+mappings** on object pages. Visitors never see any of it. It works on PR previews too, where the Edit links
 open the pull request's branch instead of main.
 
 In the installed app (below) there's no address bar. On Android the app
@@ -415,7 +418,9 @@ own app, so remove a preview's icon once you're done testing.
 
 Every pull request, including import PRs, is built and published at
 `kacyluker.com/astronomy/pr-preview/pr-<number>/`, with a banner saying
-it's a preview. A comment on the PR links to it and updates on each push.
+it's a preview. A comment on the PR links to it in admin mode
+(`?admin=on`), so it opens with the admin bar and its data switch, and
+updates on each push.
 The preview is removed when the PR is merged or closed. The main deploy
 leaves `gh-pages/pr-preview/` alone.
 
@@ -432,12 +437,16 @@ sites at one map spot (Okie-Tex in two years, Camp Billy Joe and Black
 Mesa, for the Near link). Every merge to `main` deploys it alongside the live
 site, so it's never out of date.
 
-Its banner says **Test site** and has a **Showing real data | test data**
-switch. PR previews have the same switch (real data by default there), so
-any PR can be tried on both. The choice goes in the address
-(`?data=test`), links keep it, and your browser remembers it. The live
-site has no test data and no switch. Favorite stars are hidden while
-showing test data, since favorites only change the real data.
+Its banner says **Test site**. In admin mode the admin bar has a
+**Showing real data | test data** switch, on every site:
+- **Test site and PR previews:** they carry both datasets, so it switches
+  in place. Previews show real data by default.
+- **Live site:** it has only your data, so **test data** opens the same
+  page on the test site.
+
+The choice goes in the address (`?data=test`), links keep it, and your
+browser remembers it. Visitors never see the switch. Favorite stars are
+hidden while showing test data, since favorites only change the real data.
 
 The test data lives in `test-data/` (notebooks, sessions and
 `objects.json`, checked by `npm run validate` like `data/`). Its page
@@ -469,10 +478,11 @@ yours.
   stamp, goes through a new import as a free-text notebook the same way.
 - **Site tests** (`tests/site.spec.mjs`, Playwright in Chromium) against
   the test site's build, at phone and desktop width: every page loads with
-  no errors, failed requests or sideways scroll; the real/test switch;
-  to-dos, N/A and the seeing and transparency words; one object under two
-  designations; the Sketches toggle and the back button; the scan view
-  being remembered; search and filters; and the map's Near link. Expected
+  no errors, failed requests or sideways scroll; the admin bar's
+  real/test switch; to-dos, N/A and the seeing and transparency words;
+  one object under two designations; the Sketches toggle and the back
+  button; the scan view being remembered; search and filters; and the
+  map's Near link. Expected
   values come from the test data where they can.
 
 When a site test fails on GitHub, its screenshots are kept with the run

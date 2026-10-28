@@ -48,9 +48,14 @@ change things safely.
   `dist/test-data/` when `TEST_SITE` or `PREVIEW_OF` is set; `pages.yml`
   deploys a `TEST_SITE=1` build to `gh-pages/test/` (the main deploy
   leaves `test/` and `pr-preview/` alone). The banner's
-  `data-test-data` (the default dataset) turns on the real/test switch in
-  `site/lib.js` (`dataset`, `dataFile()`, `?data=`, remembered in
-  localStorage); the live site never has it.
+  `data-test-data` (the default dataset) means both datasets are built
+  (`dataset`, `dataFile()`, `?data=`, remembered in localStorage, in
+  `site/lib.js`). The real/test switch is in the admin bar only (#117,
+  `dataLinks()`): in place where both are built, and on the live site,
+  which has no test data, a link to the same page under `test/`. PR
+  preview comments link to the preview with `?admin=on`; `preview.yml`
+  posts its own comment (marked `<!-- preview-link -->`) since the
+  preview action's is turned off.
 - Keep README.md and CLAUDE.md in step with the code in the same PR. The
   **Docs** workflow also checks code PRs, commits fixes ("Update docs for
   this change") to the branch and comments what changed; pull before
@@ -305,7 +310,9 @@ any that don't).
   with its own session's block, and validation checks each entry comes
   after its session's `header_box`. On the session page the view toggle
   applies to the whole page (pages and cards). The Sketches tab's thumbnails
-  (`<n>.thumb.jpg`, `.thumb.clean.jpg`, 240 px, shown at 96 px) show just
+  (`<n>.thumb.jpg`, `.thumb.clean.jpg`, 240 px, shown at 96 px; always
+  inverted, whatever the view toggle says elsewhere, while the notebook
+  cards' cover thumbnails are never inverted, #122) show just
   the sketch circle, which `scripts/lib/circle.mjs` finds with a Hough
   search over the entry's ink (the whole entry if none is found, and
   always for free-text notebooks, which have no stamped circle). Ink is
@@ -367,10 +374,12 @@ any that don't).
   Favorites only filter.
 - Admin mode (Kacy only): `?admin=on` on any page, remembered in
   localStorage (`?admin=off` clears it), adds an admin bar across the top
-  of the page (after `.preview-banner` when there is one) with a link to `help.html` (Kacy's phone how-to; keep it in step with
-  the forms and the README's Importing section) and an Edit links toggle
-  (also remembered; switching reloads the page). The installed app has
-  no address bar, so a device that has been in admin mode
+  of the page (after `.preview-banner` when there is one) with a link
+  to `help.html` (Kacy's phone how-to; keep it in step with the forms
+  and the README's Importing section), an Edit links toggle (also
+  remembered; switching reloads the page) and the real/test data switch
+  (`dataLinks()`, above). The installed app has no address bar, so a
+  device that has been in admin mode
   (`observing-log-admin-seen` in localStorage) gets an "Admin mode" link
   in the footer while it's off (#112); on Android the app shares Chrome's
   storage, so `?admin=on` in Chrome turns it on in the app.
