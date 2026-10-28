@@ -307,7 +307,9 @@ any that don't).
   with its own session's block, and validation checks each entry comes
   after its session's `header_box`. On the session page the view toggle
   applies to the whole page (pages and cards). The Sketches tab's thumbnails
-  (`<n>.thumb.jpg`, `.thumb.clean.jpg`, 240 px, shown at 96 px) show just
+  (`<n>.thumb.jpg`, `.thumb.clean.jpg`, 240 px, shown at 96 px; always
+  inverted, whatever the view toggle says elsewhere, while the notebook
+  cards' cover thumbnails are never inverted, #122) show just
   the sketch circle, which `scripts/lib/circle.mjs` finds with a Hough
   search over the entry's ink (the whole entry if none is found, and
   always for free-text notebooks, which have no stamped circle). Ink is
