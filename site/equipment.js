@@ -11,8 +11,9 @@ import { nameKey } from "./search.js";
 
 const used = (x) => x != null && x !== "";
 
-// [{ name, docs }] grouped by name, most observations first.
-function group(docs, nameOf) {
+// [{ name, docs }] grouped by name, most observations first; the Activity
+// tab (site/activity.js) counts the same way.
+export function group(docs, nameOf) {
   const groups = new Map();
   for (const d of docs) {
     const name = nameOf(d);

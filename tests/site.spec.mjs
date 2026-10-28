@@ -30,7 +30,7 @@ test.afterEach(async ({ page }) => {
 });
 
 const PAGES = [
-  "", "#sessions", "#sketches", "#sketches/ngc", "#equipment", "#map", "help.html",
+  "", "#sessions", "#sketches", "#sketches/ngc", "#equipment", "#map", "#activity", "help.html",
   ...notebooks.map((n) => `notebook.html?id=${n.id}`),
   ...sessions.map((s) => `session.html?id=${s.id}`),
   ...["M31", "NGC 224", "C14", "Albireo"].map((id) => `object.html?id=${encodeURIComponent(id)}`),
@@ -139,6 +139,29 @@ test("search and filters narrow the observations", async ({ page }) => {
   await page.goto("?fav=1");
   await expect(page.locator(".summary").first()).toContainText("1 matching observation");
   await expect(page.locator(".chip").first()).toContainText("Favorites only");
+});
+
+test("the Activity tab counts the test data, and narrows with the search (#128)", async ({ page }) => {
+  // The build's copy has each observation's catalog object, so M31 and
+  // NGC 224 count as one.
+  const built = read("dist/test-data/data/sessions.json").flatMap((s) => s.observations.map((o) => ({ s, o })));
+  const objectsOf = (docs) => new Set(docs.map(({ o }) => o.catalog?.key ?? o.catalog_id)).size;
+  const sessionsOf = (docs) => new Set(docs.map(({ s }) => s.id)).size;
+  const total = (name) => page.locator(`#activity [data-total="${name}"] dd`);
+
+  await page.goto("#activity");
+  await expect(page.locator("#tab-activity")).toHaveAttribute("aria-selected", "true");
+  await expect(total("sessions")).toHaveText(String(sessions.length));
+  await expect(total("observations")).toHaveText(String(observations.length));
+  await expect(total("objects")).toHaveText(String(objectsOf(built)));
+  await expect(page.locator("#activity")).toContainText("I · Excellent");
+  await expect(page.locator("#activity")).toContainText("V · Transparent");
+
+  const m31 = built.filter(({ o }) => (o.ids ?? []).includes("M31"));
+  await page.goto("?q=andromeda#activity");
+  await expect(total("observations")).toHaveText(String(m31.length));
+  await expect(total("sessions")).toHaveText(String(sessionsOf(m31)));
+  await expect(total("objects")).toHaveText("1");
 });
 
 test("the map groups sites by spot, and its Near link lists every session there", async ({ page }) => {

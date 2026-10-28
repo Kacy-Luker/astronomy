@@ -94,7 +94,7 @@ change things safely.
 | `scans/<id>/NN.jpg` | Page images in scan order (NN = position + 1), 1600 px tall, redacted |
 | `scans/<id>/NN.clean.jpg` | Same page with stamp show-through removed, when possible |
 | `test-data/` | The test site's made-up data, laid out like `data/`, with drawn page images in `test-data/scans/` |
-| `site/` | Static pages: home (Notebooks, Sessions, Sketches, Equipment and Map tabs, `#notebooks`, `#sketches/ngc`, `#equipment`, `#map` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
+| `site/` | Static pages: home (Notebooks, Sessions, Sketches, Equipment, Map and Activity tabs, `#notebooks`, `#sketches/ngc`, `#equipment`, `#map`, `#activity` etc.), `notebook.html?id=`, `session.html?id=`, `object.html?id=` (any designation, e.g. `M31` or `NGC 224`), `view.html?img=&view=` (one page full size) |
 | `scripts/` | Build, validation, import, splitting, cleaning; data files are read and written, and page images named, through `scripts/lib/files.mjs` (`readJSON`, `readJSONDir`, `writeJSON`, `pageName`, `objectKeys`); every outside library or tool goes through one module (`docs/DEPENDENCIES.md`; `tests/unit/wrapped.test.mjs` checks it): images `scripts/lib/image.mjs`, page reading `scripts/lib/reader.mjs`, data formats `scripts/lib/schema.mjs`, scans and PDFs `scripts/lib/scans.mjs` (with `scripts/pick-scan.mjs`, the Notebook job's notebook and scan picker) |
 | `tests/` | `npm test`: `tests/unit/*.test.mjs` (node --test) and `tests/site.spec.mjs` (Playwright) |
 | `.github/actions/` | Steps the workflows share (`docs/DEPENDENCIES.md`): `setup` (Node, `npm ci`, optional Python and poppler), `open-pr`, `publish`; workflows don't use those actions directly |
@@ -328,7 +328,7 @@ any that don't).
   field of it and its session (designations also without spaces), and a
   query that matches when every word appears; case and accents are
   folded. The home page's search box sits above the tabs and narrows all
-  five (`?q=` in the URL, kept by the tab links). Filters (`FILTERS` in
+  six (`?q=` in the URL, kept by the tab links). Filters (`FILTERS` in
   `site/search.js`; values per observation on each document) and the bar
   (`site/filterbar.js`: search box, Filters panel, chips, Clear all) are
   on every page and in the URL; `keepFilters()` adds them to links between
@@ -361,6 +361,19 @@ any that don't).
   (`leaflet`, exact version) and `scripts/build.mjs` copies it to
   `dist/vendor/leaflet/`; no CDN. The tile URL is the `TILES` constant,
   the one outside service, credited on the map.
+- Activity tab (`site/activity.js`, #128; last in the tab row): totals
+  (sessions, observations, objects), observations per year (newest
+  first, only years with observations; past `MAX_ROWS`, eight, the list
+  scrolls, `.bars.scroll`), objects by type (each
+  object once, by its catalog key; no type is "Not in the catalogs"),
+  seeing and transparency over I–V with `seeingText()`/`transparencyText()`
+  words, and the top five telescopes and eyepieces (`group()` from
+  `site/equipment.js`). All from the matching search documents, so it
+  follows the search and filters; the counting is `activityStats()`
+  (unit-tested), the drawing `renderActivity()`. Charts are plain bars in
+  the site's CSS (`.bars`, no chart library, Kacy's choice), each row with
+  its number written out and the bar `aria-hidden`; two columns from
+  40rem. Hours aren't counted: sessions have no start and end times.
 - Favorites (#23): `favorite: true` on an observation, at most one per
   object (validation; objects matched through `data/objects.json`). The
   admin-mode star (`favoriteLink()` in `site/lib.js`, object page; hidden
