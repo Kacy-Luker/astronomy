@@ -277,7 +277,8 @@ some aren't. By hand: `node scripts/favorite.mjs <session id>
 ## Moon phase
 
 Each observation card on a session or object page has a small Moon
-showing its phase when the entry was made. Tap it for a short note: the
+showing its phase when the entry was made: a new Moon is a dark circle,
+and a Moon below the horizon is greyed with a dashed outline. Tap it for a short note: the
 phase name, how much of the Moon was lit, and whether it was above the
 horizon at the site (only when the session has a lat/long and the entry a
 time). It's worked out when the site is built, from the date, time and

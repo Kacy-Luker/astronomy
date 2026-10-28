@@ -59,11 +59,13 @@ export function observationDescription(o) {
 // The Moon's phase as a small glyph (#127): the lit part of the disc, lit
 // on the right while waxing as seen from the north, mirrored south of the
 // equator. phase runs 0 to 1 (0 new, 0.5 full); lit is the lit fraction.
+// The disc is outlined, so a new Moon is a whole dark circle; down (the
+// Moon below the horizon) greys the phase and dashes the outline.
 const SVG = "http://www.w3.org/2000/svg";
-export function moonGlyph(phase, lit, south = false) {
+export function moonGlyph(phase, lit, south = false, down = false) {
   const svg = document.createElementNS(SVG, "svg");
   svg.setAttribute("viewBox", "-10 -10 20 20");
-  svg.setAttribute("class", "moon-glyph");
+  svg.setAttribute("class", down ? "moon-glyph down" : "moon-glyph");
   svg.setAttribute("aria-hidden", "true");
   const disc = document.createElementNS(SVG, "circle");
   disc.setAttribute("r", "9");
@@ -91,13 +93,15 @@ let moonNotes = 0;
 export function moonParts(o, s) {
   const m = o.moon;
   if (!m) return { button: null, note: null };
-  const summary = `${m.name}, ${m.illumination}% lit`;
+  const summary = `${m.name}, ${m.illumination}% lit${m.up === false ? ", below the horizon" : ""}`;
   const button = el("button", "tag moon");
   button.type = "button";
   button.title = `Moon: ${summary}`;
   button.setAttribute("aria-label", `Moon: ${summary}`);
   button.setAttribute("aria-expanded", "false");
-  button.append(moonGlyph(m.phase, m.illumination / 100, s.site?.lat < 0));
+  // A New Moon is drawn dark, without the sliver of its last few percent.
+  const lit = m.name === "New Moon" ? 0 : m.illumination / 100;
+  button.append(moonGlyph(m.phase, lit, s.site?.lat < 0, m.up === false));
   const note = el("p", "moon-note");
   note.id = `moon-note-${++moonNotes}`;
   note.hidden = true;

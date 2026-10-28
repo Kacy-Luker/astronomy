@@ -206,7 +206,9 @@ test("each observation card has the Moon's phase, and tapping it says how much w
   await page.goto(`session.html?id=${s.id}`);
   const card = page.locator("article.observation").first();
   const button = card.locator("button.moon");
-  await expect(button).toHaveAttribute("aria-label", `Moon: ${moon.name}, ${moon.illumination}% lit`);
+  await expect(button).toHaveAttribute("aria-label", `Moon: ${moon.name}, ${moon.illumination}% lit${moon.up === false ? ", below the horizon" : ""}`);
+  // Below the horizon the glyph is greyed with a dashed outline.
+  await expect(button.locator("svg.moon-glyph")).toHaveClass(moon.up === false ? /\bdown\b/ : /^moon-glyph$/);
   await expect(page.locator("article.observation button.moon")).toHaveCount(s.observations.length);
   const note = card.locator(".moon-note");
   await expect(note).toBeHidden();
