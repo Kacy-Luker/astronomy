@@ -36,7 +36,7 @@ async function loadJSON(path) {
 // data-test-data, the dataset shown by default; ?data=test or ?data=real
 // switches, and this browser remembers the choice. The live site has no
 // test data and always shows the real log. The switch is in the admin bar
-// (#117; dataLinks() below).
+// (#117, #133; dataSwitch() below).
 const DATA_KEY = "observing-log-data";
 const testBanner = document.querySelector(".preview-banner[data-test-data]");
 function chooseData() {
@@ -55,20 +55,23 @@ const DATA_ROOT = dataset === "test" ? "test-data/" : "";
 // A data file's path in the repo, e.g. dataFile("notebooks/x.json").
 export const dataFile = (path) => `${dataset === "test" ? "test-data" : "data"}/${path}`;
 
-// The admin bar's real/test switch: where each dataset is shown. A site
-// with both (test site, previews) switches in place; the live site has only
-// the real data, so "test" opens the same page on the test site (test/).
-export function dataLinks(href, both, current) {
-  return [["real", "real data"], ["test", "test data"]].map(([value, text]) => {
-    const url = new URL(href);
-    if (both) url.searchParams.set("data", value);
-    else if (value === "test") {
-      const page = url.pathname.split("/").pop();
-      url.pathname = url.pathname.replace(/[^/]*$/, `test/${page}`);
-      url.searchParams.set("data", "test");
-    }
-    return { text, href: url.href, current: value === current };
-  });
+// The admin bar's Test data toggle (#133): where it goes from this page.
+// Turning test data off from the test site (testSite) goes back to the
+// same page on the live site; turning it on from the live site, which has
+// only the real data, opens the same page on the test site (test/). A
+// preview has both, and switches in place.
+export function dataSwitch(href, { both, testSite, current }) {
+  const on = current === "test";
+  const url = new URL(href);
+  if (on && testSite) {
+    url.pathname = url.pathname.replace(/test\/([^/]*)$/, "$1");
+    url.searchParams.delete("data");
+  } else if (both) url.searchParams.set("data", on ? "real" : "test");
+  else {
+    url.pathname = url.pathname.replace(/[^/]*$/, (page) => `test/${page}`);
+    url.searchParams.set("data", "test");
+  }
+  return { on, href: url.href };
 }
 
 export const loadSessions = () => loadJSON(`${DATA_ROOT}data/sessions.json`);
@@ -206,10 +209,11 @@ export function imageFigure(page, alt, caption) {
 // Admin mode is for Kacy: turned on by opening any page with ?admin=on
 // (?admin=off turns it off), which this browser remembers (previews share
 // the setting, being on the same site). It adds an admin bar at the top
-// of the page with the how-to page (help.html) and a toggle for the Edit links, which
-// open a data file in GitHub's web editor. The installed app has no address
-// bar, so a device that has been in admin mode also gets an "Admin mode"
-// link in the footer to turn it back on (#112); visitors never see it.
+// of the page with the how-to page (help.html), toggles for the Edit links
+// (which open a data file in GitHub's web editor) and the test data, and a
+// Leave admin mode button. The installed app has no address bar, so a
+// device that has been in admin mode also gets an "Admin mode" button in
+// the footer to turn it back on (#112); visitors never see it.
 const REPO = "https://github.com/Kacy-Luker/astronomy";
 const ADMIN_KEY = "observing-log-admin";
 const EDIT_KEY = "observing-log-edit";
@@ -265,26 +269,36 @@ export function favoriteLink(o, s, n) {
   return a;
 }
 
+// The admin bar's buttons, all drawn alike.
+function adminButton(text, onClick, className = "admin-toggle") {
+  const button = el("button", className, text);
+  button.type = "button";
+  button.addEventListener("click", onClick);
+  return button;
+}
+// This page with ?admin=on or off.
+function withAdmin(value) {
+  const url = new URL(location.href);
+  url.searchParams.set("admin", value);
+  return url.href;
+}
+
 // The admin bar runs across the top of the page, under the preview banner
 // on a PR preview, and scrolls away with the page.
 if (adminMode) {
   const bar = el("div", "admin-bar");
   bar.append(el("strong", null, "Admin"), " · ");
   // The Edit links are drawn as the page loads, so switching reloads it.
-  const toggle = el("button", "admin-toggle", `Edit links: ${editMode ? "on" : "off"}`);
-  toggle.type = "button";
-  toggle.setAttribute("aria-pressed", String(editMode));
-  toggle.addEventListener("click", () => { store(EDIT_KEY, !editMode); location.reload(); });
-  const off = new URL(location.href);
-  off.searchParams.set("admin", "off");
-  const data = el("span", "data-toggle");
-  data.append("Showing ");
-  dataLinks(location.href, Boolean(testBanner), dataset).forEach(({ text, href, current }, i) => {
-    const a = link(href, text);
-    if (current) a.setAttribute("aria-current", "true");
-    data.append(...(i ? [" | "] : []), a);
+  const edit = adminButton(`Edit links: ${editMode ? "on" : "off"}`, () => { store(EDIT_KEY, !editMode); location.reload(); });
+  edit.setAttribute("aria-pressed", String(editMode));
+  const { on, href } = dataSwitch(location.href, {
+    both: Boolean(testBanner), testSite: Boolean(document.querySelector(".preview-banner[data-test-site]")), current: dataset,
   });
-  bar.append(link("help.html", "How to add a session"), " · ", toggle, " · ", data, " · ", link(off.href, "Leave admin mode"));
+  const data = adminButton(`Test data: ${on ? "on" : "off"}`, () => location.assign(href));
+  data.classList.add("data-toggle");
+  data.setAttribute("aria-pressed", String(on));
+  const leave = adminButton("Leave admin mode", () => location.assign(withAdmin("off")));
+  bar.append(link("help.html", "How to add a session"), " · ", edit, " · ", data, " · ", leave);
   const banner = document.querySelector(".preview-banner");
   if (banner) banner.after(bar);
   else document.body.prepend(bar);
@@ -292,8 +306,6 @@ if (adminMode) {
 
 // Back into admin mode, on a device that has used it (#112).
 if (!adminMode && stored(ADMIN_SEEN_KEY)) {
-  const on = new URL(location.href);
-  on.searchParams.set("admin", "on");
   const footer = document.querySelector(".site-footer") ?? document.body.appendChild(el("footer", "site-footer muted"));
-  footer.append(" ", link(on.href, "Admin mode", "admin-on"));
+  footer.append(" ", adminButton("Admin mode", () => location.assign(withAdmin("on")), "admin-toggle admin-on"));
 }

@@ -194,7 +194,8 @@ const footer = footerParts.length ? `  <footer class="site-footer muted">\n    $
 
 // A PR preview or the test site also gets a banner on every page so it
 // isn't mistaken for the live site. With the test data built, data-test-data
-// is the dataset shown by default, and site/lib.js adds the real/test toggle.
+// is the dataset shown by default, and site/lib.js adds the real/test toggle;
+// data-test-site marks the test site, whose real data is the live site.
 let banner = "";
 const testData = test ? ` data-test-data="${TEST_SITE ? "test" : "real"}"` : "";
 if (process.env.PREVIEW_OF) {
@@ -202,7 +203,7 @@ if (process.env.PREVIEW_OF) {
   const branch = process.env.PREVIEW_BRANCH ? ` data-branch="${escape(process.env.PREVIEW_BRANCH)}"` : "";
   banner = `\n  <div class="preview-banner"${branch}${testData}>Preview of ${escape(process.env.PREVIEW_OF)}.${link}</div>`;
 } else if (TEST_SITE) {
-  banner = `\n  <div class="preview-banner"${testData}>Test site.</div>`;
+  banner = `\n  <div class="preview-banner" data-test-site${testData}>Test site.</div>`;
 }
 for (const file of (await readdir(OUT)).filter((f) => f.endsWith(".html"))) {
   const html = (await readFile(join(OUT, file), "utf8")).replace("</head>", `${icons}</head>`).replace("</body>", `${footer}</body>`);

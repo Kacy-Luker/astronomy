@@ -10,7 +10,7 @@ import { isNA, sessionTodos, todoCount } from "../../site/todos.js";
 globalThis.document = { querySelector: () => null };
 globalThis.location = { search: "", href: "http://localhost/" };
 const { eventName, spotOf } = await import("../../site/search.js");
-const { dataLinks } = await import("../../site/lib.js");
+const { dataSwitch } = await import("../../site/lib.js");
 
 test("a blank field is a to-do; N/A and AKA aren't", () => {
   const s = {
@@ -46,15 +46,19 @@ test("designations sort by catalog, then number", () => {
   assert.equal(catalogOf("NGC 224"), "NGC");
 });
 
-test("the admin bar's data switch: in place where both datasets are built, else to the test site (#117)", () => {
-  const [real, testData] = dataLinks("https://kacyluker.com/astronomy/session.html?id=x#top", false, "real");
-  assert.equal(real.href, "https://kacyluker.com/astronomy/session.html?id=x#top");
-  assert.ok(real.current);
-  assert.equal(testData.href, "https://kacyluker.com/astronomy/test/session.html?id=x&data=test#top");
-  assert.equal(dataLinks("https://kacyluker.com/astronomy/", false, "real")[1].href, "https://kacyluker.com/astronomy/test/?data=test");
-  const both = dataLinks("https://kacyluker.com/astronomy/test/?q=m31", true, "test");
-  assert.deepEqual(both.map((l) => [l.href, l.current]), [
-    ["https://kacyluker.com/astronomy/test/?q=m31&data=real", false],
-    ["https://kacyluker.com/astronomy/test/?q=m31&data=test", true],
-  ]);
+test("the admin bar's Test data toggle: live to test site and back, in place on previews (#117, #133)", () => {
+  // Live site: on opens the same page on the test site.
+  const live = dataSwitch("https://kacyluker.com/astronomy/session.html?id=x#top", { both: false, testSite: false, current: "real" });
+  assert.deepEqual(live, { on: false, href: "https://kacyluker.com/astronomy/test/session.html?id=x&data=test#top" });
+  assert.equal(dataSwitch("https://kacyluker.com/astronomy/", { current: "real" }).href, "https://kacyluker.com/astronomy/test/?data=test");
+  // Test site: off goes back to the same page on the live site.
+  const test = dataSwitch("https://kacyluker.com/astronomy/test/session.html?id=x&data=test#top", { both: true, testSite: true, current: "test" });
+  assert.deepEqual(test, { on: true, href: "https://kacyluker.com/astronomy/session.html?id=x#top" });
+  assert.equal(dataSwitch("https://kacyluker.com/astronomy/test/?q=m31", { both: true, testSite: true, current: "test" }).href, "https://kacyluker.com/astronomy/?q=m31");
+  // The test site showing the real data (remembered): on, in place.
+  assert.equal(dataSwitch("https://kacyluker.com/astronomy/test/?q=m31", { both: true, testSite: true, current: "real" }).href, "https://kacyluker.com/astronomy/test/?q=m31&data=test");
+  // A preview: in place both ways.
+  const preview = "https://kacyluker.com/astronomy/pr-preview/pr-9/?q=m31";
+  assert.equal(dataSwitch(preview, { both: true, testSite: false, current: "real" }).href, `${preview}&data=test`);
+  assert.equal(dataSwitch(preview, { both: true, testSite: false, current: "test" }).href, `${preview}&data=real`);
 });

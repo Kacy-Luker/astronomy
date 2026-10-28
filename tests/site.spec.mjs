@@ -45,7 +45,7 @@ for (const path of PAGES) {
   });
 }
 
-test("the test site shows the test data, and the admin bar's switch shows the real data (#117)", async ({ page }) => {
+test("the test site shows the test data, and the admin bar's Test data toggle switches it (#117, #133)", async ({ page }) => {
   const count = `${sessions.length} sessions · ${observations.length} observations`;
   const summary = page.locator(".summary").first();
   // Loaded (not the "Loading" text) and showing the real data, not the test data's count.
@@ -55,18 +55,24 @@ test("the test site shows the test data, and the admin bar's switch shows the re
   };
   await page.goto("");
   await expect(summary).toContainText(count);
-  // Only in admin mode, and never in the banner.
-  await expect(page.getByRole("link", { name: "real data" })).toHaveCount(0);
+  // Only in admin mode, as a button like Edit links.
+  const toggle = page.locator(".admin-bar").getByRole("button", { name: /^Test data:/ });
+  await expect(toggle).toHaveCount(0);
   await page.goto("?admin=on");
-  await expect(page.locator(".preview-banner").getByRole("link", { name: "real data" })).toHaveCount(0);
-  await page.locator(".admin-bar").getByRole("link", { name: "real data" }).click();
-  await expect(page).toHaveURL(/data=real/);
+  await expect(toggle).toHaveText("Test data: on");
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  // Off from the test site goes to the live site's page (dataSwitch(), unit-tested);
+  // here, showing the real data on the test site, on switches in place.
+  await page.goto("?data=real");
   await real();
+  await expect(toggle).toHaveText("Test data: off");
   // Remembered on the next visit.
   await page.goto("#sessions");
   await real();
-  await page.goto("?data=test");
+  await toggle.click();
+  await expect(page).toHaveURL(/data=test/);
   await expect(summary).toContainText(count);
+  await expect(toggle).toHaveText("Test data: on");
 });
 
 test("to-dos, N/A and the Clear Sky Chart words", async ({ page }) => {
@@ -175,13 +181,13 @@ test("the map opens on the USA, and fits other sites when only they match", asyn
 });
 
 test("admin mode can be turned back on from the footer, only where it's been used (#112)", async ({ page }) => {
-  const footerLink = page.locator(".site-footer").getByRole("link", { name: "Admin mode" });
+  const footerLink = page.locator(".site-footer").getByRole("button", { name: "Admin mode" });
   await page.goto("");
   await expect(page.locator(".summary").first()).toContainText("observations");
   await expect(footerLink).toHaveCount(0);
   await page.goto("?admin=on");
   await expect(page.locator(".admin-bar")).toBeVisible();
-  await page.getByRole("link", { name: "Leave admin mode" }).click();
+  await page.locator(".admin-bar").getByRole("button", { name: "Leave admin mode" }).click();
   await expect(page.locator(".admin-bar")).toHaveCount(0);
   // As in the installed app: no address bar, so back on from the footer.
   await footerLink.click();
