@@ -1,11 +1,12 @@
 // The home page's Activity tab (#128): totals, observations per year,
 // objects by type, how seeing and transparency were spread, the most used
-// telescopes and eyepieces. Counted from the same
-// documents as the search (site/search.js), so it follows the search and
-// filters. Charts are plain bars drawn with the site's own styles, each
-// with its number written beside it.
+// telescopes and eyepieces, and the observing programs (site/programs.js,
+// #125). Counted from the same documents as the search (site/search.js),
+// so it follows the search and filters. Charts are plain bars drawn with
+// the site's own styles, each with its number written beside it.
 import { group } from "./equipment.js";
 import { el, plural, seeingText, transparencyText } from "./lib.js";
+import { renderPrograms } from "./programs.js";
 
 // One object however it's written (M31 and NGC 224), as site/objects.js
 // groups them.
@@ -94,7 +95,9 @@ function bars(title, rows, note, wide = false, scroll = false) {
 const TOP = 5;
 const top = (rows, word) => rows.slice(0, TOP).map((r) => ({ label: r.name, count: r.count, value: plural(r.count, word) }));
 
-export function renderActivity(docs) {
+// catalog is data/objects.json's objects (for the observing programs);
+// narrowed says the search or filters are on.
+export function renderActivity(docs, { catalog = {}, narrowed = false } = {}) {
   const stats = activityStats(docs);
   const totals = el("section", "session totals wide-card");
   const list = el("dl", "totals-list");
@@ -110,6 +113,7 @@ export function renderActivity(docs) {
   const unrated = (spread) => (spread.unrated ? `${plural(spread.unrated, "observation")} not rated.` : null);
   return [
     totals,
+    renderPrograms(docs, catalog, narrowed),
     bars("Observations per year", stats.years.map((y) => ({
       label: y.year, count: y.count, value: `${plural(y.count, "observation")} · ${plural(y.sessions, "session")}`,
     })), null, true, true),
