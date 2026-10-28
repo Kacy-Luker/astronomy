@@ -108,7 +108,12 @@ export function moonParts(o, s) {
   button.append(moonGlyph(m.phase, lit, south, m.up === false));
   if (south) {
     button.classList.add("south");
-    button.append(el("span", "moon-south", "🦘"));
+    // A picture, not the emoji, so it's the same kangaroo on every phone
+    // (Noto Color Emoji's, SIL Open Font License).
+    const roo = el("img", "moon-south");
+    roo.src = "icons/kangaroo.png";
+    roo.alt = "";
+    button.append(roo);
   }
   const note = el("p", "moon-note");
   note.id = `moon-note-${++moonNotes}`;

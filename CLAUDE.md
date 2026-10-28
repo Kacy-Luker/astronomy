@@ -367,10 +367,11 @@ any that don't).
   have no zone: taken as solar time at the site's longitude (else UTC−6),
   before noon as the next morning, a written UT wins; no time means 22:00
   and no `up`. `moonParts()` in `site/observation.js` gives the card's
-  glyph button (mirrored south of the equator, with a 🦘 on the icon; a New Moon has no sliver,
-  just the dark disc; `up: false` adds `.down`, greyed with a
-  dashed outline) and the note it toggles,
-  on the session and object pages.
+  glyph button (mirrored south of the equator, with a kangaroo on the
+  icon: `site/icons/kangaroo.png`, Noto Color Emoji's (OFL) as an image
+  so every phone shows the same one; a New Moon has no sliver, just the
+  dark disc; `up: false` adds `.down`, greyed with a dashed outline) and
+  the note it toggles, on the session and object pages.
 - Favorites (#23): `favorite: true` on an observation, at most one per
   object (validation; objects matched through `data/objects.json`). The
   admin-mode star (`favoriteLink()` in `site/lib.js`, object page; hidden
