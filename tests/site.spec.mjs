@@ -116,13 +116,12 @@ test("the scan view toggle is remembered", async ({ page }) => {
   await page.getByRole("button", { name: "Inverted" }).first().click();
 });
 
-test("the Blue view is a plain inversion, also full size (#96)", async ({ page }) => {
+test("Inverted is a plain inversion (the blue look), also full size (#96)", async ({ page }) => {
   await page.goto("notebook.html?id=test-001");
-  await page.getByRole("button", { name: "Blue" }).first().click();
-  const img = page.locator(".scans img").first();
-  await expect(img).toHaveCSS("filter", "invert(1)");
   await page.getByRole("button", { name: "Inverted" }).first().click();
-  await expect(img).toHaveCSS("filter", "invert(1) hue-rotate(180deg)");
+  await expect(page.locator(".scans img").first()).toHaveCSS("filter", "invert(1)");
+  await expect(page.getByRole("button", { name: "Blue" })).toHaveCount(0);
+  // A link from when Blue was its own view still shows it.
   await page.goto("view.html?img=test-data/scans/test-001/06.jpg&view=blue");
   await expect(page.locator("figure.page img")).toHaveCSS("filter", "invert(1)");
 });
@@ -193,7 +192,7 @@ test("Sketches thumbnails are always inverted, cover thumbnails never (#122)", a
   await page.addInitScript(() => localStorage.setItem("page-view", "original"));
   await page.goto("#sketches");
   const thumb = page.locator(".sketch-thumb img").first();
-  await expect(thumb).toHaveCSS("filter", "invert(1) hue-rotate(180deg)");
+  await expect(thumb).toHaveCSS("filter", "invert(1)");
   await expect(thumb).toHaveAttribute("src", /\.thumb\.clean\.jpg$/);
   await page.evaluate(() => localStorage.setItem("page-view", "inverted"));
   await page.goto("#notebooks");

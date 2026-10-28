@@ -114,16 +114,15 @@ export function catalogText(c) {
 export const seeingText = (n) => n && `${ROMAN[n - 1]} · ${SEEING[n - 1]}`;
 export const transparencyText = (n) => n && `${ROMAN[n - 1]} · ${TRANSPARENCY[n - 1]}`;
 
-// How scans are shown: inverted (white on dark; the default), blue (a plain
-// inversion, so the cream paper turns navy and pencil pale blue, #96),
-// cleaned (stamp show-through removed), or the original scan. Inverted and
-// blue use the cleaned image. The viewer's last choice is remembered;
-// storage can be unavailable.
-const VIEWS = { inverted: "Inverted", blue: "Blue", cleaned: "Cleaned", original: "Original" };
-// Both inverted views are .inverted; .blue changes the filter (style.css).
+// How scans are shown: inverted (the default; a plain inversion, so the
+// cream paper turns navy and pencil pale blue, #96), cleaned (stamp
+// show-through removed), or the original scan. Inverted uses the cleaned
+// image. The viewer's last choice is remembered; storage can be unavailable.
+const VIEWS = { inverted: "Inverted", cleaned: "Cleaned", original: "Original" };
+// Inverted is .inverted (style.css). "blue" was briefly its own view, so
+// links and saved choices naming it get the same look.
 export function viewClasses(target, view) {
   target.classList.toggle("inverted", view === "inverted" || view === "blue");
-  target.classList.toggle("blue", view === "blue");
 }
 const VIEW_KEY = "page-view";
 function savedView() {

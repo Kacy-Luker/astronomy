@@ -282,12 +282,12 @@ any that don't).
   the `kacy-luker.github.io` user site's domain, so all asset paths are
   relative. The main deploy must leave `gh-pages/pr-preview/` and
   `gh-pages/test/` alone.
-- Scans have an Inverted / Blue / Cleaned / Original toggle; Inverted (of
-  the cleaned image) is the default. Inversion is a CSS filter, so pages
-  link to `view.html` (which applies the same view), not to the bare JPEG.
-  Both inverted views set `.inverted` (`viewClasses()` in `site/lib.js`);
-  the filter is `--scan-filter`, which `.blue` (#96) makes a plain
-  `invert(1)` with no hue turn, so the paper goes navy.
+- Scans have an Inverted / Cleaned / Original toggle; Inverted (of the
+  cleaned image) is the default. Inversion is a CSS filter, so pages link
+  to `view.html` (which applies the same view), not to the bare JPEG. It's
+  a plain `invert(1)` with no hue turn, so the cream paper goes navy
+  (#96, Kacy's choice); `viewClasses()` in `site/lib.js` sets `.inverted`,
+  and also treats `view=blue` (briefly its own view) as Inverted.
 - The contents table on each notebook page is generated from sessions.
 - The home page's Sketches tab groups observations by catalog object (M31
   and NGC 224 are one) and shows one catalog at a time, picked with a
