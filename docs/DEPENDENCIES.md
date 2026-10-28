@@ -47,6 +47,8 @@ at a path.
   returns `{ legible, what }`, saying whether any personal detail can
   still be read.
 - `name` (optional), for messages.
+- `usage()` (optional): the tokens used so far, `{ input, output }`, shown
+  in the import's pull request with a link to the prices per token.
 
 **It must:**
 - Transcribe what's written and add nothing, correcting only plain

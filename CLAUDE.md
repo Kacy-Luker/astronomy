@@ -235,6 +235,9 @@ supported types) can be updated.
    normal capitalization (Kacy prints in capitals), but adds nothing; each
    correction goes in the reading's `corrections` and is listed under
    "Spelling corrected" in the PR summary (`sessions.mjs`, `summary.mjs`).
+   The reader counts its tokens (`usage()`), and the PR summary gives them
+   with a link to the prices per token (`PRICES` in `summary.mjs`), so
+   each import shows what it cost.
    Don't switch to API-enforced structured output: the schema is too
    large ("compiled grammar is too large"). The contract a replacement
    must meet is in `docs/DEPENDENCIES.md`.
