@@ -372,6 +372,19 @@ any that don't).
   the site's CSS (`.bars`, no chart library, Kacy's choice), each row with
   its number written out and the bar `aria-hidden`; two columns from
   40rem. Hours aren't counted: sessions have no start and end times.
+- Observing programs (`site/programs.js`, #125): a section of the
+  Activity tab, after the totals. `PROGRAMS` is Messier (M1–M110) and
+  Caldwell (C1–C109) as numbered ranges; `programProgress()` (unit-tested)
+  marks a designation observed when any matching observation has it among
+  its catalog object's `ids` (from `data/objects.json`, so NGC 224 counts
+  as M31 and Kacy's mappings apply, M102), its own `ids` or its
+  `catalog_id`. Each program shows "N of 110" and a bar, and a `<details>`
+  checklist: observed objects are ticked links to `object.html?id=`, the
+  rest greyed (dashed). Counts follow the search and filters, with
+  "Observed in the current selection." when narrowed. Only designations
+  are shown for unobserved objects (no names: the OpenNGC cache isn't
+  available offline at build). The Herschel 400 needs its own object list
+  and is a follow-up.
 - Moon phase (#127): the build stores `o.moon` (`phase` 0–1, 0.5 full;
   `illumination` %; `name`; `timed`; with a time and numeric site
   lat/lon, `up` and `altitude`) from `observationMoon()` in
@@ -380,8 +393,8 @@ any that don't).
   have no zone: taken as solar time at the site's longitude (else UTC−6),
   before noon as the next morning, a written UT wins (`ut: true`, and
   the note says so); no time means 22:00 and no `up`. `moonParts()` in
-  `site/observation.js` gives the card's glyph button (mirrored south of the equator, with a kangaroo on the
-  icon: `site/icons/kangaroo.png`, Noto Color Emoji's (OFL) as an image
+  `site/observation.js` gives the card's glyph button (mirrored south of
+  the equator, with a kangaroo on the icon: `site/icons/kangaroo.png`, Noto Color Emoji's (OFL) as an image
   so every phone shows the same one; a New Moon has no sliver, just the
   dark disc; `up: false` adds `.down`, greyed with a dashed outline) and
   the note it toggles, on the session and object pages.
