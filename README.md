@@ -316,6 +316,15 @@ used telescopes and eyepieces. The charts are simple bars with each number
 written beside them. Like the other tabs, it follows the search and
 filters, so `?site=Okie-Tex#activity` shows just Okie-Tex.
 
+**Observing programs** near the top shows how far along the Messier (110
+objects) and Caldwell (109) lists are, like the Astronomical League's
+awards: "43 of 110" and a bar. Tap **Messier checklist** to see every
+object: the ones observed are ticked and link to their object page, the
+rest are greyed. An object counts however it was written (NGC 224 counts
+as M31), and your own mappings apply (M102 is NGC 5866). With a search or
+filter on, it counts only what matches and says "Observed in the current
+selection".
+
 **Follow new sessions** at the top links to `feed.xml`, a feed of the 20
 newest sessions (date, site and objects, linking to each session page)
 that news readers can follow. The build writes it from the real data, and
