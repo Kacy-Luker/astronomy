@@ -1,5 +1,5 @@
-// One page full size, in the view it was opened from (Inverted, Blue,
-// Cleaned or Original), so tapping a page doesn't lose the inversion: that's a style on
+// One page full size, in the view it was opened from (Inverted, Cleaned or
+// Original), so tapping a page doesn't lose the inversion: that's a style on
 // the site, not part of the image file.
 import { el, link, viewClasses } from "./lib.js";
 
