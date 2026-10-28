@@ -1,0 +1,85 @@
+{
+  "id": "2026-10-11-okie-tex-2026-2",
+  "program": "Messier",
+  "date": "2026-10-11",
+  "site": { "name": "Okie-Tex 2026", "lat": 36.898, "lon": -102.952 },
+  "sky": { "sqm": 21.99 },
+  "scope": {
+    "name": "Orion XT8",
+    "type": "Dobsonian",
+    "aperture_mm": 203,
+    "focal_length_mm": 1200,
+    "f_ratio": 5.9
+  },
+  "observers": ["Kacy Luker"],
+  "notebook": "test-001",
+  "pages": [4, 5],
+  "header_box": { "page": 4, "box": [0.03, 0.035, 0.83, 0.26] },
+  "observations": [
+    {
+      "catalog_id": "M13",
+      "aka": "Hercules Cluster",
+      "ids": ["M13", "NGC 6205"],
+      "page": 4,
+      "local_time": "20:50",
+      "seeing": 3,
+      "transparency": 4,
+      "eyepiece": "13mm Ethos",
+      "filter": "N/A",
+      "description": "Large bright stars evenly distributed; core of more stars but less bright making core not much brighter than halo; unclear edge; 1000's of stars",
+      "box": [0.03, 0.31, 0.96, 0.335]
+    },
+    {
+      "catalog_id": "M57",
+      "aka": "Ring Nebula",
+      "ids": ["M57", "NGC 6720"],
+      "page": 4,
+      "local_time": "21:30",
+      "seeing": 2,
+      "transparency": 5,
+      "eyepiece": "13mm Ethos",
+      "filter": "N/A",
+      "description": "Brighter ring; center has light but dim compared to ring; ring brightness is brighter than star that is very close to it",
+      "box": [0.03, 0.605, 0.9, 0.3]
+    },
+    {
+      "catalog_id": "M31",
+      "aka": "Andromeda",
+      "ids": ["M31", "NGC 224"],
+      "page": 5,
+      "local_time": "23:10",
+      "seeing": 3,
+      "transparency": 4,
+      "eyepiece": "13mm Ethos",
+      "filter": "N/A",
+      "description": "Very large halo; bright core with an even brighter center there is a bright star in or in front of halo",
+      "box": [0.24, 0.008, 0.74, 0.287]
+    },
+    {
+      "catalog_id": "M32",
+      "aka": null,
+      "ids": ["M32", "NGC 221"],
+      "page": 5,
+      "local_time": "23:25",
+      "seeing": 3,
+      "transparency": 4,
+      "eyepiece": "13mm Ethos",
+      "filter": "N/A",
+      "description": "Small halo; slightly brighter core; almost inside of dimmest part of M31 halo",
+      "box": [0.24, 0.292, 0.64, 0.294]
+    },
+    {
+      "catalog_id": "M110",
+      "aka": null,
+      "ids": ["M110", "NGC 205"],
+      "page": 5,
+      "local_time": "23:35",
+      "seeing": 3,
+      "transparency": 4,
+      "eyepiece": "13mm Ethos",
+      "filter": "N/A",
+      "description": "Core is dimmer than nearby stars; halo is less massive than core dim",
+      "box": [0.24, 0.585, 0.64, 0.3]
+    }
+  ]
+}

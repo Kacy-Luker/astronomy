@@ -13,6 +13,7 @@ on:
         options:
           # Written by scripts/sync-workflow.mjs from data/notebooks/.
           # notebooks:start
+          - test-001
           - astronomy-001
           - new-notebook
           # notebooks:end

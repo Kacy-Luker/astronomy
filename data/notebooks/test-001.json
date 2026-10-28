@@ -1,0 +1,27 @@
+{
+  "id": "test-001",
+  "title": "Astronomy",
+  "owner": "Kacy Luker",
+  "type": "stamped-spreads",
+  "status": "in_progress",
+  "started": "2026-08-12",
+  "finished": null,
+  "scan": { "rotate": 90, "split": 0.47 },
+  "front_cover": {},
+  "pages": [
+    { "kind": "blank" },
+    { "kind": "title", "redact": [[0.42, 0.464, 0.274, 0.07], [0.432, 0.492, 0.358, 0.071]] },
+    { "kind": "contents", "open": true },
+    { "kind": "contents", "open": true },
+    { "kind": "contents", "open": true },
+    { "kind": "contents", "open": true },
+    { "kind": "reference", "label": "Seeing and transparency key" },
+    { "kind": "blank", "number": 1 },
+    { "kind": "session", "number": 2 },
+    { "kind": "unused", "number": 3 },
+    { "kind": "session", "number": 4 },
+    { "kind": "session", "number": 5 },
+    { "kind": "session", "number": 6 },
+    { "kind": "blank", "number": 7, "open": true }
+  ]
+}
