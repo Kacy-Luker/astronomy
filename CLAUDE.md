@@ -365,8 +365,8 @@ any that don't).
   `scripts/lib/moon.mjs`, our own short computation (no library; checked
   against astronomy-engine to 0.2% lit and 0.2° altitude). Local times
   have no zone: taken as solar time at the site's longitude (else UTC−6),
-  before noon as the next morning, a written UT wins; no time means 22:00
-  and no `up`. `moonParts()` in `site/observation.js` gives the card's
+  before noon as the next morning, a written UT wins (`ut: true`, and
+  the note says so); no time means 22:00 and no `up`. `moonParts()` in `site/observation.js` gives the card's
   glyph button (mirrored south of the equator, with a kangaroo on the
   icon: `site/icons/kangaroo.png`, Noto Color Emoji's (OFL) as an image
   so every phone shows the same one; a New Moon has no sliver, just the

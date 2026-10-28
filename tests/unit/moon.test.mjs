@@ -63,6 +63,11 @@ test("local times are taken as solar time at the site, after midnight on the nex
   assert.equal(when("2026-08-15", "21:00", null, "N/A").date.toISOString(), "2026-08-16T03:00:00.000Z");
   // A written UT wins, on the date nearest the estimate.
   assert.equal(when("2026-08-15", "22:00", "04:10", -104).date.toISOString(), "2026-08-16T04:10:00.000Z");
+  // Also with no local time, or one off by hours.
+  assert.equal(when("2026-08-15", null, "04:10", -104).date.toISOString(), "2026-08-16T04:10:00.000Z");
+  assert.equal(when("2026-08-15", "20:00", "04:10", -104).date.toISOString(), "2026-08-16T04:10:00.000Z");
+  assert.equal(when("2026-08-15", "22:00", "04:10", -104).ut, true);
+  assert.equal(when("2026-08-15", "22:00", null, -104).ut, false);
 });
 
 test("missing, N/A and unreadable times don't crash", () => {
@@ -85,4 +90,7 @@ test("an observation gets the phase, and up only with a time and the site's coor
   const nowhere = { date: "2024-10-16", site: { name: "Somewhere", lat: null, lon: "N/A" } };
   assert.equal(observationMoon(nowhere, { local_time: "23:30" }).up, undefined);
   assert.equal(observationMoon({ date: "N/A", site: {} }, {}), null);
+  // A written UT is used, and said so.
+  assert.equal(observationMoon(session, { local_time: "23:30", ut: "04:30" }).ut, true);
+  assert.equal(m.ut, false);
 });

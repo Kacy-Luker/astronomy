@@ -98,7 +98,8 @@ const clock = (t) => {
 // of day, on whichever date puts it nearest the local estimate. Times
 // before noon are after midnight, on the day after the session's date (the
 // date the night started). With no time at all, 22:00 local stands in.
-// Returns { date, timed }, or null when the session's date is unreadable.
+// Returns { date, timed, ut } (ut: a written UT was used), or null when the
+// session's date is unreadable.
 export function when(day, localTime, ut, lon) {
   const base = Date.parse(`${day}T00:00:00Z`);
   if (Number.isNaN(base)) return null;
@@ -108,10 +109,10 @@ export function when(day, localTime, ut, lon) {
   const offset = typeof lon === "number" ? lon / 15 : -6;
   const estimate = base + (hours - offset) * 3600000;
   const u = clock(ut);
-  if (!u) return { date: new Date(estimate), timed: Boolean(local) };
+  if (!u) return { date: new Date(estimate), timed: Boolean(local), ut: false };
   const candidates = [-1, 0, 1, 2].map((d) => base + (d * 24 + u.h + u.m / 60) * 3600000);
   const nearest = candidates.reduce((a, b) => (Math.abs(b - estimate) < Math.abs(a - estimate) ? b : a));
-  return { date: new Date(nearest), timed: true };
+  return { date: new Date(nearest), timed: true, ut: true };
 }
 
 // What the build stores on an observation (o.moon), or null without a
@@ -129,6 +130,7 @@ export function observationMoon(session, o) {
     illumination: Math.round(m.illumination * 100),
     name: m.name,
     timed: at.timed,
+    ut: at.ut,
   };
   if (at.timed && m.up != null) Object.assign(out, { up: m.up, altitude: Math.round(m.altitude) });
   return out;
