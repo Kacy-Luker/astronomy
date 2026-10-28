@@ -310,7 +310,8 @@ on the map.
 
 The home page's **Activity** tab sums up the log: how many sessions,
 observations and objects (M31 and NGC 224 count as one), observations per
-quarter over the last two years (quiet quarters too), objects by type,
+year (newest first, only years with observations; past eight it
+scrolls), objects by type,
 how seeing and transparency were spread (with the Clear Sky Chart
 words), and the most used telescopes and eyepieces. The charts are
 simple bars with each number written beside them. Like the other tabs,
