@@ -5,6 +5,7 @@ import { join } from "node:path";
 import * as images from "./lib/image.mjs";
 import { category, isBack, ranks } from "./lib/categories.mjs";
 import { findCircle } from "./lib/circle.mjs";
+import { atomFeed } from "./lib/feed.mjs";
 import { objectKeys, pageName, readJSON, readJSONDir } from "./lib/files.mjs";
 import { typeOf } from "./lib/notebook-types.mjs";
 
@@ -162,6 +163,12 @@ async function buildData(dir, root) {
 const { notebooks, sessions } = await buildData("data", "");
 const test = withTestData ? await buildData("test-data", "test-data/") : null;
 
+// The feed of new sessions (#128), from the real data only, with the live
+// site's addresses. Only the live site announces it in every page's head,
+// so feed readers don't pick up a preview or the test site.
+await writeFile(join(OUT, "feed.xml"), atomFeed(sessions));
+const live = !TEST_SITE && !process.env.PREVIEW_OF;
+
 // Every page gets the site's icons (site/icons/: Kacy's telescope photos,
 // a wide crop for tab sizes and a close-up for larger ones), so a new page
 // can't miss them. Without these, browsers show kacyluker.com's favicon.
@@ -172,6 +179,7 @@ const icons = [
   `<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">`,
   // Chrome on Android takes home-screen icons from the manifest.
   `<link rel="manifest" href="manifest.webmanifest">`,
+  ...(live ? [`<link rel="alternate" type="application/atom+xml" title="New sessions" href="feed.xml">`] : []),
 ].map((tag) => `  ${tag}\n`).join("");
 
 // Every page's footer credits the catalog sources the objects came from
