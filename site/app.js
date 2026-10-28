@@ -1,7 +1,7 @@
-// Home page: Notebooks, Sessions, Sketches, Equipment and Map tabs, under the
-// search and filter bar (site/filterbar.js) that narrows them all. The tab
-// is in the URL (#notebooks, #sessions, #sketches, #sketches/ngc for a
-// catalog, #equipment, #map)
+// Home page: Notebooks, Sessions, Sketches, Equipment, Map and Activity
+// tabs, under the search and filter bar (site/filterbar.js) that narrows
+// them all. The tab is in the URL (#notebooks, #sessions, #sketches,
+// #sketches/ngc for a catalog, #equipment, #map, #activity)
 // and so are the search and filters (?q=&site=...), so links and the back
 // button keep them.
 import {
@@ -10,6 +10,7 @@ import {
 } from "./lib.js";
 import { CATALOGS, catalogOf, compareIds } from "./catalog.js";
 import { observedObjects, sameName } from "./objects.js";
+import { renderActivity } from "./activity.js";
 import { renderEquipment } from "./equipment.js";
 import { filterBar } from "./filterbar.js";
 import { mapPanel } from "./map.js";
@@ -17,7 +18,7 @@ import { activeFilters, keepFilters, matchesAll, searchDocuments } from "./searc
 import { todoCount } from "./todos.js";
 
 const summary = document.getElementById("summary");
-const TABS = ["notebooks", "sessions", "sketches", "equipment", "map"];
+const TABS = ["notebooks", "sessions", "sketches", "equipment", "map", "activity"];
 const DEFAULT_TAB = "sessions";
 
 function renderNotebook(nb, sessions) {
@@ -211,7 +212,8 @@ try {
   // its sessions match.
   function render(state) {
     const narrowed = Boolean(state.q.trim() || activeFilters(state).length);
-    const found = new Set(docs.filter((d) => matchesAll(d, state)).map((d) => d.o));
+    const matching = docs.filter((d) => matchesAll(d, state));
+    const found = new Set(matching.map((d) => d.o));
     const shown = sessions
       .map((s) => ({ ...s, whole: s, observations: s.observations.filter((o) => found.has(o)) }))
       .filter((s) => s.observations.length);
@@ -223,9 +225,12 @@ try {
     const objects = observedObjects(shown, catalog);
     updateObjects(objects, "No objects match.");
     const equipment = document.getElementById("equipment");
-    equipment.replaceChildren(...renderEquipment(docs.filter((d) => found.has(d.o))));
+    equipment.replaceChildren(...renderEquipment(matching));
     keepFilters(equipment);
-    updateMap(docs.filter((d) => found.has(d.o)));
+    updateMap(matching);
+    const activity = document.getElementById("activity");
+    activity.replaceChildren(...renderActivity(matching));
+    keepFilters(activity);
     summary.textContent = narrowed
       ? `${plural(found.size, "matching observation")} · ${plural(shown.length, "session")} · ${plural(objects.length, "object")}`
       : `${plural(sessions.length, "session")} · ${plural(found.size, "observation")} · ${plural(objects.length, "object")}`;
