@@ -217,8 +217,10 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python scripts/showthrough.py astronomy-001
 ```
 
-On the site, scans have an **Inverted / Cleaned / Original** toggle.
-Inverted (the default) shows the cleaned page with light and dark swapped.
+On the site, scans have an **Inverted / Blue / Cleaned / Original**
+toggle. Inverted (the default) shows the cleaned page with light and dark
+swapped. Blue is a plain inversion, so the cream paper turns navy and the
+pencil pale blue.
 Tapping a page opens it full size (`view.html`) in the same view.
 
 ## Searching
